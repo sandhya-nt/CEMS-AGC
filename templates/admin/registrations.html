@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% block title %}All Registrations — CEMS{% endblock %}
+{% block content %}
+<div class="narrow-wide"><h1>All Registrations</h1><div class="table-card"><table><thead><tr><th>Student</th><th>Event</th><th>Ticket</th><th>Payment</th><th>Attendance</th></tr></thead><tbody>{% for r in registrations %}<tr><td>{{ r.user.name }}</td><td>{{ r.event.title }}</td><td>{{ r.ticket_code }}</td><td>{{ r.payment_status }}</td><td>{{ 'Checked In' if r.attended else 'Pending' }}</td></tr>{% endfor %}</tbody></table></div></div>
+{% endblock %}

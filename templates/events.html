@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block title %}Events — CEMS{% endblock %}
+{% block content %}
+<div class="page-head"><div><span class="eyebrow">DISCOVER</span><h1>Campus Events</h1></div><a class="btn" href="{{ url_for('register') }}">Join CEMS</a></div>
+<form class="filterbar"><input name="q" value="{{ q }}" placeholder="Search events..."><select name="category"><option value="">All categories</option>{% for c in categories %}<option {% if category==c %}selected{% endif %}>{{ c }}</option>{% endfor %}</select><select name="status"><option value="">All</option><option value="upcoming" {% if status=='upcoming' %}selected{% endif %}>Upcoming</option><option value="completed" {% if status=='completed' %}selected{% endif %}>Completed</option></select><button class="btn">Filter</button></form>
+<div class="grid-3">{% for event in events %}<article class="event-card"><div class="event-thumb">{{ event.category[:2].upper() }}</div><div class="event-body"><span class="tag">{{ event.category }}</span><h3>{{ event.title }}</h3><p>◷ {{ event.date.strftime('%d %b %Y') }} · {{ event.start_time }}</p><p>⌖ {{ event.venue }}</p><p>{{ event.description[:110] }}...</p><a href="{{ url_for('event_details', event_id=event.id) }}">View Details →</a></div></article>{% else %}<div class="empty">No events match your search.</div>{% endfor %}</div>
+{% endblock %}

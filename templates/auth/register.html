@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Create Account — CEMS{% endblock %}
+{% block content %}
+<div class="auth-page"><div class="auth-art"><span class="eyebrow">CEMS • {{ college_short }}</span><h2>Create Account</h2><p>Join the campus community and be part of amazing events.</p><div class="big-icon">◈</div></div>
+<form class="form-card" method="post"><h1>Register</h1><p class="muted">Create your account to continue.</p>
+<label>Full Name<input name="name" required placeholder="Enter your full name"></label>
+<label>Email Address<input type="email" name="email" required placeholder="Enter your email"></label>
+<label>Mobile Number<input name="mobile" placeholder="Enter mobile number"></label>
+<div class="form-grid"><label>Password<input type="password" name="password" required minlength="8" placeholder="At least 8 characters"></label><label>Confirm Password<input type="password" name="confirm_password" required placeholder="Confirm password"></label></div>
+<div class="form-grid"><label>Role<select name="role"><option value="student">Student</option><option value="organizer">Organizer</option></select></label><label>Department<input name="department" placeholder="e.g. Computer Science"></label></div>
+<label>College Roll No. <input name="roll_no" placeholder="Optional"></label>
+<button class="btn full">Register</button><p class="center">Already have an account? <a href="{{ url_for('login') }}">Login</a></p>
+</form></div>
+{% endblock %}

@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% block title %}Manage Events — CEMS{% endblock %}
+{% block content %}
+<div class="narrow-wide"><h1>Manage Events</h1><div class="table-card"><table><thead><tr><th>Event</th><th>Organizer</th><th>Date</th><th>Status</th><th>Action</th></tr></thead><tbody>{% for e in events %}<tr><td>{{ e.title }}</td><td>{{ e.organizer.name }}</td><td>{{ e.date.strftime('%d %b %Y') }}</td><td><span class="status">{{ e.status }}</span></td><td>{% if e.status=='pending' %}<form class="inline" method="post" action="{{ url_for('event_action', event_id=e.id, action='approve') }}"><button class="btn mini">Approve</button></form><form class="inline" method="post" action="{{ url_for('event_action', event_id=e.id, action='reject') }}"><button class="btn mini danger-btn">Reject</button></form>{% else %}—{% endif %}</td></tr>{% endfor %}</tbody></table></div></div>
+{% endblock %}

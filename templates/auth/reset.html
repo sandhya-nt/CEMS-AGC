@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% block title %}Reset Password — CEMS{% endblock %}
+{% block content %}
+<div class="narrow-card"><h1>Reset Password</h1><form method="post"><label>New Password<input type="password" name="password" minlength="8" required></label><label>Confirm Password<input type="password" name="confirm_password" minlength="8" required></label><button class="btn full">Update Password</button></form></div>
+{% endblock %}

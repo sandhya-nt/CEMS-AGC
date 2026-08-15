@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Demo Payment — CEMS{% endblock %}
+{% block content %}
+<div class="narrow-card">
+  <span class="tag">SECURE DEMO CHECKOUT</span>
+  <h1>Payment for {{ event.title }}</h1>
+  <div class="summary"><span>Participant</span><b>{{ current_user.name }}</b><span>Event</span><b>{{ event.title }}</b><span>Amount</span><b>₹{{ '%.2f'|format(event.fee) }}</b></div>
+  <div class="demo-box">This academic project uses a simulated payment. No card, UPI PIN, OTP or banking credentials are collected.</div>
+  <form method="post"><button class="btn full">Pay ₹{{ '%.2f'|format(event.fee) }} (Demo)</button></form>
+</div>
+{% endblock %}

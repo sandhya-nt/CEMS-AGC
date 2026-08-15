@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% block title %}Reports — CEMS{% endblock %}
+{% block content %}
+<div class="narrow-wide"><div class="page-head"><h1>Reports & Analytics</h1></div><div class="stats"><div><span>Total Events</span><strong>{{ total_events }}</strong></div><div><span>Registrations</span><strong>{{ total_reg }}</strong></div><div><span>Attendees</span><strong>{{ total_att }}</strong></div><div><span>Revenue</span><strong>₹{{ '%.0f'|format(revenue) }}</strong></div></div><div class="table-card"><table><thead><tr><th>Event</th><th>Registrations</th><th>Attendance</th><th>Revenue</th></tr></thead><tbody>{% for e in events %}<tr><td>{{ e.title }}</td><td>{{ e.registrations|length }}</td><td>{{ e.registrations|selectattr('attended')|list|length }}</td><td>₹{{ '%.0f'|format(e.fee * (e.registrations|selectattr('payment_status','equalto','paid')|list|length)) }}</td></tr>{% endfor %}</tbody></table></div></div>
+{% endblock %}

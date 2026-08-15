@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% block title %}My Profile — CEMS{% endblock %}
+{% block content %}
+<div class="narrow-card"><h1>My Profile</h1><form method="post"><label>Full Name<input name="name" value="{{ current_user.name }}" required></label><label>Email<input value="{{ current_user.email }}" disabled></label><label>Mobile<input name="mobile" value="{{ current_user.mobile or '' }}"></label><label>Department<input name="department" value="{{ current_user.department or '' }}"></label><label>Roll Number<input name="roll_no" value="{{ current_user.roll_no or '' }}"></label><button class="btn full">Update Profile</button></form></div>
+{% endblock %}

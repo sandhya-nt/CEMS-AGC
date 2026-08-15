@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Login — CEMS{% endblock %}
+{% block content %}
+<div class="auth-page"><div class="auth-art"><span class="eyebrow">WELCOME BACK</span><h2>Explore campus events.</h2><p>Login to discover, register and participate.</p><div class="big-icon">🔐</div></div>
+<form class="form-card" method="post"><h1>Login</h1>
+<label>Email Address<input type="email" name="email" required placeholder="Enter email"></label>
+<label>Password<div class="input-inline"><input type="password" name="password" required placeholder="Enter password"><a href="{{ url_for('forgot_password') }}">Forgot Password?</a></div></label>
+<label class="check"><input type="checkbox" name="remember"> Remember Me</label>
+<button class="btn full">Login</button>
+<p class="center">Don't have an account? <a href="{{ url_for('register') }}">Register</a></p>
+<div class="demo-box"><b>Demo accounts</b><br>Admin: admin@agc.local / Admin@123<br>Organizer: organizer@agc.local / Organizer@123<br>Student: student@agc.local / Student@123</div>
+</form></div>
+{% endblock %}

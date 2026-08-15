@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Create Event — CEMS{% endblock %}
+{% block content %}
+<div class="narrow-wide"><h1>Create New Event</h1><p class="muted">Create an event; admin approval is required before publishing.</p><form method="post" class="form-card inline-card">
+<label>Event Title<input name="title" required placeholder="e.g. Tech Fest 2K26"></label><div class="form-grid"><label>Category<select name="category"><option>Technical</option><option>Cultural</option><option>Sports</option><option>Workshop</option><option>Seminar</option><option>Competition</option><option>Other</option></select></label><label>Event Type<select name="event_type"><option value="free">Free</option><option value="paid">Paid</option></select></label></div>
+<div class="form-grid"><label>Date<input type="date" name="date" required></label><label>Registration Deadline<input type="date" name="registration_deadline"></label></div>
+<div class="form-grid"><label>Start Time<input name="start_time" required placeholder="10:00 AM"></label><label>End Time<input name="end_time" required placeholder="5:00 PM"></label></div>
+<div class="form-grid"><label>Venue<input name="venue" required placeholder="Main Auditorium"></label><label>Capacity<input type="number" name="capacity" min="1" value="100"></label></div>
+<label>Fee (₹)<input type="number" step="0.01" name="fee" value="0" min="0"></label>
+<label>Description<textarea name="description" rows="5" required></textarea></label><label>Highlights<textarea name="highlights" rows="4" placeholder="One highlight per line"></textarea></label>
+<button class="btn">Create Event</button></form></div>
+{% endblock %}

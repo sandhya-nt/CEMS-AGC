@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block title %}Student Dashboard — CEMS{% endblock %}
+{% block content %}
+<div class="dashboard"><aside class="sidebar"><div class="side-brand">CEMS</div><a class="active" href="{{ url_for('student_dashboard') }}">▣ Dashboard</a><a href="{{ url_for('events') }}">◫ Events</a><a href="{{ url_for('my_registrations') }}">✓ My Registrations</a><a href="{{ url_for('my_tickets') }}">▣ My Tickets</a><a href="{{ url_for('student_notifications') }}">♢ Notifications {% if unread_notifications %}<b class="badge">{{ unread_notifications }}</b>{% endif %}</a><a href="{{ url_for('profile') }}">♙ Profile</a><a href="{{ url_for('logout') }}">↪ Logout</a></aside>
+<section class="dash-main"><div class="page-head"><div><h1>Dashboard</h1><p>Welcome, {{ current_user.name }} 👋</p></div><span class="avatar">{{ current_user.name[0] }}</span></div>
+<div class="stats"><div><span>Upcoming Events</span><strong>{{ upcoming|length }}</strong></div><div><span>My Registrations</span><strong>{{ regs }}</strong></div><div><span>My Tickets</span><strong>{{ tickets }}</strong></div><div><span>Events Attended</span><strong>{{ attended }}</strong></div></div>
+<div class="section-head"><h2>Upcoming Events</h2><a href="{{ url_for('events') }}">View All</a></div><div class="grid-4">{% for event in upcoming %}<article class="event-card"><div class="event-thumb">{{ event.category[:2].upper() }}</div><div class="event-body"><h3>{{ event.title }}</h3><p>◷ {{ event.date.strftime('%d %b %Y') }}</p><p>⌖ {{ event.venue }}</p><a href="{{ url_for('event_details', event_id=event.id) }}">View Details</a></div></article>{% endfor %}</div></section></div>
+{% endblock %}

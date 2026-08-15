@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% block title %}Notifications — CEMS{% endblock %}
+{% block content %}
+<div class="dashboard"><aside class="sidebar"><div class="side-brand">CEMS</div><a href="{{ url_for('student_dashboard') }}">▣ Dashboard</a><a href="{{ url_for('events') }}">◫ Events</a><a href="{{ url_for('my_registrations') }}">✓ My Registrations</a><a href="{{ url_for('my_tickets') }}">▣ My Tickets</a><a class="active" href="{{ url_for('student_notifications') }}">♢ Notifications</a><a href="{{ url_for('profile') }}">♙ Profile</a><a href="{{ url_for('logout') }}">↪ Logout</a></aside><section class="dash-main"><h1>Notifications</h1>{% for n in notifications %}<div class="notification"><span>●</span><div><b>{{ n.title }}</b><p>{{ n.message }}</p><small>{{ n.created_at.strftime('%d %b %Y %I:%M %p') }}</small></div></div>{% else %}<div class="empty">No notifications.</div>{% endfor %}</section></div>
+{% endblock %}

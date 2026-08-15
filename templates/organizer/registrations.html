@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% block title %}Registrations — CEMS{% endblock %}
+{% block content %}
+<div class="narrow-wide"><div class="page-head"><h1>{{ event.title }} — Registrations</h1><a class="btn" href="{{ url_for('checkin') }}">Check-in</a></div><div class="table-card"><table><thead><tr><th>Name</th><th>Email</th><th>Ticket</th><th>Payment</th><th>Attendance</th></tr></thead><tbody>{% for r in registrations %}<tr><td>{{ r.user.name }}</td><td>{{ r.user.email }}</td><td>{{ r.ticket_code }}</td><td>{{ r.payment_status }}</td><td>{% if r.attended %}<span class="status success">Checked In</span>{% else %}<span class="status">Not Checked In</span>{% endif %}</td></tr>{% else %}<tr><td colspan="5" class="empty">No registrations.</td></tr>{% endfor %}</tbody></table></div></div>
+{% endblock %}

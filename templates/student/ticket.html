@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% block title %}Digital Ticket — CEMS{% endblock %}
+{% block content %}
+<div class="ticket-page"><div class="ticket"><div><span class="tag">{{ reg.event.category }}</span><h1>{{ reg.event.title }}</h1><p>◷ {{ reg.event.date.strftime('%A, %d %B %Y') }} · {{ reg.event.start_time }}</p><p>⌖ {{ reg.event.venue }}</p><p><b>Participant:</b> {{ reg.user.name }}</p><p><b>Ticket ID:</b> {{ reg.ticket_code }}</p></div><img class="qr" src="{{ url_for('ticket_qr', registration_id=reg.id) }}"></div><a class="btn" href="{{ url_for('my_tickets') }}">Back to My Tickets</a></div>
+{% endblock %}

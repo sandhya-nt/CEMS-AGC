@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% block title %}Register — {{ event.title }}{% endblock %}
+{% block content %}
+<div class="narrow-card"><span class="tag">{{ event.category }}</span><h1>Register for {{ event.title }}</h1><p>{{ event.date.strftime('%d %b %Y') }} · {{ event.start_time }} · {{ event.venue }}</p><div class="summary"><span>Participant</span><b>{{ current_user.name }}</b><span>Email</span><b>{{ current_user.email }}</b><span>Fee</span><b>{% if event.fee %}₹{{ event.fee }}{% else %}Free{% endif %}</b></div><form method="post"><button class="btn full">{% if event.fee %}Continue to Demo Payment{% else %}Submit Registration{% endif %}</button></form><small class="muted">Demo payment only — no card/UPI credentials are collected.</small></div>
+{% endblock %}

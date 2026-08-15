@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% block title %}Manage Users — CEMS{% endblock %}
+{% block content %}
+<div class="narrow-wide"><h1>Manage Users</h1><div class="table-card"><table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Verified</th><th>Status</th><th>Action</th></tr></thead><tbody>{% for u in users %}<tr><td>{{ u.name }}</td><td>{{ u.email }}</td><td>{{ u.role }}</td><td>{{ 'Yes' if u.is_verified else 'No' }}</td><td>{{ 'Active' if u.is_active_account else 'Blocked' }}</td><td>{% if u.id != current_user.id %}<form method="post" action="{{ url_for('toggle_user', user_id=u.id) }}"><button class="link-btn">{{ 'Block' if u.is_active_account else 'Unblock' }}</button></form>{% endif %}</td></tr>{% endfor %}</tbody></table></div></div>
+{% endblock %}

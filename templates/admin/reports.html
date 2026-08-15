@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% block title %}Admin Reports — CEMS{% endblock %}
+{% block content %}
+<div class="narrow-wide"><h1>Reports & Analytics</h1><div class="stats"><div><span>Users</span><strong>{{ users }}</strong></div><div><span>Events</span><strong>{{ events }}</strong></div><div><span>Registrations</span><strong>{{ registrations }}</strong></div><div><span>Attendees</span><strong>{{ attendees }}</strong></div></div><div class="chart-card"><h2>System Insights</h2><p>Average feedback rating: <b>{{ avg_rating }}/5</b></p><p>Recorded paid-event revenue: <b>₹{{ '%.2f'|format(total_revenue) }}</b></p><div class="bars"><span style="height:{{ [users*8,20]|max }}px"></span><span style="height:{{ [events*15,20]|max }}px"></span><span style="height:{{ [registrations*4,20]|max }}px"></span><span style="height:{{ [attendees*4,20]|max }}px"></span></div><div class="bar-labels"><span>Users</span><span>Events</span><span>Registrations</span><span>Attendees</span></div></div></div>
+{% endblock %}

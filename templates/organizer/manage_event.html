@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% block title %}Manage Event — CEMS{% endblock %}
+{% block content %}
+<div class="narrow-wide"><div class="page-head"><div><span class="tag">{{ event.status }}</span><h1>Manage {{ event.title }}</h1></div><a class="btn" href="{{ url_for('organizer_registrations', event_id=event.id) }}">View Registrations</a></div><form method="post" class="form-card inline-card"><label>Event Title<input name="title" value="{{ event.title }}" required></label><div class="form-grid"><label>Category<input name="category" value="{{ event.category }}"></label><label>Venue<input name="venue" value="{{ event.venue }}"></label></div><label>Capacity<input type="number" name="capacity" value="{{ event.capacity }}"></label><label>Description<textarea name="description" rows="5">{{ event.description }}</textarea></label><label>Highlights<textarea name="highlights" rows="4">{{ event.highlights }}</textarea></label><button class="btn">Save Changes</button></form></div>
+{% endblock %}

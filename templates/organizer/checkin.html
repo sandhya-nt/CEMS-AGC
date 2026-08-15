@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% block title %}Event Check-in — CEMS{% endblock %}
+{% block content %}
+<div class="narrow-card"><div class="big-icon">⌁</div><h1>Event Day Check-in</h1><p class="muted">Enter the ticket code printed with the attendee's QR ticket.</p><form method="post"><label>Ticket Code<input name="ticket_code" autofocus placeholder="AGC-XXXXXXXX" required></label><button class="btn full">Verify & Check In</button></form>{% if result %}<div class="success-box"><b>{{ result.user.name }}</b><br>{{ result.event.title }}<br>{{ result.ticket_code }}<br>Checked in: {{ result.checkin_time.strftime('%d %b %Y %I:%M %p') }}</div>{% endif %}</div>
+{% endblock %}

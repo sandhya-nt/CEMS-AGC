@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}CEMS — AGC Campus Events{% endblock %}
+{% block content %}
+<div class="utility-strip">
+  <div class="utility-inner">
+    <span>WhatsApp</span><span>Call</span><span>Facebook</span><span>Email</span><span>Instagram</span><span>LinkedIn</span><span>YouTube</span><span>Telegram</span>
+    <a href="{{ url_for('register') }}">Register Here</a>
+  </div>
+</div>
+
+<section class="hero agc-hero">
+  <div class="hero-copy">
+    <span class="eyebrow">{{ college_name|upper }} • {{ agc_profile.status|upper }}</span>
+    <h1>Welcome to <span>AGC Campus Event</span><br>Management System</h1>
+    <p>Discover, register, organize and manage academic, technical, cultural, sports and student-development events across the AGC campus.</p>
+    <div class="actions"><a class="btn" href="{{ url_for('events') }}">Explore Events</a><a class="btn dark" href="{{ url_for('register') }}">Organize Event</a></div>
+    <div class="hero-badges"><span>NAAC A Grade</span><span>AICTE</span><span>PCI</span><span>IKGPTU Affiliated</span></div>
+  </div>
+  <div class="hero-art agc-emblem">AGC<br><small>EVENTS • COMMUNITY • EXCELLENCE</small></div>
+</section>
+
+<section class="institution-strip">
+  <div><strong>{{ agc_profile.students }}</strong><span>Student strength</span></div>
+  <div><strong>{{ agc_profile.years }}</strong><span>Education & growth</span></div>
+  <div><strong>{{ agc_profile.programs }}</strong><span>Programs</span></div>
+  <div><strong>{{ agc_profile.naac }}</strong><span>Accreditation highlight</span></div>
+</section>
+
+<section class="section">
+  <div class="section-head"><div><span class="eyebrow">CEMS • AGC AMRITSAR</span><h2>Upcoming Campus Events</h2></div><a href="{{ url_for('events') }}">View All →</a></div>
+  <div class="grid-4">
+    {% for event in events %}
+    <article class="event-card">
+      <div class="event-thumb">{{ event.category[:2].upper() }}</div>
+      <div class="event-body">
+        <span class="tag">{{ event.category }}</span><h3>{{ event.title }}</h3>
+        <p>◷ {{ event.date.strftime('%d %b %Y') }} · {{ event.start_time }}</p><p>⌖ {{ event.venue }}, AGC Campus</p>
+        <a href="{{ url_for('event_details', event_id=event.id) }}">View Details →</a>
+      </div>
+    </article>
+    {% else %}<div class="empty">No approved events yet.</div>{% endfor %}
+  </div>
+</section>
+
+<section class="section agc-profile-section">
+  <div class="section-head"><div><span class="eyebrow">WHY AGC</span><h2>Built around AGC's campus ecosystem</h2></div></div>
+  <div class="profile-grid">
+    <div class="profile-card"><strong>Autonomous Institution</strong><p>Event workflows can be managed according to campus departments, clubs, organizers and institutional approvals.</p></div>
+    <div class="profile-card"><strong>Academic & Professional Growth</strong><p>Support workshops, seminars, conferences, competitions, placement activities and student-development programs.</p></div>
+    <div class="profile-card"><strong>Industry-Integrated Learning</strong><p>Enable industry interaction, expert sessions, entrepreneurship activities and networking through organized events.</p></div>
+    <div class="profile-card"><strong>Quality & Digital Learning</strong><p>Connect events with IQAC, NPTEL, research, innovation, AI and other academic initiatives.</p></div>
+  </div>
+</section>
+
+<section class="section two-col">
+  <div><span class="eyebrow">AGC CAMPUS NETWORK</span><h2>One platform for every event stakeholder.</h2><p>Students discover events, organizers manage registrations and volunteers, judges evaluate competitions, and administrators monitor the complete campus event lifecycle.</p><div class="feature-list"><div>✓ Role-based access</div><div>✓ QR ticket & check-in</div><div>✓ Notifications</div><div>✓ Reports & analytics</div><div>✓ Certificates</div><div>✓ Feedback & ratings</div></div></div>
+  <div class="updates-card"><h3>Latest Updates & Notices</h3>{% for item in agc_updates %}<div class="update-item"><span>NEW</span>{{ item }}</div>{% endfor %}</div>
+</section>
+
+<section class="section academic-section">
+  <div class="section-head"><div><span class="eyebrow">ACADEMICS & CAMPUS</span><h2>Connected AGC modules</h2></div></div>
+  <div class="module-chips"><span>Engineering & Technology</span><span>Pharmacy</span><span>Management</span><span>Hospitality & Tourism</span><span>Fashion Design</span><span>Nutrition & Dietetics</span><span>Research & Development</span><span>Entrepreneurship Cell</span><span>Alumni</span><span>Campus Placements</span><span>Centre of Excellence</span><span>Digital Learning / NPTEL</span></div>
+</section>
+
+<section class="section contact-panel">
+  <div><span class="eyebrow">CONTACT DIRECTORY</span><h2>{{ college_name }}</h2><p>{{ agc_profile.address }}</p><p>For project/demo purposes, institutional links and social handles can be configured in the project settings.</p></div>
+  <div class="directory-grid"><span>Admissions</span><span>Academics</span><span>Examination</span><span>Research</span><span>Placement</span><span>Alumni</span><span>Grievance Redressal</span><span>Infrastructure</span><span>Life @ AGC</span><span>Contact Us</span></div>
+</section>
+
+<section class="cta"><h2>Make AGC campus events smarter.</h2><p>Register, participate, organize, check-in and analyse events from one system.</p><a class="btn" href="{{ url_for('register') }}">Create CEMS Account</a></section>
+{% endblock %}
