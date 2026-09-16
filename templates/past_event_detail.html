@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+{% block title %}{{ event.title }} — Past Event{% endblock %}
+{% block breadcrumb %}Past Events{% endblock %}
+
+{% block extra_css %}
+<style>
+.cems-event-detail-banner {
+  width: 100%;
+  max-height: 320px;
+  object-fit: cover;
+  border-radius: var(--cems-radius-xl);
+  margin-bottom: 24px;
+  box-shadow: var(--cems-shadow-md);
+}
+.cems-event-detail-banner-placeholder {
+  width: 100%;
+  height: 320px;
+  border: 2px dashed var(--cems-border);
+  border-radius: var(--cems-radius-xl);
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 4rem;
+  opacity: 0.2;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="cems-event-detail">
+  {% set img_url = event_image_url(event) %}
+  {% if img_url %}
+  <img src="{{ img_url }}"
+       alt="{{ event.title }}"
+       class="cems-event-detail-banner"
+       onerror="this.onerror=null;this.parentElement.innerHTML='<div class=\"cems-event-detail-banner-placeholder\">{{ event.category[:2].upper() }}</div>';">
+  {% else %}
+  <div class="cems-event-detail-banner-placeholder">
+    {{ event.category[:2].upper() }}
+  </div>
+  {% endif %}
+
+  <div class="cems-event-detail-header">
+    <div style="flex: 1;">
+      <span class="cems-badge cems-badge-primary" style="margin-bottom: 12px;">{{ event.category }} · {{ event.event_type|title }}</span>
+      <h1 class="cems-event-detail-title">{{ event.title }}</h1>
+      <div class="cems-event-detail-meta">
+        <div class="cems-event-detail-meta-item">
+          <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+          {{ event.date.strftime('%A, %d %B %Y') }}
+        </div>
+        <div class="cems-event-detail-meta-item">
+          <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          {{ event.start_time }} - {{ event.end_time }}
+        </div>
+        <div class="cems-event-detail-meta-item">
+          <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.243-4.243A8 8 0 0117.657 16.657z"></path><circle cx="12" cy="11" r="1.5" fill="currentColor"></circle></svg>
+          {{ event.venue }}
+        </div>
+      </div>
+    </div>
+    {% if current_user.is_authenticated and current_user.role in ('admin', 'organizer') %}
+    <div>
+      <a href="{{ url_for('past_event_pdf', event_id=event.id) }}" class="cems-btn cems-btn-secondary">📄 Download PDF Report</a>
+      {% if event.organizer_id == current_user.id %}
+      <a href="{{ url_for('generate_certificates', event_id=event.id) }}" class="cems-btn cems-btn-success">🏆 Generate Certificates</a>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="cems-event-detail-body">
+    <div class="cems-event-detail-grid">
+      <section>
+        <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 16px; color: var(--cems-text-primary);">About Event</h2>
+        <p style="color: var(--cems-text-secondary); line-height: 1.8; margin-bottom: 24px;">{{ event.description }}</p>
+
+        {% if event.rules %}
+        <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 8px; color: var(--cems-text-primary);">Event Rules</h3>
+        <p style="color: var(--cems-text-secondary); line-height: 1.8; margin-bottom: 24px;">{{ event.rules }}</p>
+        {% endif %}
+
+        {% if event.eligibility %}
+        <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 8px; color: var(--cems-text-primary);">Eligibility Criteria</h3>
+        <p style="color: var(--cems-text-secondary); line-height: 1.8; margin-bottom: 24px;">{{ event.eligibility }}</p>
+        {% endif %}
+
+        {% if event.highlights %}
+        <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 8px; color: var(--cems-text-primary);">Event Highlights</h3>
+        <ul class="ticks" style="list-style: none; padding: 0; margin-bottom: 24px;">
+          {% for item in event.highlights.splitlines() %}
+          <li style="padding: 6px 0; color: var(--cems-text-secondary); display: flex; align-items: center; gap: 8px;">
+            <svg width="16" height="16" fill="none" stroke="var(--cems-success)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            {{ item }}
+          </li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+
+        {% if event.contact_info %}
+        <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 8px; color: var(--cems-text-primary);">Contact Information</h3>
+        <p style="color: var(--cems-text-secondary); line-height: 1.8;">{{ event.contact_info }}</p>
+        {% endif %}
+      </section>
+      <aside class="cems-event-detail-sidebar">
+        <div class="cems-card">
+          <div class="cems-card-header">
+            <div class="cems-card-title">Event Information</div>
+          </div>
+          <div class="cems-card-body">
+            <div style="display: flex; flex-direction: column; gap: 16px;">
+              <div style="display: flex; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px solid var(--cems-border-light);">
+                <span style="color: var(--cems-text-muted); font-size: 0.85rem;">Organized By</span>
+                <span style="font-weight: 600; font-size: 0.9rem;">{{ event.organizer.name }}</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px solid var(--cems-border-light);">
+                <span style="color: var(--cems-text-muted); font-size: 0.85rem;">Capacity</span>
+                <span style="font-weight: 600; font-size: 0.9rem;">{{ event.capacity }}</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px solid var(--cems-border-light);">
+                <span style="color: var(--cems-text-muted); font-size: 0.85rem;">Total Registrations</span>
+                <span style="font-weight: 600; font-size: 0.9rem;">{{ event.registrations|length }}</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px solid var(--cems-border-light);">
+                <span style="color: var(--cems-text-muted); font-size: 0.85rem;">Total Attendance</span>
+                <span style="font-weight: 600; font-size: 0.9rem; color: var(--cems-success);">{{ event.registrations|selectattr('attended')|list|length }}</span>
+              </div>
+              <div style="display: flex; justify-content: space-between;">
+                <span style="color: var(--cems-text-muted); font-size: 0.85rem;">Status</span>
+                <span class="cems-badge
+                  {% if event.status=='approved' %}cems-badge-success
+                  {% elif event.status in ('pending', 'waiting') %}cems-badge-warning
+                  {% elif event.status=='rejected' %}cems-badge-danger
+                  {% else %}cems-badge-neutral{% endif %}">
+                  {{ event.status|replace('_', ' ')|title }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% if event.image %}
+        <div class="cems-card" style="margin-top: 20px;">
+          <div class="cems-card-header">
+            <div class="cems-card-title">Event Gallery</div>
+          </div>
+          <div class="cems-card-body">
+            <img src="{{ image_url(event.image) }}"
+                 alt="{{ event.title }}"
+                 style="width: 100%; height: 200px; object-fit: cover; border-radius: var(--cems-radius-md);"
+                 onerror="this.onerror=null;this.src='{{ url_for('static', filename='images/placeholder.svg') }}';">
+          </div>
+        </div>
+        {% endif %}
+      </aside>
+    </div>
+  </div>
+</div>
+{% endblock %}

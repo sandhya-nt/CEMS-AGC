@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Volunteer Dashboard — CEMS{% endblock %}
+{% block breadcrumb %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="cems-page-header">
+  <div class="cems-page-header-top">
+    <div>
+      <h1 class="cems-page-title">Welcome, {{ current_user.name }}!</h1>
+      <p class="cems-page-description">Volunteer dashboard. More features coming soon.</p>
+    </div>
+  </div>
+</div>
+
+<div class="cems-card">
+  <div class="cems-card-body">
+    <div class="cems-empty">
+      <div class="cems-empty-icon">🤝</div>
+      <div class="cems-empty-title">Volunteer Portal</div>
+      <div class="cems-empty-description">Your volunteer assignments and event support tools will be available here.</div>
+    </div>
+  </div>
+</div>
+{% endblock %}

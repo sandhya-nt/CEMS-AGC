@@ -1,11 +1,20 @@
+# Python
 __pycache__/
 *.py[cod]
-.env
-instance/*.db
-static/uploads/*
-!static/uploads/.gitkeep
+
+# Virtual environment
 .venv/
 venv/
+
+# Environment variables / secrets
+.env
+
+# Database
+instance/*.db
+
+# User uploads
+static/uploads/*
+!static/uploads/.gitkeep
+
+# VS Code
 .vscode/
-.idea/
-.DS_Store

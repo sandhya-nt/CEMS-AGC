@@ -1,12 +1,139 @@
 {% extends "base.html" %}
 {% block title %}Create Event — CEMS{% endblock %}
+{% block breadcrumb %}Create Event{% endblock %}
+
 {% block content %}
-<div class="narrow-wide"><h1>Create New Event</h1><p class="muted">Create an event; admin approval is required before publishing.</p><form method="post" class="form-card inline-card">
-<label>Event Title<input name="title" required placeholder="e.g. Tech Fest 2K26"></label><div class="form-grid"><label>Category<select name="category"><option>Technical</option><option>Cultural</option><option>Sports</option><option>Workshop</option><option>Seminar</option><option>Competition</option><option>Other</option></select></label><label>Event Type<select name="event_type"><option value="free">Free</option><option value="paid">Paid</option></select></label></div>
-<div class="form-grid"><label>Date<input type="date" name="date" required></label><label>Registration Deadline<input type="date" name="registration_deadline"></label></div>
-<div class="form-grid"><label>Start Time<input name="start_time" required placeholder="10:00 AM"></label><label>End Time<input name="end_time" required placeholder="5:00 PM"></label></div>
-<div class="form-grid"><label>Venue<input name="venue" required placeholder="Main Auditorium"></label><label>Capacity<input type="number" name="capacity" min="1" value="100"></label></div>
-<label>Fee (₹)<input type="number" step="0.01" name="fee" value="0" min="0"></label>
-<label>Description<textarea name="description" rows="5" required></textarea></label><label>Highlights<textarea name="highlights" rows="4" placeholder="One highlight per line"></textarea></label>
-<button class="btn">Create Event</button></form></div>
+  <div class="cems-page-header">
+    <div class="cems-page-header-top">
+      <div>
+        <h1 class="cems-page-title">Create New Event</h1>
+        <p class="cems-page-description">Fill in the event details. Admin approval is required before publishing.</p>
+      </div>
+      <div class="cems-page-actions">
+        <a href="{{ url_for('festival_calendar') }}" class="cems-btn cems-btn-secondary">📅 Festival Calendar</a>
+      </div>
+    </div>
+  </div>
+
+<div class="cems-card" style="max-width: 800px;">
+  <div class="cems-card-body">
+    <form method="post" enctype="multipart/form-data" class="cems-form-grid">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      
+      <div class="cems-form-group">
+        <label class="cems-form-label">Event Title</label>
+        <input type="text" name="title" class="cems-form-input" required placeholder="e.g. Tech Fest 2K26">
+      </div>
+      
+      <div class="cems-form-group">
+        <label class="cems-form-label">Event Banner</label>
+        <input type="file" name="banner" class="cems-form-input" accept="image/*">
+      </div>
+      
+      <div class="cems-grid-2">
+        <div class="cems-form-group">
+          <label class="cems-form-label">Category</label>
+          <select name="category" class="cems-form-select">
+            <option>Technical</option>
+            <option>Cultural</option>
+            <option>Sports</option>
+            <option>Workshop</option>
+            <option>Seminar</option>
+            <option>Competition</option>
+            <option>Academic</option>
+            <option>Entrepreneurship</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="cems-form-group">
+          <label class="cems-form-label">Event Type</label>
+          <select name="event_type" class="cems-form-select">
+            <option value="free">Free</option>
+            <option value="paid">Paid</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="cems-grid-2">
+        <div class="cems-form-group">
+          <label class="cems-form-label">Date</label>
+          <input type="date" name="date" class="cems-form-input" required>
+        </div>
+        <div class="cems-form-group">
+          <label class="cems-form-label">Registration Deadline</label>
+          <input type="date" name="registration_deadline" class="cems-form-input">
+        </div>
+      </div>
+      
+      <div class="cems-grid-2">
+        <div class="cems-form-group">
+          <label class="cems-form-label">Start Time</label>
+          <input type="text" name="start_time" class="cems-form-input" required placeholder="10:00 AM">
+        </div>
+        <div class="cems-form-group">
+          <label class="cems-form-label">End Time</label>
+          <input type="text" name="end_time" class="cems-form-input" required placeholder="5:00 PM">
+        </div>
+      </div>
+      
+      <div class="cems-grid-2">
+        <div class="cems-form-group">
+          <label class="cems-form-label">Venue</label>
+          <input type="text" name="venue" class="cems-form-input" required placeholder="Main Auditorium">
+        </div>
+        <div class="cems-form-group">
+          <label class="cems-form-label">Capacity</label>
+          <input type="number" name="capacity" class="cems-form-input" min="1" value="100">
+        </div>
+      </div>
+      
+      <div class="cems-form-group">
+        <label class="cems-form-label">Fee (₹)</label>
+        <input type="number" step="0.01" name="fee" class="cems-form-input" value="0" min="0">
+      </div>
+      
+      <div class="cems-form-group">
+        <label class="cems-form-label">Description</label>
+        <textarea name="description" class="cems-form-textarea" rows="5" required></textarea>
+      </div>
+      
+      <div class="cems-form-group">
+        <label class="cems-form-label">Highlights</label>
+        <textarea name="highlights" class="cems-form-textarea" rows="4" placeholder="One highlight per line"></textarea>
+      </div>
+      
+      <div class="cems-form-group">
+        <label class="cems-form-label">Event Rules</label>
+        <textarea name="rules" class="cems-form-textarea" rows="3" placeholder="Participation rules, guidelines, code of conduct..."></textarea>
+      </div>
+      
+      <div class="cems-form-group">
+        <label class="cems-form-label">Eligibility Criteria</label>
+        <textarea name="eligibility" class="cems-form-textarea" rows="3" placeholder="Who can participate? Any prerequisites?"></textarea>
+      </div>
+      
+      <div class="cems-form-group">
+        <label class="cems-form-label">Contact Information</label>
+        <textarea name="contact_info" class="cems-form-textarea" rows="2" placeholder="Organizer contact email/phone..."></textarea>
+      </div>
+      
+      <div class="cems-grid-2">
+        <div class="cems-form-group">
+          <label class="cems-form-label">Main Guest</label>
+          <input type="text" name="main_guest" class="cems-form-input" placeholder="e.g. Dr. Jane Smith">
+        </div>
+        <div class="cems-form-group">
+          <label class="cems-form-label">Chief Guest</label>
+          <input type="text" name="chief_guest" class="cems-form-input" placeholder="e.g. Prof. John Doe">
+        </div>
+      </div>
+      
+      <div style="display: flex; gap: 12px; margin-top: 8px;">
+        <button type="submit" name="action" value="draft" class="cems-btn cems-btn-secondary">Save as Draft</button>
+        <button type="submit" name="action" value="submit" class="cems-btn cems-btn-primary">Submit for Approval</button>
+      </div>
+    </form>
+  </div>
+</div>
 {% endblock %}
+

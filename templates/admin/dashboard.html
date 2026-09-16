@@ -1,5 +1,177 @@
 {% extends "base.html" %}
 {% block title %}Admin Dashboard — CEMS{% endblock %}
+{% block breadcrumb %}Dashboard{% endblock %}
+
 {% block content %}
-<div class="dashboard"><aside class="sidebar orange"><div class="side-brand">CEMS</div><a class="active" href="{{ url_for('admin_dashboard') }}">▣ Dashboard</a><a href="{{ url_for('admin_users') }}">♙ Manage Users</a><a href="{{ url_for('admin_events') }}">◫ Manage Events</a><a href="{{ url_for('admin_registrations') }}">✓ All Registrations</a><a href="{{ url_for('admin_reports') }}">▥ Reports</a><a href="{{ url_for('admin_notifications') }}">♢ Notifications</a><a href="{{ url_for('admin_venues') }}">⌂ Venues</a><a href="{{ url_for('logout') }}">↪ Logout</a></aside><section class="dash-main"><div class="page-head"><div><h1>Admin Dashboard</h1><p>System overview for {{ college_name }}.</p></div></div><div class="stats"><div><span>Total Users</span><strong>{{ stats.users }}</strong></div><div><span>Total Events</span><strong>{{ stats.events }}</strong></div><div><span>Registrations</span><strong>{{ stats.registrations }}</strong></div><div><span>Attendees</span><strong>{{ stats.attendees }}</strong></div></div>{% if stats.pending_events %}<div class="notice">⚠ {{ stats.pending_events }} event(s) waiting for approval. <a href="{{ url_for('admin_events') }}">Review now</a></div>{% endif %}<div class="table-card"><table><thead><tr><th>Event</th><th>Organizer</th><th>Date</th><th>Status</th></tr></thead><tbody>{% for e in events %}<tr><td>{{ e.title }}</td><td>{{ e.organizer.name }}</td><td>{{ e.date.strftime('%d %b %Y') }}</td><td><span class="status">{{ e.status }}</span></td></tr>{% endfor %}</tbody></table></div></section></div>
+<div class="cems-page-header">
+  <div class="cems-page-header-top">
+    <div>
+      <h1 class="cems-page-title">Admin Dashboard</h1>
+      <p class="cems-page-description">System overview and management controls.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Stats -->
+<div class="cems-stats-grid">
+  <div class="cems-stat-card">
+    <div class="cems-stat-icon primary">
+      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+    </div>
+    <div class="cems-stat-content">
+      <div class="cems-stat-value">{{ stats.users }}</div>
+      <div class="cems-stat-label">Total Users</div>
+    </div>
+  </div>
+  <div class="cems-stat-card">
+    <div class="cems-stat-icon info">
+      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+    </div>
+    <div class="cems-stat-content">
+      <div class="cems-stat-value">{{ stats.students }}</div>
+      <div class="cems-stat-label">Students</div>
+    </div>
+  </div>
+  <div class="cems-stat-card">
+    <div class="cems-stat-icon success">
+      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M12 18h.01"></path></svg>
+    </div>
+    <div class="cems-stat-content">
+      <div class="cems-stat-value">{{ stats.organizers }}</div>
+      <div class="cems-stat-label">Organizers</div>
+    </div>
+  </div>
+  <div class="cems-stat-card">
+    <div class="cems-stat-icon primary">
+      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+    </div>
+    <div class="cems-stat-content">
+      <div class="cems-stat-value">{{ stats.events }}</div>
+      <div class="cems-stat-label">Total Events</div>
+    </div>
+  </div>
+  <div class="cems-stat-card">
+    <div class="cems-stat-icon warning">
+      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+    </div>
+    <div class="cems-stat-content">
+      <div class="cems-stat-value">{{ stats.pending_events }}</div>
+      <div class="cems-stat-label">Pending Approval</div>
+    </div>
+  </div>
+  <div class="cems-stat-card">
+    <div class="cems-stat-icon success">
+      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+    </div>
+    <div class="cems-stat-content">
+      <div class="cems-stat-value">{{ stats.approved_events }}</div>
+      <div class="cems-stat-label">Approved Events</div>
+    </div>
+  </div>
+  <div class="cems-stat-card">
+    <div class="cems-stat-icon danger">
+      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+    </div>
+    <div class="cems-stat-content">
+      <div class="cems-stat-value">{{ stats.rejected_events }}</div>
+      <div class="cems-stat-label">Rejected Events</div>
+    </div>
+  </div>
+  <div class="cems-stat-card">
+    <div class="cems-stat-icon info">
+      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+    </div>
+    <div class="cems-stat-content">
+      <div class="cems-stat-value">{{ stats.registrations }}</div>
+      <div class="cems-stat-label">Total Registrations</div>
+    </div>
+  </div>
+  <div class="cems-stat-card">
+    <div class="cems-stat-icon success">
+      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+    </div>
+    <div class="cems-stat-content">
+      <div class="cems-stat-value">{{ stats.attendees }}</div>
+      <div class="cems-stat-label">Total Attendance</div>
+    </div>
+  </div>
+  <div class="cems-stat-card">
+    <div class="cems-stat-icon primary">
+      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+    </div>
+    <div class="cems-stat-content">
+      <div class="cems-stat-value">{{ stats.completed_events }}</div>
+      <div class="cems-stat-label">Completed Events</div>
+    </div>
+  </div>
+  <div class="cems-stat-card">
+    <div class="cems-stat-icon info">
+      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-1.106 1.67l-5.5 2.5a1.76 1.76 0 01-2.3-1.67V5.882a1.76 1.76 0 011.106-1.67l5.5-2.5a1.76 1.76 0 012.3 1.67z"></path></svg>
+    </div>
+    <div class="cems-stat-content">
+      <div class="cems-stat-value">{{ stats.notices }}</div>
+      <div class="cems-stat-label">Published Notices</div>
+    </div>
+  </div>
+</div>
+
+<!-- Pending Approval Alert -->
+{% if stats.pending_events %}
+<div class="cems-alert cems-alert-warning" style="margin-bottom: 24px;">
+  <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+  <span><strong>{{ stats.pending_events }} event(s)</strong> waiting for approval. <a href="{{ url_for('admin_events') }}" style="font-weight: 600;">Review now →</a></span>
+</div>
+{% endif %}
+
+<!-- Recent Events -->
+<div class="cems-card">
+  <div class="cems-card-header">
+    <div class="cems-card-title">Latest Events</div>
+    <a href="{{ url_for('admin_events') }}" class="cems-btn cems-btn-secondary cems-btn-sm">View All</a>
+  </div>
+  <div class="cems-card-body" style="padding: 0;">
+    <div class="cems-overflow-x-auto">
+      <table class="cems-table">
+        <thead>
+          <tr>
+            <th>Event Name</th>
+            <th>Organizer</th>
+            <th>Category</th>
+            <th>Date</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for e in events %}
+          <tr>
+            <td><strong>{{ e.title }}</strong></td>
+            <td>{{ e.organizer.name }}</td>
+            <td><span class="cems-badge cems-badge-primary">{{ e.category }}</span></td>
+            <td>{{ e.date.strftime('%d %b %Y') if e.date else '—' }}</td>
+            <td>
+              <span class="cems-badge
+                {% if e.status=='approved' %}cems-badge-success
+                {% elif e.status in ('pending', 'waiting') %}cems-badge-warning
+                {% elif e.status=='rejected' %}cems-badge-danger
+                {% else %}cems-badge-neutral{% endif %}">
+                {{ e.status|replace('_', ' ')|title }}
+              </span>
+            </td>
+            <td>
+              <a href="{{ url_for('event_details', event_id=e.id) }}" class="cems-btn cems-btn-secondary cems-btn-sm">View</a>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="6" style="text-align: center; padding: 40px; color: var(--cems-text-muted);">
+              No events yet.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
 {% endblock %}

@@ -1,5 +1,241 @@
 {% extends "base.html" %}
 {% block title %}Digital Ticket — CEMS{% endblock %}
+{% block breadcrumb %}My Tickets{% endblock %}
+
+{% block extra_css %}
+<style>
+.cems-ticket-page {
+  max-width: 800px;
+  margin: 0 auto;
+}
+.cems-ticket-print {
+  border: 3px solid var(--cems-primary);
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: var(--cems-shadow-xl);
+  background: linear-gradient(135deg, var(--cems-bg-primary) 0%, #ecfdf5 100%);
+  position: relative;
+}
+.cems-ticket-print::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 60px;
+  background: linear-gradient(90deg, var(--cems-primary), var(--cems-primary-dark));
+}
+.cems-ticket-header {
+  padding: 24px 32px 16px;
+  background: linear-gradient(90deg, var(--cems-primary), var(--cems-primary-dark));
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.cems-ticket-header h1 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin: 0;
+}
+.cems-ticket-badge {
+  background: var(--cems-success);
+  color: white;
+  padding: 6px 16px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+.cems-ticket-body {
+  padding: 32px;
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 32px;
+}
+.cems-ticket-details h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--cems-text-primary);
+  margin-bottom: 8px;
+}
+.cems-ticket-details .cems-text-muted {
+  color: var(--cems-text-secondary);
+  margin-bottom: 24px;
+  font-size: 0.95rem;
+}
+.cems-ticket-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.cems-ticket-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  background: var(--cems-bg-primary);
+  border-radius: var(--cems-radius-md);
+  border: 1px solid var(--cems-border-light);
+}
+.cems-ticket-info-label {
+  font-size: 0.75rem;
+  color: var(--cems-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.cems-ticket-info-value {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--cems-text-primary);
+}
+.cems-ticket-qr-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.cems-ticket-qr-code {
+  width: 180px;
+  height: 180px;
+  border: 2px solid var(--cems-border);
+  border-radius: 12px;
+  padding: 8px;
+  background: white;
+  box-shadow: var(--cems-shadow-sm);
+}
+.cems-ticket-qr-code img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.cems-ticket-qr-label {
+  font-size: 0.85rem;
+  color: var(--cems-text-secondary);
+  text-align: center;
+}
+.cems-ticket-id {
+  font-family: monospace;
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--cems-primary);
+  letter-spacing: 1px;
+}
+.cems-ticket-actions {
+  padding: 24px 32px;
+  border-top: 1px solid var(--cems-border-light);
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+@media (max-width: 640px) {
+  .cems-ticket-body {
+    grid-template-columns: 1fr;
+    padding: 24px;
+  }
+  .cems-ticket-print::before { height: 50px; }
+}
+@media print {
+  .cems-ticket-actions { display: none; }
+  .cems-ticket-print { box-shadow: none; border: none; page-break-inside: avoid; }
+}
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="ticket-page"><div class="ticket"><div><span class="tag">{{ reg.event.category }}</span><h1>{{ reg.event.title }}</h1><p>◷ {{ reg.event.date.strftime('%A, %d %B %Y') }} · {{ reg.event.start_time }}</p><p>⌖ {{ reg.event.venue }}</p><p><b>Participant:</b> {{ reg.user.name }}</p><p><b>Ticket ID:</b> {{ reg.ticket_code }}</p></div><img class="qr" src="{{ url_for('ticket_qr', registration_id=reg.id) }}"></div><a class="btn" href="{{ url_for('my_tickets') }}">Back to My Tickets</a></div>
+<div class="cems-ticket-page">
+  <div class="cems-ticket-print">
+    <div class="cems-ticket-header">
+      <h1>🎟️ Digital Entry Ticket</h1>
+      <span class="cems-ticket-badge">{{ 'VERIFIED ENTRY' if reg.attended else 'CONFIRMED' }}</span>
+    </div>
+    <div class="cems-ticket-body">
+      <div class="cems-ticket-details">
+        <div>
+          <span class="cems-badge cems-badge-primary" style="margin-bottom: 12px; font-size: 0.8rem; padding: 6px 14px;">{{ reg.event.category }}</span>
+          <h2>{{ reg.event.title }}</h2>
+          <p class="cems-text-muted">
+            📅 {{ reg.event.date.strftime('%A, %d %B %Y') }} · ⏰ {{ reg.event.start_time }} - {{ reg.event.end_time }}
+          </p>
+          <p class="cems-text-muted">📍 {{ reg.event.venue }}</p>
+        </div>
+
+        <div class="cems-ticket-info-grid">
+          <div class="cems-ticket-info-item">
+            <span class="cems-ticket-info-label">Participant</span>
+            <span class="cems-ticket-info-value">{{ reg.user.name }}</span>
+          </div>
+          <div class="cems-ticket-info-item">
+            <span class="cems-ticket-info-label">Ticket ID</span>
+            <span class="cems-ticket-id">{{ reg.ticket_code }}</span>
+          </div>
+          <div class="cems-ticket-info-item">
+            <span class="cems-ticket-info-label">Roll Number</span>
+            <span class="cems-ticket-info-value">{{ reg.user.roll_no or '—' }}</span>
+          </div>
+          <div class="cems-ticket-info-item">
+            <span class="cems-ticket-info-label">Department</span>
+            <span class="cems-ticket-info-value">{{ reg.user.department or '—' }}</span>
+          </div>
+          <div class="cems-ticket-info-item">
+            <span class="cems-ticket-info-label">Email</span>
+            <span class="cems-ticket-info-value">{{ reg.user.email }}</span>
+          </div>
+          <div class="cems-ticket-info-item">
+            <span class="cems-ticket-info-label">Payment</span>
+            <span class="cems-ticket-info-value">{{ reg.payment_status.title() }}</span>
+          </div>
+          <div class="cems-ticket-info-item">
+            <span class="cems-ticket-info-label">Registration Date</span>
+            <span class="cems-ticket-info-value">{{ reg.registered_at.strftime('%d %b %Y') }}</span>
+          </div>
+          <div class="cems-ticket-info-item">
+            <span class="cems-ticket-info-label">Attendance</span>
+            <span class="cems-ticket-info-value">
+              {% if reg.attended %}
+                <span class="cems-badge cems-badge-success">Attended</span>
+              {% else %}
+                <span class="cems-badge cems-badge-neutral">Not Attended</span>
+              {% endif %}
+            </span>
+          </div>
+        </div>
+
+        {% if not reg.attended %}
+        <div style="background: var(--cems-info-bg); border-radius: var(--cems-radius-md); padding: 12px 16px; margin-top: 8px;">
+          <small style="color: var(--cems-info-dark);">
+            📋 Bring this ticket (or the QR code below) and a valid ID for entry at the venue.
+          </small>
+        </div>
+        {% endif %}
+      </div>
+
+      <div class="cems-ticket-qr-section">
+        <div class="cems-ticket-qr-code">
+          <img src="{{ url_for('ticket_qr', registration_id=reg.id) }}" alt="QR Code">
+        </div>
+        <div class="cems-ticket-qr-label">
+          Scan at the venue entrance to check in
+        </div>
+        {% if reg.attended %}
+        <a href="{{ url_for('certificate', registration_id=reg.id) }}" class="cems-btn cems-btn-success cems-btn-sm">
+          📜 Download Certificate
+        </a>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="cems-ticket-actions">
+      <a href="{{ url_for('ticket_download', registration_id=reg.id) }}" class="cems-btn cems-btn-primary">
+        ⬇️ Download Ticket PDF
+      </a>
+      <a href="{{ url_for('ticket_qr', registration_id=reg.id) }}" class="cems-btn cems-btn-outline" download>
+        💾 Download QR Code
+      </a>
+      <a href="{{ url_for('my_tickets') }}" class="cems-btn cems-btn-secondary">
+        ← Back to My Tickets
+      </a>
+    </div>
+  </div>
+</div>
 {% endblock %}

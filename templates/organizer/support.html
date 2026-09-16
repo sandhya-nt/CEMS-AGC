@@ -3,16 +3,17 @@
 {% block content %}
 <div class="narrow-wide">
   <h1>{{ module|title }} Management</h1>
-  <form method="post" class="form-card inline-card">
+  <form method="post" class="form-card inline-card"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <label>Name<input name="name" required></label>
     <div class="form-grid"><label>Email / Contact<input name="{{ 'email' if module != 'sponsors' else 'contact' }}"></label><label>Event<select name="event_id" required>{% for e in events %}<option value="{{ e.id }}">{{ e.title }}</option>{% endfor %}</select></label></div>
     {% if module == 'volunteers' %}<label>Task<input name="task" placeholder="Registration desk / stage / help desk"></label>
     {% elif module == 'judges' %}<label>Evaluation Criteria<input name="criteria" placeholder="Innovation, presentation, accuracy"></label>
     {% else %}<label>Contribution (₹)<input type="number" name="contribution" value="0"></label>{% endif %}
-    <button class="btn">Add {{ module|title[:-1] if module.endswith('s') else module|title }}</button>
+    <button class="btn">Add {{ module[:-1]|title if module.endswith('s') else module|title }}</button>
   </form>
   <div class="table-card"><table><thead><tr><th>Name</th><th>Event</th><th>Contact</th><th>Details</th></tr></thead><tbody>
   {% for row in rows %}<tr><td>{{ row.name }}</td><td>{{ row.event_id }}</td><td>{{ row.email if module != 'sponsors' else row.contact }}</td><td>{{ row.task if module=='volunteers' else row.criteria if module=='judges' else '₹%.2f'|format(row.contribution) }}</td></tr>{% else %}<tr><td colspan="4" class="empty">No records yet.</td></tr>{% endfor %}
   </tbody></table></div>
 </div>
 {% endblock %}
+

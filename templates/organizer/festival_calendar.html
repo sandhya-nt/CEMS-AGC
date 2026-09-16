@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Festival Calendar — CEMS{% endblock %}
+{% block breadcrumb %}Festival Calendar{% endblock %}
+
+{% block content %}
+<div class="cems-page-header">
+  <div class="cems-page-header-top">
+    <div>
+      <h1 class="cems-page-title">Festival Calendar {{ year }}</h1>
+      <p class="cems-page-description">Plan events around Indian festivals and national holidays.</p>
+    </div>
+    <div class="cems-page-actions">
+      <a href="{{ url_for('create_event') }}" class="cems-btn cems-btn-primary">Create Event</a>
+    </div>
+  </div>
+</div>
+
+<div class="cems-card">
+  <div class="cems-card-body">
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;">
+      {% for f in festivals %}
+      <div class="cems-card" style="border-left: 4px solid var(--cems-primary);">
+        <div class="cems-card-body">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div>
+              <h3 style="margin: 0 0 8px; font-size: 1.1rem; font-weight: 600;">{{ f.name }}</h3>
+              <p style="margin: 0; color: var(--cems-text-muted); font-size: 0.9rem;">
+                {{ f.date.strftime('%d %B %Y') }}
+              </p>
+              <span class="cems-badge cems-badge-neutral" style="margin-top: 8px;">{{ f.type }}</span>
+            </div>
+            <a href="{{ url_for('create_event') }}?date={{ f.date.strftime('%Y-%m-%d') }}" class="cems-btn cems-btn-sm cems-btn-primary">Plan Event</a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

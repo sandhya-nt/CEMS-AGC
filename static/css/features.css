@@ -1,0 +1,27 @@
+/* Feature Links Styling - Make them clickable and interactive */
+.feature-item-link {
+  display: block;
+  padding: 12px 14px;
+  background: #fff;
+  border: 1px solid #e8edf5;
+  border-radius: 10px;
+  color: #234fd5;
+  font-weight: 600;
+  font-size: 13px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.feature-item-link:hover {
+  background: #4f6bea;
+  color: #fff;
+  border-color: #4f6bea;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(79, 107, 234, 0.25);
+}
+
+.feature-item-link:active {
+  transform: translateY(0);
+}

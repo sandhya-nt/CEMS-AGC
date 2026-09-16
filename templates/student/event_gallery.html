@@ -1,0 +1,182 @@
+﻿{% extends "base.html" %}
+{% block title %}Event Gallery — {{ event.title }}{% endblock %}
+{% block breadcrumb %}{{ event.title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .cems-gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 16px;
+    margin-top: 20px;
+  }
+  .cems-gallery-item {
+    border-radius: var(--cems-radius-lg);
+    overflow: hidden;
+    box-shadow: var(--cems-shadow-sm);
+    background: var(--cems-bg-primary);
+    border: 1px solid var(--cems-border);
+    transition: transform var(--cems-transition-fast);
+  }
+  .cems-gallery-item:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--cems-shadow-md);
+  }
+  .cems-gallery-item img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    display: block;
+  }
+  .cems-gallery-item-info {
+    padding: 12px;
+    font-size: 0.8rem;
+    color: var(--cems-text-muted);
+  }
+  .cems-gallery-empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--cems-text-muted);
+  }
+  .cems-gallery-empty-icon {
+    font-size: 3rem;
+    margin-bottom: 12px;
+    opacity: 0.3;
+  }
+  .cems-gallery-upload-form {
+    background: var(--cems-bg-tertiary);
+    border-radius: var(--cems-radius-lg);
+    padding: 20px;
+    margin-bottom: 24px;
+  }
+  @media (max-width: 640px) {
+    .cems-gallery-grid {
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 12px;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="cems-page-header">
+  <div class="cems-page-header-top">
+    <div>
+      <h1 class="cems-page-title">Event Gallery — {{ event.title }}</h1>
+      <p class="cems-page-description">Photos shared by students for this event</p>
+    </div>
+    <div class="cems-btn-group">
+      <a href="{{ url_for('event_details', event_id=event.id) }}" class="cems-btn cems-btn-secondary cems-btn-sm">← Back to Event</a>
+    </div>
+  </div>
+</div>
+
+{% if can_upload %}
+<div class="cems-gallery-upload-form">
+  <h3 style="margin-bottom: 12px; color: var(--cems-text-primary);"> Upload Event Photo</h3>
+  <form method="post" enctype="multipart/form-data" id="gallery-upload-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div style="display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap;">
+      <div class="cems-form-group" style="margin-bottom: 0; flex: 1; min-width: 200px;">
+        <label class="cems-form-label">Select Image (JPG, PNG, WEBP - max 4MB)</label>
+        <input type="file" name="image" accept="image/jpeg,image/png,image/webp" class="cems-form-input" required>
+      </div>
+      <button type="submit" class="cems-btn cems-btn-primary"> Upload</button>
+    </div>
+    <div id="gallery-upload-error" class="cems-auth-error" style="display:none; margin-top: 12px;"></div>
+    <div id="gallery-upload-success" class="cems-auth-error" style="display:none; margin-top: 12px; border-left-color: var(--cems-success); background: var(--cems-success-bg); color: var(--cems-success-dark);"></div>
+  </form>
+</div>
+{% endif %}
+
+{% if gallery %}
+<div class="cems-gallery-grid">
+  {% for item in gallery %}
+  <div class="cems-gallery-item">
+    <img src="{{ url_for('static', filename=item.image) }}" alt="Event photo" loading="lazy"
+         onerror="this.onerror=null;this.src='{{ url_for('static', filename='images/placeholder.svg') }}';">
+    <div class="cems-gallery-item-info">
+      <div>Uploaded by {{ item.uploader.name if item.uploader else 'Unknown' }}</div>
+      <div>{{ item.uploaded_at.strftime('%d %b %Y') }}</div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="cems-gallery-empty">
+  <div class="cems-gallery-empty-icon">🖼️</div>
+  <div class="cems-empty-title">No Event Images Yet</div>
+  <div class="cems-empty-description">Be the first to share an approved event photo.</div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+  const form = document.getElementById('gallery-upload-form');
+  if (!form) return;
+  const errorDiv = document.getElementById('gallery-upload-error');
+  const successDiv = document.getElementById('gallery-upload-success');
+  const submitBtn = form.querySelector('button[type="submit"]');
+
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    errorDiv.style.display = 'none';
+    successDiv.style.display = 'none';
+
+    const formData = new FormData(form);
+    const file = form.image.files[0];
+    
+    if (!file) {
+      errorDiv.textContent = 'Please select a valid image.';
+      errorDiv.style.display = 'block';
+      return;
+    }
+
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      errorDiv.textContent = 'Only JPG, PNG, and WEBP images are allowed.';
+      errorDiv.style.display = 'block';
+      return;
+    }
+
+    if (file.size > 4 * 1024 * 1024) {
+      errorDiv.textContent = 'Image size must be less than 4MB.';
+      errorDiv.style.display = 'block';
+      return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Uploading...';
+
+    fetch('{{ url_for("api_upload_gallery_image", gallery_id=event.id) }}', {
+      method: 'POST',
+      body: formData,
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(response => response.json())
+    .then(data => {
+      submitBtn.disabled = false;
+      submitBtn.textContent = ' Upload';
+      if (data.success) {
+        successDiv.textContent = data.message;
+        successDiv.style.display = 'block';
+        form.reset();
+        setTimeout(() => window.location.reload(), 1500);
+      } else {
+        errorDiv.textContent = data.errors ? Object.values(data.errors).join(' ') : 'Upload failed.';
+        errorDiv.style.display = 'block';
+      }
+    })
+    .catch(err => {
+      submitBtn.disabled = false;
+      submitBtn.textContent = ' Upload';
+      errorDiv.textContent = 'Network error. Please try again.';
+      errorDiv.style.display = 'block';
+      console.error(err);
+    });
+  });
+})();
+</script>
+{% endblock %}

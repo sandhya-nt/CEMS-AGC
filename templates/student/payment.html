@@ -4,8 +4,26 @@
 <div class="narrow-card">
   <span class="tag">SECURE DEMO CHECKOUT</span>
   <h1>Payment for {{ event.title }}</h1>
-  <div class="summary"><span>Participant</span><b>{{ current_user.name }}</b><span>Event</span><b>{{ event.title }}</b><span>Amount</span><b>₹{{ '%.2f'|format(event.fee) }}</b></div>
+  <div class="summary">
+    <span>Participant</span><b>{{ current_user.name }}</b>
+    <span>Event</span><b>{{ event.title }}</b>
+    <span>Amount</span><b>₹{{ '%.2f'|format(event.fee) }}</b>
+  </div>
   <div class="demo-box">This academic project uses a simulated payment. No card, UPI PIN, OTP or banking credentials are collected.</div>
-  <form method="post"><button class="btn full">Pay ₹{{ '%.2f'|format(event.fee) }} (Demo)</button></form>
+  <form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="cems-form-group" style="margin-bottom: 20px;">
+      <label class="cems-form-label">Select Payment Method</label>
+      <select name="payment_method" class="cems-form-select" required>
+        <option value="card">Credit / Debit Card</option>
+        <option value="upi">UPI (Google Pay / PhonePe / Paytm)</option>
+        <option value="netbanking">Net Banking</option>
+        <option value="wallet">Digital Wallet</option>
+        <option value="cash">Cash at Campus Counter</option>
+      </select>
+    </div>
+    <button type="submit" class="btn full">Pay ₹{{ '%.2f'|format(event.fee) }} (Demo)</button>
+  </form>
 </div>
 {% endblock %}
+

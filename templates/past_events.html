@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% block title %}Past Events — CEMS{% endblock %}
+{% block breadcrumb %}Past Events{% endblock %}
+
+{% block extra_css %}
+<style>
+.cems-event-card-image-wrap {
+  width: 100%;
+  height: 180px;
+  border-radius: var(--cems-radius-md);
+  margin-bottom: 12px;
+  overflow: hidden;
+  background: var(--cems-bg-tertiary);
+  position: relative;
+}
+.cems-event-card-image-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform var(--cems-transition-slow);
+}
+.cems-event-card:hover .cems-event-card-image-wrap img {
+  transform: scale(1.05);
+}
+.cems-event-card-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  opacity: 0.3;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="cems-page-header">
+  <div class="cems-page-header-top">
+    <div>
+      <h1 class="cems-page-title">Past Events 📜</h1>
+      <p class="cems-page-description">Event history and archives</p>
+    </div>
+  </div>
+</div>
+
+<form class="cems-filter-bar" method="get">
+  <div class="cems-form-group">
+    <input type="text" name="q" class="cems-form-input" placeholder="Search past events..." value="{{ q }}">
+  </div>
+  <div class="cems-form-group">
+    <select name="category" class="cems-form-select">
+      <option value="">All Categories</option>
+      {% for c in categories %}
+      <option value="{{ c }}" {% if category == c %}selected{% endif %}>{{ c }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="cems-form-group">
+    <select name="venue" class="cems-form-select">
+      <option value="">All Venues</option>
+      {% for v in venues %}
+      <option value="{{ v }}" {% if venue == v %}selected{% endif %}>{{ v }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <button type="submit" class="cems-btn cems-btn-primary">Filter</button>
+</form>
+
+{% if events %}
+<div class="cems-card-grid">
+  {% for event in events %}
+  <article class="cems-event-card">
+    {% set img_url = event_image_url(event) %}
+    <div class="cems-event-card-image-wrap">
+      <img src="{{ img_url }}"
+           alt="{{ event.title }}"
+           loading="lazy"
+           onerror="this.onerror=null;this.parentElement.innerHTML='<div class=\"cems-event-card-placeholder\">{{ event.category[:2].upper() }}</div>';">
+    </div>
+    <div class="cems-event-card-body">
+      <span class="cems-event-card-category cems-badge-primary">{{ event.category }}</span>
+      <h3 class="cems-event-card-title">{{ event.title }}</h3>
+      <div class="cems-event-card-meta">
+        <div class="cems-event-card-meta-item">
+          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+          {{ event.date.strftime('%d %b %Y') }}
+        </div>
+        <div class="cems-event-card-meta-item">
+          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          {{ event.start_time }} - {{ event.end_time }}
+        </div>
+        <div class="cems-event-card-meta-item">
+          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.243-4.243A8 8 0 0117.657 16.657z"></path><circle cx="12" cy="11" r="1.5" fill="currentColor"></circle></svg>
+          {{ event.venue }}
+        </div>
+      </div>
+      <p class="cems-event-card-description">{{ event.description[:120] }}...</p>
+      <div class="cems-event-card-footer">
+        <span class="cems-event-card-seats available">
+          🎓 {{ event.registrations|length }} registered ·
+          {{ event.registrations|selectattr('attended')|list|length }} attended
+        </span>
+        <a href="{{ url_for('past_event_detail', event_id=event.id) }}" class="cems-btn cems-btn-secondary cems-btn-sm">View Details</a>
+      </div>
+    </div>
+  </article>
+  {% endfor %}
+</div>
+
+{% if pagination and pagination.pages > 1 %}
+<div class="cems-pagination">
+  {% if pagination.has_prev %}
+  <a href="{{ url_for('past_events', page=pagination.prev_num, q=q, category=category, venue=venue) }}" class="cems-pagination-btn">← Previous</a>
+  {% endif %}
+  <span class="cems-pagination-info">Page {{ pagination.page }} of {{ pagination.pages }}</span>
+  {% if pagination.has_next %}
+  <a href="{{ url_for('past_events', page=pagination.next_num, q=q, category=category, venue=venue) }}" class="cems-pagination-btn">Next →</a>
+  {% endif %}
+</div>
+{% endif %}
+{% else %}
+<div class="cems-empty">
+  <div class="cems-empty-icon">📜</div>
+  <div class="cems-empty-title">No past events found</div>
+  <div class="cems-empty-description">Try adjusting your search filters or check back later.</div>
+</div>
+{% endif %}
+{% endblock %}

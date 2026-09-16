@@ -1,5 +1,112 @@
 {% extends "base.html" %}
 {% block title %}Registrations — CEMS{% endblock %}
 {% block content %}
-<div class="narrow-wide"><div class="page-head"><h1>{{ event.title }} — Registrations</h1><a class="btn" href="{{ url_for('checkin') }}">Check-in</a></div><div class="table-card"><table><thead><tr><th>Name</th><th>Email</th><th>Ticket</th><th>Payment</th><th>Attendance</th></tr></thead><tbody>{% for r in registrations %}<tr><td>{{ r.user.name }}</td><td>{{ r.user.email }}</td><td>{{ r.ticket_code }}</td><td>{{ r.payment_status }}</td><td>{% if r.attended %}<span class="status success">Checked In</span>{% else %}<span class="status">Not Checked In</span>{% endif %}</td></tr>{% else %}<tr><td colspan="5" class="empty">No registrations.</td></tr>{% endfor %}</tbody></table></div></div>
+<div class="dashboard">
+  <aside class="sidebar">
+    <div class="side-brand"><strong>🎪 CEMS</strong><span>Organizer Panel</span></div>
+    <nav>
+      <a href="{{ url_for('organizer_dashboard') }}">📊 Dashboard</a>
+      <a href="{{ url_for('create_event') }}">➕ Create Event</a>
+      <a class="active" href="{{ url_for('organizer_reports') }}">📈 Reports</a>
+    </nav>
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Event Management</div>
+      <a href="{{ url_for('checkin') }}">✅ Check-in</a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Resources</div>
+      <a href="{{ url_for('organizer_support', module='volunteers') }}">👥 Volunteers</a>
+      <a href="{{ url_for('organizer_support', module='judges') }}">⭐ Judges</a>
+      <a href="{{ url_for('organizer_support', module='sponsors') }}">💰 Sponsors</a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Account</div>
+      <a href="{{ url_for('profile') }}">👤 Profile</a>
+      <a href="{{ url_for('logout') }}">🚪 Logout</a>
+    </div>
+  </aside>
+
+  <section class="dash-main">
+    <div class="dash-head">
+      <div>
+        <h1>{{ event.title }} 📝</h1>
+        <p style="color: #7b8495; margin: 5px 0 0;">Registrations & attendance</p>
+      </div>
+      <div style="display: flex; gap: 10px;">
+        <a class="btn" href="{{ url_for('checkin') }}">✅ Check-in</a>
+        <a class="btn" href="{{ url_for('qr_scanner') }}">📷 QR Scanner</a>
+        <a class="btn outline" href="{{ url_for('export_event_registrations', event_id=event.id) }}" style="background: var(--cems-info); color: white; border: none;">📥 Export CSV</a>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="stat-card">
+        <div class="stat-icon">📝</div>
+        <div class="stat-value">{{ registrations|length }}</div>
+        <div class="stat-label">Total Registrations</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">✅</div>
+        <div class="stat-value">{{ registrations|selectattr('attended', 'equalto', True)|list|length }}</div>
+        <div class="stat-label">Checked In</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">💰</div>
+        <div class="stat-value">{{ registrations|selectattr('payment_status', 'equalto', 'paid')|list|length }}</div>
+        <div class="stat-label">Paid Registrations</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">📊</div>
+        <div class="stat-value">{{ '%.0f'|format((registrations|selectattr('attended', 'equalto', True)|list|length / registrations|length * 100) if registrations else 0) }}%</div>
+        <div class="stat-label">Attendance Rate</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">EVENT DETAILS</span>
+          <h2>Registered Participants</h2>
+        </div>
+      </div>
+
+      <div style="overflow-x: auto;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Ticket Code</th>
+              <th>Payment Status</th>
+              <th>Check-in Status</th>
+              <th>Registration Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in registrations %}
+            <tr>
+              <td><strong>{{ r.user.name }}</strong></td>
+              <td>{{ r.user.email }}</td>
+              <td><code style="background: #f0f2f7; padding: 4px 8px; border-radius: 4px;">{{ r.ticket_code }}</code></td>
+              <td><span class="status-badge {% if r.payment_status=='paid' %}approved{% else %}pending{% endif %}">{{ r.payment_status|title }}</span></td>
+              <td>
+                {% if r.attended %}
+                <span class="status-badge approved">✅ Checked In</span>
+                {% else %}
+                <span class="status-badge pending">⏳ Pending</span>
+                {% endif %}
+              </td>
+              <td>{{ r.registered_at.strftime('%d %b %Y • %I:%M %p') }}</td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="6" style="text-align: center; padding: 30px;">No registrations yet.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</div>
 {% endblock %}

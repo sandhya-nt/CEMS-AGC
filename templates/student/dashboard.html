@@ -1,8 +1,165 @@
 {% extends "base.html" %}
 {% block title %}Student Dashboard — CEMS{% endblock %}
+{% block breadcrumb %}Dashboard{% endblock %}
+
 {% block content %}
-<div class="dashboard"><aside class="sidebar"><div class="side-brand">CEMS</div><a class="active" href="{{ url_for('student_dashboard') }}">▣ Dashboard</a><a href="{{ url_for('events') }}">◫ Events</a><a href="{{ url_for('my_registrations') }}">✓ My Registrations</a><a href="{{ url_for('my_tickets') }}">▣ My Tickets</a><a href="{{ url_for('student_notifications') }}">♢ Notifications {% if unread_notifications %}<b class="badge">{{ unread_notifications }}</b>{% endif %}</a><a href="{{ url_for('profile') }}">♙ Profile</a><a href="{{ url_for('logout') }}">↪ Logout</a></aside>
-<section class="dash-main"><div class="page-head"><div><h1>Dashboard</h1><p>Welcome, {{ current_user.name }} 👋</p></div><span class="avatar">{{ current_user.name[0] }}</span></div>
-<div class="stats"><div><span>Upcoming Events</span><strong>{{ upcoming|length }}</strong></div><div><span>My Registrations</span><strong>{{ regs }}</strong></div><div><span>My Tickets</span><strong>{{ tickets }}</strong></div><div><span>Events Attended</span><strong>{{ attended }}</strong></div></div>
-<div class="section-head"><h2>Upcoming Events</h2><a href="{{ url_for('events') }}">View All</a></div><div class="grid-4">{% for event in upcoming %}<article class="event-card"><div class="event-thumb">{{ event.category[:2].upper() }}</div><div class="event-body"><h3>{{ event.title }}</h3><p>◷ {{ event.date.strftime('%d %b %Y') }}</p><p>⌖ {{ event.venue }}</p><a href="{{ url_for('event_details', event_id=event.id) }}">View Details</a></div></article>{% endfor %}</div></section></div>
+<div class="cems-page-header">
+  <div class="cems-page-header-top">
+    <div>
+      <h1 class="cems-page-title">Welcome back, {{ current_user.name }}!</h1>
+      <p class="cems-page-description">Here's what's happening with your events today.</p>
+    </div>
+    <div class="cems-page-actions">
+      <a href="{{ url_for('events') }}" class="cems-btn cems-btn-primary">
+        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+        Discover Events
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- Stats -->
+<div class="cems-stats-grid">
+  <div class="cems-stat-card">
+    <div class="cems-stat-icon primary">
+      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+    </div>
+    <div class="cems-stat-content">
+      <div class="cems-stat-value">{{ upcoming|length }}</div>
+      <div class="cems-stat-label">Upcoming Events</div>
+    </div>
+  </div>
+  <div class="cems-stat-card">
+    <div class="cems-stat-icon success">
+      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+    </div>
+    <div class="cems-stat-content">
+      <div class="cems-stat-value">{{ regs }}</div>
+      <div class="cems-stat-label">My Registrations</div>
+    </div>
+  </div>
+  <div class="cems-stat-card">
+    <div class="cems-stat-icon info">
+      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3.5a2 2 0 001.16 1.77l1.33 1A2 2 0 007 16.5V19a2 2 0 002 2h10a2 2 0 002-2v-2.5a2 2 0 00-1.16-1.77l-1.33-1A2 2 0 0017 10.5V7a2 2 0 00-2-2H5z"></path></svg>
+    </div>
+    <div class="cems-stat-content">
+      <div class="cems-stat-value">{{ tickets }}</div>
+      <div class="cems-stat-label">Active Tickets</div>
+    </div>
+  </div>
+  <div class="cems-stat-card">
+    <div class="cems-stat-icon success">
+      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+    </div>
+    <div class="cems-stat-content">
+      <div class="cems-stat-value">{{ attended }}</div>
+      <div class="cems-stat-label">Events Attended</div>
+    </div>
+  </div>
+  <div class="cems-stat-card">
+    <div class="cems-stat-icon warning">
+      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-1.106 1.67l-5.5 2.5a1.76 1.76 0 01-2.3-1.67V5.882a1.76 1.76 0 011.106-1.67l5.5-2.5a1.76 1.76 0 012.3 1.67z"></path></svg>
+    </div>
+    <div class="cems-stat-content">
+      <div class="cems-stat-value">{{ uploaded_images }}</div>
+      <div class="cems-stat-label">My Uploaded Images</div>
+    </div>
+  </div>
+</div>
+
+<!-- Upcoming Events -->
+<div class="cems-card">
+  <div class="cems-card-header">
+    <div>
+      <span class="cems-section-title" style="margin-bottom:0;">Upcoming Events</span>
+    </div>
+    <a href="{{ url_for('events') }}" class="cems-btn cems-btn-secondary cems-btn-sm">View All</a>
+  </div>
+  <div class="cems-card-body">
+    {% if upcoming %}
+    <div class="cems-card-grid">
+      {% for event in upcoming %}
+      <div class="cems-event-card">
+        <div class="cems-event-card-body">
+          <span class="cems-event-card-category cems-badge-primary">{{ event.category }}</span>
+          <h3 class="cems-event-card-title">{{ event.title }}</h3>
+          <div class="cems-event-card-meta">
+            <div class="cems-event-card-meta-item">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+              {{ event.date.strftime('%d %b %Y') }}
+            </div>
+            <div class="cems-event-card-meta-item">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+              {{ event.start_time }} - {{ event.end_time }}
+            </div>
+            <div class="cems-event-card-meta-item">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243A8 8 0 1117.657 16.657z"></path><circle cx="12" cy="11" r="1.5" fill="currentColor"></circle></svg>
+              {{ event.venue }}
+            </div>
+          </div>
+          <div class="cems-event-card-footer">
+            <span class="cems-event-card-seats available">
+              {% set seats_left = event.capacity - event.registrations|length %}
+              {% if seats_left > 0 %}{{ seats_left }} seats left{% else %}Full{% endif %}
+            </span>
+            <a href="{{ url_for('event_details', event_id=event.id) }}" class="cems-btn cems-btn-primary cems-btn-sm">View Details</a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="cems-empty">
+      <div class="cems-empty-icon">📅</div>
+      <div class="cems-empty-title">No upcoming events</div>
+      <div class="cems-empty-description">Browse available events to register and start participating.</div>
+      <a href="{{ url_for('events') }}" class="cems-btn cems-btn-primary" style="margin-top: 20px;">Browse Events</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Past Events -->
+<div class="cems-card">
+  <div class="cems-card-header">
+    <div>
+      <span class="cems-section-title" style="margin-bottom:0;">Past Events</span>
+    </div>
+    <a href="{{ url_for('past_events') }}" class="cems-btn cems-btn-secondary cems-btn-sm">View All</a>
+  </div>
+  <div class="cems-card-body">
+    {% if past_events %}
+    <div class="cems-card-grid">
+      {% for event in past_events %}
+      <div class="cems-event-card">
+        <div class="cems-event-card-body">
+          <span class="cems-event-card-category cems-badge-neutral">{{ event.category }}</span>
+          <h3 class="cems-event-card-title">{{ event.title }}</h3>
+          <div class="cems-event-card-meta">
+            <div class="cems-event-card-meta-item">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 002 2v12a2 2 0 002 2z"></path></svg>
+              {{ event.date.strftime('%d %b %Y') }}
+            </div>
+            <div class="cems-event-card-meta-item">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243A8 8 0 1117.657 16.657z"></path><circle cx="12" cy="11" r="1.5" fill="currentColor"></circle></svg>
+              {{ event.venue }}
+            </div>
+          </div>
+          <div class="cems-event-card-footer">
+            <span class="cems-event-card-seats completed">Completed</span>
+            <a href="{{ url_for('past_event_detail', event_id=event.id) }}" class="cems-btn cems-btn-secondary cems-btn-sm">View Details</a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="cems-empty">
+      <div class="cems-empty-icon">📜</div>
+      <div class="cems-empty-title">No past events yet</div>
+      <div class="cems-empty-description">Past events will appear here after they are completed.</div>
+    </div>
+    {% endif %}
+  </div>
+</div>
 {% endblock %}

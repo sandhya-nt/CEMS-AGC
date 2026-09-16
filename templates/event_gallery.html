@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}{{ event.title }} — Gallery{% endblock %}
+{% block content %}
+<div class="dashboard">
+  <aside class="sidebar">
+    <div class="side-brand"><strong>🎪 CEMS</strong><span>Organizer Panel</span></div>
+    <nav>
+      <a href="{{ url_for('organizer_dashboard') }}">📊 Dashboard</a>
+      <a href="{{ url_for('create_event') }}">➕ Create Event</a>
+      <a href="{{ url_for('organizer_reports') }}">📈 Reports</a>
+    </nav>
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Event Management</div>
+      <a href="{{ url_for('checkin') }}">✅ Check-in</a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Account</div>
+      <a href="{{ url_for('profile') }}">👤 Profile</a>
+      <a href="{{ url_for('logout') }}">🚪 Logout</a>
+    </div>
+  </aside>
+
+  <section class="dash-main">
+    <div class="dash-head">
+      <div>
+        <h1>{{ event.title }} - Gallery</h1>
+        <p style="color: #7b8495; margin: 5px 0 0;">Event photos and media</p>
+      </div>
+      {% if can_upload %}
+      <a class="btn" href="#upload">Upload Images</a>
+      {% endif %}
+    </div>
+
+    {% if can_upload %}
+    <div class="section" id="upload">
+      <form method="post" enctype="multipart/form-data" class="form-card inline-card">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <label>Upload Event Images<input type="file" name="images" accept="image/*" multiple required></label>
+        <button class="btn">Upload Images</button>
+      </form>
+    </div>
+    {% endif %}
+
+    <div class="section">
+      <div class="grid-4">
+        {% for item in gallery %}
+        <div class="card">
+          <img src="{{ url_for('static', filename=item.image) }}" style="width:100%;height:200px;object-fit:cover;border-radius:8px;">
+        </div>
+        {% else %}
+        <div class="empty">No images uploaded yet.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+</div>
+{% endblock %}
+
+
+

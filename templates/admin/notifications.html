@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block title %}Notifications — CEMS{% endblock %}
 {% block content %}
-<div class="narrow-card"><h1>Send Announcement</h1><form method="post"><label>Audience<select name="audience"><option value="all">All Users</option><option value="student">Students</option><option value="organizer">Organizers</option></select></label><label>Title<input name="title" value="Campus Update" required></label><label>Message<textarea name="message" rows="6" required></textarea></label><button class="btn full">Send Notification</button></form></div>
+<div class="narrow-card"><h1>Send Announcement</h1><form method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><label>Audience<select name="audience"><option value="all">All Users</option><option value="student">Students</option><option value="organizer">Organizers</option></select></label><label>Title<input name="title" value="Campus Update" required></label><label>Message<textarea name="message" rows="6" required></textarea></label><button class="btn full">Send Notification</button></form></div>
 {% endblock %}
+

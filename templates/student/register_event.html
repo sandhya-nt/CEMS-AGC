@@ -1,5 +1,51 @@
 {% extends "base.html" %}
 {% block title %}Register — {{ event.title }}{% endblock %}
+{% block breadcrumb %}Events{% endblock %}
+
 {% block content %}
-<div class="narrow-card"><span class="tag">{{ event.category }}</span><h1>Register for {{ event.title }}</h1><p>{{ event.date.strftime('%d %b %Y') }} · {{ event.start_time }} · {{ event.venue }}</p><div class="summary"><span>Participant</span><b>{{ current_user.name }}</b><span>Email</span><b>{{ current_user.email }}</b><span>Fee</span><b>{% if event.fee %}₹{{ event.fee }}{% else %}Free{% endif %}</b></div><form method="post"><button class="btn full">{% if event.fee %}Continue to Demo Payment{% else %}Submit Registration{% endif %}</button></form><small class="muted">Demo payment only — no card/UPI credentials are collected.</small></div>
+<div class="cems-page-header">
+  <div class="cems-page-header-top">
+    <div>
+      <span class="cems-badge cems-badge-primary" style="margin-bottom: 8px;">{{ event.category }}</span>
+      <h1 class="cems-page-title">Register for {{ event.title }}</h1>
+      <p class="cems-page-description">{{ event.date.strftime('%d %b %Y') }} · {{ event.start_time }} · {{ event.venue }}</p>
+    </div>
+  </div>
+</div>
+
+<div class="cems-card" style="max-width: 600px;">
+  <div class="cems-card-body">
+    <div style="display: flex; flex-direction: column; gap: 16px; margin-bottom: 24px;">
+      <div style="display: flex; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px solid var(--cems-border-light);">
+        <span style="color: var(--cems-text-muted); font-size: 0.9rem;">Participant</span>
+        <span style="font-weight: 600;">{{ current_user.name }}</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px solid var(--cems-border-light);">
+        <span style="color: var(--cems-text-muted); font-size: 0.9rem;">Email</span>
+        <span style="font-weight: 600;">{{ current_user.email }}</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px solid var(--cems-border-light);">
+        <span style="color: var(--cems-text-muted); font-size: 0.9rem;">Fee</span>
+        <span style="font-weight: 600; font-size: 1.1rem;">{% if event.fee %}₹{{ '%.2f'|format(event.fee) }}{% else %}<span class="cems-badge cems-badge-success">Free</span>{% endif %}</span>
+      </div>
+    </div>
+    
+    <form method="post" class="cems-form-grid">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label class="cems-form-label" style="display: flex; gap: 10px; align-items: flex-start; margin-bottom: 16px;">
+        <input type="checkbox" name="terms_accepted" style="margin-top: 4px;" required>
+        <span>I accept the event rules, cancellation policy, and consent to campus event communications.</span>
+      </label>
+      <button type="submit" class="cems-btn cems-btn-primary cems-btn-lg cems-w-full">
+        {% if event.fee %}Continue to Payment{% else %}Submit Registration{% endif %}
+      </button>
+    </form>
+
+    
+    <p style="margin-top: 16px; font-size: 0.85rem; color: var(--cems-text-muted); text-align: center;">
+      Demo payment only — no card/UPI credentials are collected.
+    </p>
+  </div>
+</div>
 {% endblock %}
+

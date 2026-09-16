@@ -1,5 +1,70 @@
 {% extends "base.html" %}
 {% block title %}Manage Users — CEMS{% endblock %}
+{% block breadcrumb %}Manage Users{% endblock %}
+
 {% block content %}
-<div class="narrow-wide"><h1>Manage Users</h1><div class="table-card"><table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Verified</th><th>Status</th><th>Action</th></tr></thead><tbody>{% for u in users %}<tr><td>{{ u.name }}</td><td>{{ u.email }}</td><td>{{ u.role }}</td><td>{{ 'Yes' if u.is_verified else 'No' }}</td><td>{{ 'Active' if u.is_active_account else 'Blocked' }}</td><td>{% if u.id != current_user.id %}<form method="post" action="{{ url_for('toggle_user', user_id=u.id) }}"><button class="link-btn">{{ 'Block' if u.is_active_account else 'Unblock' }}</button></form>{% endif %}</td></tr>{% endfor %}</tbody></table></div></div>
+<div class="cems-page-header">
+  <div class="cems-page-header-top">
+    <div>
+      <h1 class="cems-page-title">Manage Users</h1>
+      <p class="cems-page-description">View and manage all registered users.</p>
+    </div>
+  </div>
+</div>
+
+<div class="cems-table-container">
+  <div class="cems-overflow-x-auto">
+    <table class="cems-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Role</th>
+          <th>Department</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in users %}
+        <tr>
+          <td><strong>{{ u.name }}</strong></td>
+          <td>{{ u.email }}</td>
+          <td><span class="cems-role-badge {{ u.role }}">{{ u.role|title }}</span></td>
+          <td>{{ u.department or '—' }}</td>
+          <td>
+            <span class="cems-badge {% if u.is_active_account %}cems-badge-success{% else %}cems-badge-danger{% endif %}">
+              {{ 'Active' if u.is_active_account else 'Blocked' }}
+            </span>
+          </td>
+          <td>
+            {% if u.id != current_user.id %}
+            <form method="post" action="{{ url_for('toggle_user', user_id=u.id) }}" style="display: inline;">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="cems-btn {% if not u.is_active_account %}cems-btn-success{% else %}cems-btn-danger{% endif %} cems-btn-sm">
+                {{ 'Unblock' if not u.is_active_account else 'Block' }}
+              </button>
+            </form>
+            {% else %}
+            <span style="color: var(--cems-text-muted); font-size: 0.85rem;">Your Account</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if pagination and pagination.pages > 1 %}
+  <div class="cems-pagination">
+    {% if pagination.has_prev %}
+    <a href="{{ url_for('admin_users', page=pagination.prev_num) }}" class="cems-pagination-btn">← Previous</a>
+    {% endif %}
+    <span class="cems-pagination-info">Page {{ pagination.page }} of {{ pagination.pages }}</span>
+    {% if pagination.has_next %}
+    <a href="{{ url_for('admin_users', page=pagination.next_num) }}" class="cems-pagination-btn">Next →</a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
 {% endblock %}
+

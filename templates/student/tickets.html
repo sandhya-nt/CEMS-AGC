@@ -1,5 +1,70 @@
 {% extends "base.html" %}
 {% block title %}My Tickets — CEMS{% endblock %}
+{% block breadcrumb %}Tickets{% endblock %}
+
 {% block content %}
-<div class="dashboard"><aside class="sidebar"><div class="side-brand">CEMS</div><a href="{{ url_for('student_dashboard') }}">▣ Dashboard</a><a href="{{ url_for('events') }}">◫ Events</a><a href="{{ url_for('my_registrations') }}">✓ My Registrations</a><a class="active" href="{{ url_for('my_tickets') }}">▣ My Tickets</a><a href="{{ url_for('student_notifications') }}">♢ Notifications</a><a href="{{ url_for('profile') }}">♙ Profile</a><a href="{{ url_for('logout') }}">↪ Logout</a></aside><section class="dash-main"><h1>My Tickets</h1>{% for r in registrations %}<div class="ticket"><div class="event-thumb">{{ r.event.category[:2].upper() }}</div><div class="ticket-info"><h2>{{ r.event.title }}</h2><p>{{ r.event.date.strftime('%d %b %Y') }} · {{ r.event.start_time }} · {{ r.event.venue }}</p><b>Ticket ID: {{ r.ticket_code }}</b></div><img src="{{ url_for('ticket_qr', registration_id=r.id) }}" alt="QR"><a class="btn small" href="{{ url_for('certificate', registration_id=r.id) if r.attended else url_for('ticket', registration_id=r.id) }}">{{ 'Certificate' if r.attended else 'Open Ticket' }}</a></div>{% else %}<div class="empty">No tickets.</div>{% endfor %}</section></div>
+<div class="cems-page-header">
+  <div class="cems-page-header-top">
+    <div>
+      <h1 class="cems-page-title">My Tickets</h1>
+      <p class="cems-page-description">View and download your event tickets.</p>
+    </div>
+  </div>
+</div>
+
+{% if registrations %}
+<div style="display: flex; flex-direction: column; gap: 24px; max-width: 700px;">
+  {% for r in registrations %}
+  <div class="cems-ticket">
+    <div class="cems-ticket-left">
+      Ticket
+    </div>
+    <div class="cems-ticket-right">
+      <div class="cems-ticket-header">
+        <div>
+          <div class="cems-ticket-title">{{ r.event.title }}</div>
+          <p style="color: var(--cems-text-muted); font-size: 0.9rem; margin-top: 4px;">
+            {{ r.event.date.strftime('%d %b %Y') }} · {{ r.event.start_time }} · {{ r.event.venue }}
+          </p>
+        </div>
+        <img src="{{ url_for('ticket_qr', registration_id=r.id) }}" alt="QR Code" class="cems-ticket-qr">
+      </div>
+      <div class="cems-ticket-info">
+        <div class="cems-ticket-info-item">
+          <span class="cems-ticket-info-label">Participant</span>
+          <span class="cems-ticket-info-value">{{ r.user.name }}</span>
+        </div>
+        <div class="cems-ticket-info-item">
+          <span class="cems-ticket-info-label">Ticket ID</span>
+          <span class="cems-ticket-info-value">{{ r.ticket_code }}</span>
+        </div>
+        <div class="cems-ticket-info-item">
+          <span class="cems-ticket-info-label">Registration Date</span>
+          <span class="cems-ticket-info-value">{{ r.registered_at.strftime('%d %b %Y') }}</span>
+        </div>
+        <div class="cems-ticket-info-item">
+          <span class="cems-ticket-info-label">Status</span>
+          <span class="cems-ticket-info-value">
+            <span class="cems-badge cems-badge-success">Confirmed</span>
+          </span>
+        </div>
+      </div>
+      <div style="display: flex; gap: 10px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--cems-border-light);">
+        <a href="{{ url_for('ticket', registration_id=r.id) }}" class="cems-btn cems-btn-primary cems-btn-sm">View Ticket</a>
+        <a href="{{ url_for('certificate', registration_id=r.id) if r.attended else '#' }}" class="cems-btn cems-btn-outline cems-btn-sm">
+          {{ 'Certificate' if r.attended else 'Pending' }}
+        </a>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="cems-empty">
+  <div class="cems-empty-icon">🎟️</div>
+  <div class="cems-empty-title">No tickets yet</div>
+  <div class="cems-empty-description">Register for events to get digital tickets.</div>
+  <a href="{{ url_for('events') }}" class="cems-btn cems-btn-primary" style="margin-top: 20px;">Browse Events</a>
+</div>
+{% endif %}
 {% endblock %}

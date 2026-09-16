@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<section class="info-page">
+
+    <div class="info-container">
+
+        <div class="module-large-icon">
+            {{ module.icon }}
+        </div>
+
+        <h1>{{ module.title }}</h1>
+
+        <p>
+            {{ module.description }}
+        </p>
+
+        <div class="module-actions">
+
+            <a href="{{ url_for('landing') }}" class="primary-btn">
+                ← Back to Home
+            </a>
+
+        </div>
+
+    </div>
+
+</section>
+
+{% endblock %}

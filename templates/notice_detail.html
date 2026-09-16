@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}{{ notice.title }} — Notice{% endblock %}
+{% block breadcrumb %}Notice Board{% endblock %}
+
+{% block content %}
+<div class="cems-notice-detail">
+  <div class="cems-notice-detail-header">
+    <span class="cems-badge cems-badge-primary" style="font-size: 0.8rem; padding: 6px 14px;">{{ notice.category }}</span>
+    <h1 class="cems-notice-detail-title">{{ notice.title }}</h1>
+    <p class="cems-notice-detail-date">
+      📅 Published on {{ notice.published_at.strftime('%d %b %Y %I:%M %p') }}
+    </p>
+  </div>
+
+  {% if notice.event %}
+  <div class="cems-notice-related">
+    <b>Related Event:</b>
+    <a href="{{ url_for('event_details', event_id=notice.event.id) }}">{{ notice.event.title }}</a>
+    <span style="color: var(--cems-text-muted);">· {{ notice.event.date.strftime('%d %b %Y') }}</span>
+  </div>
+  {% endif %}
+
+  {% if notice.image %}
+  <img src="{{ image_url(notice.image) }}"
+       alt="{{ notice.title }}"
+       class="cems-notice-detail-image"
+       onerror="this.onerror=null;this.src='{{ url_for('static', filename='images/placeholder.svg') }}';">
+  {% else %}
+  <div class="cems-notice-detail-placeholder">
+    <span style="font-size: 4rem; opacity: 0.3;">📄</span>
+  </div>
+  {% endif %}
+
+  <div class="cems-notice-detail-content">
+    {{ notice.description|nl2br }}
+  </div>
+
+  {% if notice.attachment %}
+  <div style="margin-top: 24px;">
+    <a href="{{ image_url(notice.attachment) }}" class="cems-btn cems-btn-secondary" download>
+      📎 Download Attachment
+    </a>
+  </div>
+  {% endif %}
+
+  <div style="margin-top: 32px;">
+    <a href="{{ url_for('notices') }}" class="cems-btn cems-btn-outline">← Back to Notice Board</a>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.cems-notice-detail {
+  max-width: 800px;
+  margin: 0 auto;
+  background: var(--cems-bg-primary);
+  border-radius: var(--cems-radius-xl);
+  border: 1px solid var(--cems-border);
+  box-shadow: var(--cems-shadow-sm);
+  padding: 32px;
+}
+.cems-notice-detail-header { margin-bottom: 20px; }
+.cems-notice-detail-title {
+  font-size: 1.75rem; font-weight: 700; color: var(--cems-text-primary);
+  margin: 12px 0; line-height: 1.3;
+}
+.cems-notice-detail-date {
+  color: var(--cems-text-muted); font-size: 0.9rem;
+}
+.cems-notice-related {
+  background: var(--cems-primary-bg);
+  padding: 12px 16px; border-radius: var(--cems-radius-md);
+  margin-bottom: 20px; font-size: 0.9rem;
+}
+.cems-notice-detail-image {
+  width: 100%; border-radius: var(--cems-radius-lg);
+  margin: 20px 0; box-shadow: var(--cems-shadow-md);
+  object-fit: cover;
+}
+.cems-notice-detail-placeholder {
+  width: 100%; height: 240px; border: 2px dashed var(--cems-border);
+  border-radius: var(--cems-radius-lg); margin: 20px 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.cems-notice-detail-content {
+  color: var(--cems-text-secondary); line-height: 1.8;
+  font-size: 1rem; white-space: pre-wrap;
+}
+</style>
+{% endblock %}

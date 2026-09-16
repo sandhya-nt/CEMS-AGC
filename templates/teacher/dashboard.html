@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Teacher Dashboard — CEMS{% endblock %}
+{% block breadcrumb %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="cems-page-header">
+  <div class="cems-page-header-top">
+    <div>
+      <h1 class="cems-page-title">Welcome, {{ current_user.name }}!</h1>
+      <p class="cems-page-description">Teacher dashboard. More features coming soon.</p>
+    </div>
+  </div>
+</div>
+
+<div class="cems-card">
+  <div class="cems-card-body">
+    <div class="cems-empty">
+      <div class="cems-empty-icon">🎓</div>
+      <div class="cems-empty-title">Teacher Portal</div>
+      <div class="cems-empty-description">Your class events, student activity, and campus coordination tools will be available here.</div>
+    </div>
+  </div>
+</div>
+{% endblock %}

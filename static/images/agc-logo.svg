@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="AGC logo">
+  <defs>
+    <linearGradient id="g1" x1="0" x2="1">
+      <stop offset="0%" stop-color="#0f2c66"/>
+      <stop offset="100%" stop-color="#1e4ea3"/>
+    </linearGradient>
+    <linearGradient id="g2" x1="0" x2="1">
+      <stop offset="0%" stop-color="#d81e2d"/>
+      <stop offset="100%" stop-color="#b31217"/>
+    </linearGradient>
+  </defs>
+  <rect width="200" height="200" rx="28" fill="#f4f7ff"/>
+  <path d="M40 150 L90 46 L140 150 Z" fill="url(#g1)" opacity="0.95"/>
+  <path d="M80 150 L120 46 L160 150 Z" fill="url(#g2)" opacity="0.95"/>
+  <path d="M72 150 L103 95 L134 150 Z" fill="#f9fbff" opacity="0.9"/>
+  <path d="M56 164 H144" stroke="#0f2c66" stroke-width="8" stroke-linecap="round"/>
+  <text x="100" y="178" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="700" fill="#0f2c66">AGC</text>
+</svg>

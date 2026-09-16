@@ -1,5 +1,91 @@
 {% extends "base.html" %}
 {% block title %}Manage Events — CEMS{% endblock %}
+{% block breadcrumb %}Manage Events{% endblock %}
+
 {% block content %}
-<div class="narrow-wide"><h1>Manage Events</h1><div class="table-card"><table><thead><tr><th>Event</th><th>Organizer</th><th>Date</th><th>Status</th><th>Action</th></tr></thead><tbody>{% for e in events %}<tr><td>{{ e.title }}</td><td>{{ e.organizer.name }}</td><td>{{ e.date.strftime('%d %b %Y') }}</td><td><span class="status">{{ e.status }}</span></td><td>{% if e.status=='pending' %}<form class="inline" method="post" action="{{ url_for('event_action', event_id=e.id, action='approve') }}"><button class="btn mini">Approve</button></form><form class="inline" method="post" action="{{ url_for('event_action', event_id=e.id, action='reject') }}"><button class="btn mini danger-btn">Reject</button></form>{% else %}—{% endif %}</td></tr>{% endfor %}</tbody></table></div></div>
+<div class="cems-page-header">
+  <div class="cems-page-header-top">
+    <div>
+      <h1 class="cems-page-title">Manage Events</h1>
+      <p class="cems-page-description">Review and approve events submitted by organizers.</p>
+    </div>
+  </div>
+</div>
+
+<div class="cems-table-container">
+  <div class="cems-overflow-x-auto">
+    <table class="cems-table">
+      <thead>
+        <tr>
+          <th>Event Name</th>
+          <th>Organizer</th>
+          <th>Category</th>
+          <th>Date</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for e in events %}
+        <tr>
+          <td><strong>{{ e.title }}</strong></td>
+          <td>{{ e.organizer.name }}</td>
+          <td><span class="cems-badge cems-badge-primary">{{ e.category }}</span></td>
+          <td>{{ e.date.strftime('%d %b %Y') if e.date else '—' }}</td>
+          <td>
+            <span class="cems-badge
+              {% if e.status=='approved' %}cems-badge-success
+              {% elif e.status in ('pending', 'waiting') %}cems-badge-warning
+              {% elif e.status=='rejected' %}cems-badge-danger
+              {% else %}cems-badge-neutral{% endif %}">
+              {{ e.status|replace('_', ' ')|title }}
+            </span>
+            {% if e.rejection_reason %}
+            <br><small style="color: var(--cems-danger);">Reason: {{ e.rejection_reason }}</small>
+            {% endif %}
+          </td>
+          <td>
+            <div class="cems-table-actions">
+              {% if e.status == 'pending' %}
+              <form method="post" action="{{ url_for('event_action', event_id=e.id, action='approve') }}" style="display: inline;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="cems-btn cems-btn-success cems-btn-sm">Approve</button>
+              </form>
+              <form method="post" action="{{ url_for('event_action', event_id=e.id, action='reject') }}" style="display: inline;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="cems-btn cems-btn-danger cems-btn-sm">Reject</button>
+                <input type="text" name="rejection_reason" placeholder="Reason" style="width: 120px; margin-top: 4px; font-size: 0.8rem; padding: 4px;">
+              </form>
+              {% elif e.status == 'waiting' %}
+              <form method="post" action="{{ url_for('event_action', event_id=e.id, action='approve_change') }}" style="display: inline;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="cems-btn cems-btn-success cems-btn-sm">Approve Change</button>
+              </form>
+              <form method="post" action="{{ url_for('event_action', event_id=e.id, action='reject_change') }}" style="display: inline;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="cems-btn cems-btn-danger cems-btn-sm">Reject Change</button>
+              </form>
+              {% else %}
+              <a href="{{ url_for('event_details', event_id=e.id) }}" class="cems-btn cems-btn-secondary cems-btn-sm">View</a>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if pagination and pagination.pages > 1 %}
+  <div class="cems-pagination">
+    {% if pagination.has_prev %}
+    <a href="{{ url_for('admin_events', page=pagination.prev_num) }}" class="cems-pagination-btn">← Previous</a>
+    {% endif %}
+    <span class="cems-pagination-info">Page {{ pagination.page }} of {{ pagination.pages }}</span>
+    {% if pagination.has_next %}
+    <a href="{{ url_for('admin_events', page=pagination.next_num) }}" class="cems-pagination-btn">Next →</a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
 {% endblock %}
+

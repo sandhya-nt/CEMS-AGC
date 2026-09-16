@@ -1,71 +1,298 @@
 {% extends "base.html" %}
-{% block title %}CEMS — AGC Campus Events{% endblock %}
+{% block title %}CEMS - Campus Event Management{% endblock %}
+{% block extra_css %}
+<style>
+  /* Landing Page Styles */
+  .cems-landing {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+    color: white;
+  }
+  
+  .cems-landing-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 40px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
+  
+  .cems-landing-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 1.25rem;
+    font-weight: 700;
+  }
+  
+  .cems-landing-logo {
+    width: 40px;
+    height: 40px;
+    background: var(--cems-primary);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+  }
+  
+  .cems-landing-nav-links {
+    display: flex;
+    gap: 32px;
+    align-items: center;
+  }
+  
+  .cems-landing-nav-links a {
+    color: rgba(255,255,255,0.8);
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: color 0.2s;
+  }
+  
+  .cems-landing-nav-links a:hover {
+    color: white;
+  }
+  
+  .cems-landing-hero {
+    padding: 100px 40px;
+    max-width: 1200px;
+    margin: 0 auto;
+    text-align: center;
+  }
+  
+  .cems-landing-hero h1 {
+    font-size: 3.5rem;
+    font-weight: 800;
+    margin-bottom: 20px;
+    line-height: 1.2;
+    background: linear-gradient(135deg, #fff 0%, #818cf8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  .cems-landing-hero p {
+    font-size: 1.2rem;
+    color: rgba(255,255,255,0.7);
+    max-width: 600px;
+    margin: 0 auto 40px;
+    line-height: 1.7;
+  }
+  
+  .cems-landing-actions {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    margin-bottom: 80px;
+  }
+  
+  .cems-landing-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 40px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  
+  .cems-landing-stat {
+    text-align: center;
+  }
+  
+  .cems-landing-stat-value {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--cems-primary-light);
+    margin-bottom: 4px;
+  }
+  
+  .cems-landing-stat-label {
+    font-size: 0.9rem;
+    color: rgba(255,255,255,0.6);
+  }
+  
+  .cems-landing-section {
+    padding: 80px 40px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  
+  .cems-landing-section-title {
+    font-size: 2rem;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 48px;
+  }
+  
+  .cems-landing-section-title span {
+    color: var(--cems-primary-light);
+  }
+  
+  .cems-landing-categories {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+  
+  .cems-landing-category {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 32px;
+    text-align: center;
+    transition: all 0.3s;
+    text-decoration: none;
+    color: white;
+  }
+  
+  .cems-landing-category:hover {
+    background: rgba(255,255,255,0.1);
+    transform: translateY(-4px);
+    border-color: var(--cems-primary);
+  }
+  
+  .cems-landing-category-icon {
+    font-size: 2.5rem;
+    margin-bottom: 12px;
+  }
+  
+  .cems-landing-category-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  
+  .cems-landing-category-desc {
+    font-size: 0.9rem;
+    color: rgba(255,255,255,0.6);
+  }
+  
+  .cems-landing-footer {
+    text-align: center;
+    padding: 40px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.5);
+    font-size: 0.85rem;
+  }
+  
+  @media (max-width: 768px) {
+    .cems-landing-hero h1 { font-size: 2.5rem; }
+    .cems-landing-stats { grid-template-columns: repeat(2, 1fr); }
+    .cems-landing-categories { grid-template-columns: 1fr; }
+    .cems-landing-nav { padding: 16px 20px; }
+    .cems-landing-nav-links { display: none; }
+  }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="utility-strip">
-  <div class="utility-inner">
-    <span>WhatsApp</span><span>Call</span><span>Facebook</span><span>Email</span><span>Instagram</span><span>LinkedIn</span><span>YouTube</span><span>Telegram</span>
-    <a href="{{ url_for('register') }}">Register Here</a>
+<div class="cems-landing">
+  <nav class="cems-landing-nav">
+    <div class="cems-landing-brand">
+      <div class="cems-landing-logo">C</div>
+      CEMS
+    </div>
+    <div class="cems-landing-nav-links">
+      <a href="#features">Features</a>
+      <a href="#categories">Categories</a>
+      <a href="{{ url_for('events') }}">Events</a>
+      <a href="{{ url_for('login') }}">Login</a>
+      <a href="{{ url_for('register') }}" class="cems-btn cems-btn-primary">Get Started</a>
+    </div>
+  </nav>
+  
+  <div class="cems-landing-hero">
+    <h1>Campus Event Management System</h1>
+    <p>Discover upcoming events, register instantly, get digital tickets, and manage your campus participation in one secure platform.</p>
+    <div class="cems-landing-actions">
+      <a href="{{ url_for('events') }}" class="cems-btn cems-btn-primary cems-btn-lg">Browse Events</a>
+      <a href="{{ url_for('register') }}" class="cems-btn cems-btn-outline cems-btn-lg" style="border-color: rgba(255,255,255,0.3); color: white;">Create Account</a>
+    </div>
+    
+    <div class="cems-landing-stats">
+      <div class="cems-landing-stat">
+        <div class="cems-landing-stat-value">{{ agc_profile.students }}</div>
+        <div class="cems-landing-stat-label">Students</div>
+      </div>
+      <div class="cems-landing-stat">
+        <div class="cems-landing-stat-value">{{ agc_profile.years }}</div>
+        <div class="cems-landing-stat-label">Education</div>
+      </div>
+      <div class="cems-landing-stat">
+        <div class="cems-landing-stat-value">{{ agc_profile.programs }}</div>
+        <div class="cems-landing-stat-label">Programs</div>
+      </div>
+      <div class="cems-landing-stat">
+        <div class="cems-landing-stat-value">{{ agc_profile.naac }}</div>
+        <div class="cems-landing-stat-label">Accreditation</div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="cems-landing-section" id="categories">
+    <h2 class="cems-landing-section-title">Explore <span>Event Categories</span></h2>
+    <div class="cems-landing-categories">
+      <a href="{{ url_for('events', category='Academic') }}" class="cems-landing-category">
+        <div class="cems-landing-category-icon">🎓</div>
+        <div class="cems-landing-category-name">Academic</div>
+        <div class="cems-landing-category-desc">Seminars, workshops, lectures</div>
+      </a>
+      <a href="{{ url_for('events', category='Technical') }}" class="cems-landing-category">
+        <div class="cems-landing-category-icon">💻</div>
+        <div class="cems-landing-category-name">Technical</div>
+        <div class="cems-landing-category-desc">Hackathons, coding contests</div>
+      </a>
+      <a href="{{ url_for('events', category='Cultural') }}" class="cems-landing-category">
+        <div class="cems-landing-category-icon">🎨</div>
+        <div class="cems-landing-category-name">Cultural</div>
+        <div class="cems-landing-category-desc">Music, dance, art exhibits</div>
+      </a>
+      <a href="{{ url_for('events', category='Sports') }}" class="cems-landing-category">
+        <div class="cems-landing-category-icon">⚽</div>
+        <div class="cems-landing-category-name">Sports</div>
+        <div class="cems-landing-category-desc">Tournaments, athletics</div>
+      </a>
+      <a href="{{ url_for('events', category='Workshop') }}" class="cems-landing-category">
+        <div class="cems-landing-category-icon">🛠️</div>
+        <div class="cems-landing-category-name">Workshop</div>
+        <div class="cems-landing-category-desc">Skills, training programs</div>
+      </a>
+      <a href="{{ url_for('events', category='Entrepreneurship') }}" class="cems-landing-category">
+        <div class="cems-landing-category-icon">🚀</div>
+        <div class="cems-landing-category-name">Entrepreneurship</div>
+        <div class="cems-landing-category-desc">Startup pitches, ideation</div>
+      </a>
+    </div>
+  </div>
+  
+  <div class="cems-landing-section" id="features">
+    <h2 class="cems-landing-section-title">Why Choose <span>CEMS</span></h2>
+    <div class="cems-landing-categories">
+      <div class="cems-landing-category">
+        <div class="cems-landing-category-icon">📱</div>
+        <div class="cems-landing-category-name">Instant Registration</div>
+        <div class="cems-landing-category-desc">Register for events in seconds with one-click sign-up and instant confirmation.</div>
+      </div>
+      <div class="cems-landing-category">
+        <div class="cems-landing-category-icon">🎟️</div>
+        <div class="cems-landing-category-name">Digital Tickets</div>
+        <div class="cems-landing-category-desc">Get QR-coded digital tickets instantly and skip physical entry queues.</div>
+      </div>
+      <div class="cems-landing-category">
+        <div class="cems-landing-category-icon">📊</div>
+        <div class="cems-landing-category-name">Real-time Analytics</div>
+        <div class="cems-landing-category-desc">Organizers track registrations, attendance, and engagement in real-time.</div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="cems-landing-footer">
+    <p>{{ college_name }} · Campus Event Management System · {{ agc_profile.address }}</p>
   </div>
 </div>
-
-<section class="hero agc-hero">
-  <div class="hero-copy">
-    <span class="eyebrow">{{ college_name|upper }} • {{ agc_profile.status|upper }}</span>
-    <h1>Welcome to <span>AGC Campus Event</span><br>Management System</h1>
-    <p>Discover, register, organize and manage academic, technical, cultural, sports and student-development events across the AGC campus.</p>
-    <div class="actions"><a class="btn" href="{{ url_for('events') }}">Explore Events</a><a class="btn dark" href="{{ url_for('register') }}">Organize Event</a></div>
-    <div class="hero-badges"><span>NAAC A Grade</span><span>AICTE</span><span>PCI</span><span>IKGPTU Affiliated</span></div>
-  </div>
-  <div class="hero-art agc-emblem">AGC<br><small>EVENTS • COMMUNITY • EXCELLENCE</small></div>
-</section>
-
-<section class="institution-strip">
-  <div><strong>{{ agc_profile.students }}</strong><span>Student strength</span></div>
-  <div><strong>{{ agc_profile.years }}</strong><span>Education & growth</span></div>
-  <div><strong>{{ agc_profile.programs }}</strong><span>Programs</span></div>
-  <div><strong>{{ agc_profile.naac }}</strong><span>Accreditation highlight</span></div>
-</section>
-
-<section class="section">
-  <div class="section-head"><div><span class="eyebrow">CEMS • AGC AMRITSAR</span><h2>Upcoming Campus Events</h2></div><a href="{{ url_for('events') }}">View All →</a></div>
-  <div class="grid-4">
-    {% for event in events %}
-    <article class="event-card">
-      <div class="event-thumb">{{ event.category[:2].upper() }}</div>
-      <div class="event-body">
-        <span class="tag">{{ event.category }}</span><h3>{{ event.title }}</h3>
-        <p>◷ {{ event.date.strftime('%d %b %Y') }} · {{ event.start_time }}</p><p>⌖ {{ event.venue }}, AGC Campus</p>
-        <a href="{{ url_for('event_details', event_id=event.id) }}">View Details →</a>
-      </div>
-    </article>
-    {% else %}<div class="empty">No approved events yet.</div>{% endfor %}
-  </div>
-</section>
-
-<section class="section agc-profile-section">
-  <div class="section-head"><div><span class="eyebrow">WHY AGC</span><h2>Built around AGC's campus ecosystem</h2></div></div>
-  <div class="profile-grid">
-    <div class="profile-card"><strong>Autonomous Institution</strong><p>Event workflows can be managed according to campus departments, clubs, organizers and institutional approvals.</p></div>
-    <div class="profile-card"><strong>Academic & Professional Growth</strong><p>Support workshops, seminars, conferences, competitions, placement activities and student-development programs.</p></div>
-    <div class="profile-card"><strong>Industry-Integrated Learning</strong><p>Enable industry interaction, expert sessions, entrepreneurship activities and networking through organized events.</p></div>
-    <div class="profile-card"><strong>Quality & Digital Learning</strong><p>Connect events with IQAC, NPTEL, research, innovation, AI and other academic initiatives.</p></div>
-  </div>
-</section>
-
-<section class="section two-col">
-  <div><span class="eyebrow">AGC CAMPUS NETWORK</span><h2>One platform for every event stakeholder.</h2><p>Students discover events, organizers manage registrations and volunteers, judges evaluate competitions, and administrators monitor the complete campus event lifecycle.</p><div class="feature-list"><div>✓ Role-based access</div><div>✓ QR ticket & check-in</div><div>✓ Notifications</div><div>✓ Reports & analytics</div><div>✓ Certificates</div><div>✓ Feedback & ratings</div></div></div>
-  <div class="updates-card"><h3>Latest Updates & Notices</h3>{% for item in agc_updates %}<div class="update-item"><span>NEW</span>{{ item }}</div>{% endfor %}</div>
-</section>
-
-<section class="section academic-section">
-  <div class="section-head"><div><span class="eyebrow">ACADEMICS & CAMPUS</span><h2>Connected AGC modules</h2></div></div>
-  <div class="module-chips"><span>Engineering & Technology</span><span>Pharmacy</span><span>Management</span><span>Hospitality & Tourism</span><span>Fashion Design</span><span>Nutrition & Dietetics</span><span>Research & Development</span><span>Entrepreneurship Cell</span><span>Alumni</span><span>Campus Placements</span><span>Centre of Excellence</span><span>Digital Learning / NPTEL</span></div>
-</section>
-
-<section class="section contact-panel">
-  <div><span class="eyebrow">CONTACT DIRECTORY</span><h2>{{ college_name }}</h2><p>{{ agc_profile.address }}</p><p>For project/demo purposes, institutional links and social handles can be configured in the project settings.</p></div>
-  <div class="directory-grid"><span>Admissions</span><span>Academics</span><span>Examination</span><span>Research</span><span>Placement</span><span>Alumni</span><span>Grievance Redressal</span><span>Infrastructure</span><span>Life @ AGC</span><span>Contact Us</span></div>
-</section>
-
-<section class="cta"><h2>Make AGC campus events smarter.</h2><p>Register, participate, organize, check-in and analyse events from one system.</p><a class="btn" href="{{ url_for('register') }}">Create CEMS Account</a></section>
 {% endblock %}
+

@@ -1,5 +1,63 @@
 {% extends "base.html" %}
 {% block title %}My Registrations — CEMS{% endblock %}
+{% block breadcrumb %}My Registrations{% endblock %}
+
 {% block content %}
-<div class="dashboard"><aside class="sidebar"><div class="side-brand">CEMS</div><a href="{{ url_for('student_dashboard') }}">▣ Dashboard</a><a href="{{ url_for('events') }}">◫ Events</a><a class="active" href="{{ url_for('my_registrations') }}">✓ My Registrations</a><a href="{{ url_for('my_tickets') }}">▣ My Tickets</a><a href="{{ url_for('student_notifications') }}">♢ Notifications</a><a href="{{ url_for('profile') }}">♙ Profile</a><a href="{{ url_for('logout') }}">↪ Logout</a></aside><section class="dash-main"><h1>My Registrations</h1><div class="table-card"><table><thead><tr><th>Event</th><th>Date</th><th>Venue</th><th>Status</th><th>Action</th></tr></thead><tbody>{% for r in registrations %}<tr><td>{{ r.event.title }}</td><td>{{ r.event.date.strftime('%d %b %Y') }}</td><td>{{ r.event.venue }}</td><td><span class="status {{ 'success' if r.status=='confirmed' else 'danger' }}">{{ r.status|title }}</span>{% if r.attended %} <span class="status info">Attended</span>{% endif %}</td><td><a href="{{ url_for('ticket', registration_id=r.id) }}">Ticket</a>{% if r.attended %} · <a href="{{ url_for('certificate', registration_id=r.id) }}">Certificate</a>{% endif %}<form class="inline-feedback" method="post" action="{{ url_for('feedback', registration_id=r.id) }}"><select name="rating"><option value="5">★★★★★</option><option value="4">★★★★</option><option value="3">★★★</option><option value="2">★★</option><option value="1">★</option></select><input name="comment" placeholder="Feedback"><button>Send</button></form></td></tr>{% else %}<tr><td colspan="5" class="empty">No registrations yet.</td></tr>{% endfor %}</tbody></table></div></section></div>
+<div class="cems-page-header">
+  <div class="cems-page-header-top">
+    <div>
+      <h1 class="cems-page-title">My Registrations</h1>
+      <p class="cems-page-description">Track your event registrations and attendance.</p>
+    </div>
+  </div>
+</div>
+
+{% if registrations %}
+<div class="cems-table-container">
+  <div class="cems-overflow-x-auto">
+    <table class="cems-table">
+      <thead>
+        <tr>
+          <th>Event</th>
+          <th>Category</th>
+          <th>Date</th>
+          <th>Venue</th>
+          <th>Registered On</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in registrations %}
+        <tr>
+          <td><strong>{{ r.event.title }}</strong></td>
+          <td><span class="cems-badge cems-badge-primary">{{ r.event.category }}</span></td>
+          <td>{{ r.event.date.strftime('%d %b %Y') }}</td>
+          <td>{{ r.event.venue }}</td>
+          <td>{{ r.registered_at.strftime('%d %b %Y') }}</td>
+          <td>
+            <span class="cems-badge {% if r.attended %}cems-badge-success{% else %}cems-badge-warning{% endif %}">
+              {{ 'Attended' if r.attended else 'Registered' }}
+            </span>
+          </td>
+          <td>
+            <div class="cems-table-actions">
+              <a href="{{ url_for('ticket', registration_id=r.id) }}" class="cems-btn cems-btn-secondary cems-btn-sm">Ticket</a>
+              <a href="{{ url_for('ticket_download', registration_id=r.id) }}" class="cems-btn cems-btn-primary cems-btn-sm">Download</a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="cems-empty">
+  <div class="cems-empty-icon">📋</div>
+  <div class="cems-empty-title">No registrations yet</div>
+  <div class="cems-empty-description">Browse events and register to see them here.</div>
+  <a href="{{ url_for('events') }}" class="cems-btn cems-btn-primary" style="margin-top: 20px;">Browse Events</a>
+</div>
+{% endif %}
 {% endblock %}

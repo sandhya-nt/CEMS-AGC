@@ -1,5 +1,137 @@
 {% extends "base.html" %}
 {% block title %}Manage Event — CEMS{% endblock %}
+{% block breadcrumb %}Manage Event{% endblock %}
+
 {% block content %}
-<div class="narrow-wide"><div class="page-head"><div><span class="tag">{{ event.status }}</span><h1>Manage {{ event.title }}</h1></div><a class="btn" href="{{ url_for('organizer_registrations', event_id=event.id) }}">View Registrations</a></div><form method="post" class="form-card inline-card"><label>Event Title<input name="title" value="{{ event.title }}" required></label><div class="form-grid"><label>Category<input name="category" value="{{ event.category }}"></label><label>Venue<input name="venue" value="{{ event.venue }}"></label></div><label>Capacity<input type="number" name="capacity" value="{{ event.capacity }}"></label><label>Description<textarea name="description" rows="5">{{ event.description }}</textarea></label><label>Highlights<textarea name="highlights" rows="4">{{ event.highlights }}</textarea></label><button class="btn">Save Changes</button></form></div>
+<div class="cems-page-header">
+  <div class="cems-page-header-top">
+    <div>
+      <h1 class="cems-page-title">Manage {{ event.title }}</h1>
+      <p class="cems-page-description">
+          <span class="cems-badge
+            {% if event.status=='approved' %}cems-badge-success
+            {% elif event.status in ('pending', 'waiting') %}cems-badge-warning
+            {% elif event.status=='rejected' %}cems-badge-danger
+            {% else %}cems-badge-neutral{% endif %}">
+            {{ event.status|replace('_', ' ')|title }}
+          </span>
+        {% if event.change_status == 'pending' %}
+        <span class="cems-badge cems-badge-warning" style="margin-left: 8px;">Change Pending Approval</span>
+        {% endif %}
+        {% if event.rejection_reason %}
+        <span style="color: var(--cems-danger); margin-left: 8px; font-size: 0.9rem;">Reason: {{ event.rejection_reason }}</span>
+        {% endif %}
+      </p>
+    </div>
+    <div class="cems-page-actions">
+      <a href="{{ url_for('organizer_registrations', event_id=event.id) }}" class="cems-btn cems-btn-secondary">
+        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+        View Registrations
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="cems-card" style="max-width: 800px;">
+  <div class="cems-card-body">
+    <form method="post" class="cems-form-grid">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      
+      <div class="cems-form-group">
+        <label class="cems-form-label">Event Title</label>
+        <input type="text" name="title" class="cems-form-input" value="{{ event.title }}" required>
+      </div>
+      
+      <div class="cems-grid-2">
+        <div class="cems-form-group">
+          <label class="cems-form-label">Category</label>
+          <select name="category" class="cems-form-select">
+            <option {% if event.category=='Technical' %}selected{% endif %}>Technical</option>
+            <option {% if event.category=='Cultural' %}selected{% endif %}>Cultural</option>
+            <option {% if event.category=='Sports' %}selected{% endif %}>Sports</option>
+            <option {% if event.category=='Workshop' %}selected{% endif %}>Workshop</option>
+            <option {% if event.category=='Seminar' %}selected{% endif %}>Seminar</option>
+            <option {% if event.category=='Competition' %}selected{% endif %}>Competition</option>
+            <option {% if event.category=='Academic' %}selected{% endif %}>Academic</option>
+            <option {% if event.category=='Entrepreneurship' %}selected{% endif %}>Entrepreneurship</option>
+            <option {% if event.category=='Other' %}selected{% endif %}>Other</option>
+          </select>
+        </div>
+        <div class="cems-form-group">
+          <label class="cems-form-label">Venue</label>
+          <input type="text" name="venue" class="cems-form-input" value="{{ event.venue }}">
+        </div>
+      </div>
+      
+      <div class="cems-grid-2">
+        <div class="cems-form-group">
+          <label class="cems-form-label">Date</label>
+          <input type="date" name="date" class="cems-form-input" value="{{ event.date.strftime('%Y-%m-%d') if event.date else '' }}">
+        </div>
+        <div class="cems-form-group">
+          <label class="cems-form-label">Registration Deadline</label>
+          <input type="date" name="registration_deadline" class="cems-form-input" value="{{ event.registration_deadline.strftime('%Y-%m-%d') if event.registration_deadline else '' }}">
+        </div>
+      </div>
+      
+      <div class="cems-grid-2">
+        <div class="cems-form-group">
+          <label class="cems-form-label">Start Time</label>
+          <input type="text" name="start_time" class="cems-form-input" value="{{ event.start_time }}">
+        </div>
+        <div class="cems-form-group">
+          <label class="cems-form-label">End Time</label>
+          <input type="text" name="end_time" class="cems-form-input" value="{{ event.end_time }}">
+        </div>
+      </div>
+      
+      <div class="cems-form-group">
+        <label class="cems-form-label">Capacity</label>
+        <input type="number" name="capacity" class="cems-form-input" value="{{ event.capacity }}">
+      </div>
+      
+      <div class="cems-form-group">
+        <label class="cems-form-label">Description</label>
+        <textarea name="description" class="cems-form-textarea" rows="5">{{ event.description }}</textarea>
+      </div>
+      
+      <div class="cems-form-group">
+        <label class="cems-form-label">Highlights</label>
+        <textarea name="highlights" class="cems-form-textarea" rows="4">{{ event.highlights }}</textarea>
+      </div>
+      
+      <div class="cems-form-group">
+        <label class="cems-form-label">Event Rules</label>
+        <textarea name="rules" class="cems-form-textarea" rows="3">{{ event.rules or '' }}</textarea>
+      </div>
+      
+      <div class="cems-form-group">
+        <label class="cems-form-label">Eligibility Criteria</label>
+        <textarea name="eligibility" class="cems-form-textarea" rows="3">{{ event.eligibility or '' }}</textarea>
+      </div>
+      
+      <div class="cems-form-group">
+        <label class="cems-form-label">Contact Information</label>
+        <textarea name="contact_info" class="cems-form-textarea" rows="2">{{ event.contact_info or '' }}</textarea>
+      </div>
+      
+      <div class="cems-grid-2">
+        <div class="cems-form-group">
+          <label class="cems-form-label">Main Guest</label>
+          <input type="text" name="main_guest" class="cems-form-input" value="{{ event.main_guest or '' }}">
+        </div>
+        <div class="cems-form-group">
+          <label class="cems-form-label">Chief Guest</label>
+          <input type="text" name="chief_guest" class="cems-form-input" value="{{ event.chief_guest or '' }}">
+        </div>
+      </div>
+      
+      <button type="submit" class="cems-btn cems-btn-primary">
+        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+        Save Changes
+      </button>
+    </form>
+  </div>
+</div>
 {% endblock %}
+

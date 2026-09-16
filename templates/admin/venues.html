@@ -3,7 +3,7 @@
 {% block content %}
 <div class="narrow-wide">
   <div class="page-head"><div><span class="eyebrow">SUPPORTING MODULE</span><h1>Venue Management</h1></div></div>
-  <form method="post" class="form-card inline-card">
+  <form method="post" class="form-card inline-card"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div class="form-grid"><label>Venue Name<input name="name" required placeholder="Main Auditorium"></label><label>Capacity<input type="number" name="capacity" value="100"></label></div>
     <label>Location<input name="location" placeholder="AGC Campus"></label>
     <button class="btn">Add Venue</button>
@@ -13,3 +13,4 @@
   </tbody></table></div>
 </div>
 {% endblock %}
+

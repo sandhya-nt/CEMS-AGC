@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+{% block title %}QR Scanner — CEMS{% endblock %}
+{% block breadcrumb %}Check-in{% endblock %}
+
+{% block extra_css %}
+<style>
+.cems-qr-scanner-container { max-width: 560px; margin: 0 auto; }
+.cems-qr-scanner-video-wrap {
+  border-radius: var(--cems-radius-xl);
+  overflow: hidden;
+  background: #000;
+  margin-bottom: 20px;
+  position: relative;
+  box-shadow: var(--cems-shadow-xl);
+}
+.cems-qr-scanner-video-wrap video { width: 100%; height: auto; display: block; }
+.cems-qr-result {
+  background: var(--cems-bg-primary);
+  border: 1px solid var(--cems-border);
+  border-radius: var(--cems-radius-lg);
+  padding: 20px;
+  margin-top: 20px;
+  display: none;
+}
+.cems-qr-result.show { display: block; animation: cemsFadeIn 0.3s ease-out; }
+@keyframes cemsFadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+.cems-qr-result-success { border-left: 4px solid var(--cems-success); }
+.cems-qr-result-error { border-left: 4px solid var(--cems-danger); }
+.cems-qr-overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 10;
+}
+.cems-qr-overlay svg { width: 24px; height: 24px; stroke: var(--cems-success); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="cems-page-header">
+  <div class="cems-page-header-top">
+    <div>
+      <h1 class="cems-page-title">QR Code Scanner — Check-in</h1>
+      <p class="cems-page-description">Scan participant QR codes to mark attendance in real-time.</p>
+    </div>
+    <div class="cems-btn-group">
+      <a href="{{ url_for('checkin') }}" class="cems-btn cems-btn-secondary cems-btn-sm">Manual Entry</a>
+    </div>
+  </div>
+</div>
+
+<div class="cems-qr-scanner-container">
+  <div class="cems-qr-scanner-video-wrap" id="qr-video-wrap">
+    <div class="cems-qr-overlay" id="qr-overlay">
+      <svg fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="8" y="8" width="20" height="20" rx="2"></rect>
+        <rect x="308" y="8" width="20" height="20" rx="2"></rect>
+        <rect x="8" y="304" width="20" height="20" rx="2"></rect>
+        <rect x="308" y="304" width="20" height="20" rx="2"></rect>
+      </svg>
+    </div>
+    <video id="qr-video" playsinline style="width: 100%; height: auto;"></video>
+  </div>
+
+  <div id="qr-result" class="cems-qr-result">
+    <div class="cems-qr-result-content">
+      <div class="cems-qr-result-success" id="qr-success-alert" style="display:none; padding:12px; border-radius:8px; background:var(--cems-success-bg); color:var(--cems-success-dark); margin-bottom:12px;">
+        <b>✅ Check-in successful!</b>
+      </div>
+      <div class="cems-qr-result-error" id="qr-error-alert" style="display:none; padding:12px; border-radius:8px; background:var(--cems-danger-bg); color:var(--cems-danger-dark); margin-bottom:12px;">
+        <b>❌ Check-in failed.</b> <span id="qr-error-message"></span>
+      </div>
+      <div id="qr-participant-info" style="display:none;">
+        <h3 style="margin-bottom:12px; color:var(--cems-text-primary);">Participant Details</h3>
+        <div style="display:flex; gap:16px; flex-wrap:wrap;">
+          <div style="flex:1; min-width:140px;">
+            <label style="font-size:0.75rem; color:var(--cems-text-muted);">Name</label>
+            <div id="qr-participant-name" style="font-weight:600;"></div>
+          </div>
+          <div style="flex:1; min-width:140px;">
+            <label style="font-size:0.75rem; color:var(--cems-text-muted);">Ticket ID</label>
+            <div id="qr-ticket-code" style="font-weight:600;"></div>
+          </div>
+          <div style="flex:1; min-width:140px;">
+            <label style="font-size:0.75rem; color:var(--cems-text-muted);">Event</label>
+            <div id="qr-event-title" style="font-weight:600;"></div>
+          </div>
+          <div style="flex:1; min-width:140px;">
+            <label style="font-size:0.75rem; color:var(--cems-text-muted);">Check-in Time</label>
+            <div id="qr-checkin-time" style="font-weight:600;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top: 20px; text-align: center;">
+    <button class="cems-btn cems-btn-secondary cems-btn-sm" id="qr-reset-btn" style="display:none;">
+      Scan Another
+    </button>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script>
+(function() {
+  const html5QrCode = new Html5Qrcode("qr-video");
+  const resultContainer = document.getElementById("qr-result");
+  const successAlert = document.getElementById("qr-success-alert");
+  const errorAlert = document.getElementById("qr-error-alert");
+  const errorMsg = document.getElementById("qr-error-message");
+  const participantInfo = document.getElementById("qr-participant-info");
+  const resetBtn = document.getElementById("qr-reset-btn");
+  const csrfToken = '{{ csrf_token() }}';
+
+  function showResult(htmlClass, message, participant, event, ticket, checkinTime) {
+    if (htmlClass === 'success') {
+      successAlert.style.display = 'block';
+      errorAlert.style.display = 'none';
+      document.getElementById('qr-participant-name').textContent = participant || '—';
+      document.getElementById('qr-ticket-code').textContent = ticket || '—';
+      document.getElementById('qr-event-title').textContent = event || '—';
+      document.getElementById('qr-checkin-time').textContent = checkinTime || '—';
+      participantInfo.style.display = 'block';
+    } else {
+      errorAlert.style.display = 'block';
+      successAlert.style.display = 'none';
+      errorMsg.textContent = message;
+      participantInfo.style.display = 'none';
+    }
+    resultContainer.classList.add('show');
+    resultContainer.className = 'cems-qr-result show cems-qr-result-' + htmlClass;
+    resetBtn.style.display = 'inline-flex';
+  }
+
+  function resetScanner() {
+    resultContainer.classList.remove('show');
+    resultContainer.className = 'cems-qr-result';
+    successAlert.style.display = 'none';
+    errorAlert.style.display = 'none';
+    participantInfo.style.display = 'none';
+    resetBtn.style.display = 'none';
+    html5QrCode.resume().catch(() => {});
+  }
+
+  function submitCheckin(decodedText) {
+    html5QrCode.pause();
+    fetch('{{ url_for("api_checkin") }}', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrfToken
+      },
+      body: JSON.stringify({ ticket_code: decodedText })
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        showResult('success', null, data.participant, data.event, data.ticket_code, data.checkin_time);
+        if (data.already_attended) {
+          successAlert.innerHTML = '<b>⚠️ Already checked in</b>';
+        }
+      } else {
+        showResult('error', data.message || 'Unknown error', null, null, null, null);
+      }
+    })
+    .catch(err => {
+      showResult('error', 'Network error. Please try again.', null, null, null, null);
+      console.error(err);
+    });
+  }
+
+  let scanning = true;
+
+  html5QrCode.start(
+    { facingMode: "environment" },
+    {
+      fps: 10,
+      qrbox: { width: 250, height: 250 }
+    },
+    decoded => {
+      if (!scanning) return;
+      scanning = false;
+      submitCheckin(decoded);
+    },
+    err => { console.warn("QR scan error:", err); }
+  ).catch(err => {
+    document.getElementById('qr-video-wrap').innerHTML =
+      '<div style="padding:40px;text-align:center;"><p style="color:var(--cems-danger);font-weight:600;">❌ Camera access denied or unavailable.</p><p style="color:var(--cems-text-muted);margin-top:10px;">Please use the manual entry form instead.</p><a href="{{ url_for("checkin") }}" class="cems-btn cems-btn-primary" style="margin-top:15px;">Go to Manual Check-in</a></div>';
+  });
+
+  resetBtn.addEventListener('click', resetScanner);
+})();
+</script>
+{% endblock %}
