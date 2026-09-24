@@ -1,5 +1,249 @@
 {% extends "base.html" %}
 {% block title %}Admin Reports — CEMS{% endblock %}
+{% block breadcrumb %}Reports & Analytics{% endblock %}
+
+{% block extra_css %}
+<style>
+  .cems-rating-stars { display: flex; gap: 2px; color: var(--cems-warning); font-size: 1.1rem; }
+  .cems-rating-bar-container { display: flex; align-items: center; gap: 8px; }
+  .cems-rating-bar-track { flex: 1; height: 10px; background: var(--cems-gray-200); border-radius: 4px; overflow: hidden; }
+  .cems-rating-bar-fill { height: 100%; border-radius: 4px; }
+  .cems-theme-tag {
+    display: inline-block;
+    margin: 4px 8px 4px 0;
+    padding: 4px 12px;
+    background: var(--cems-primary);
+    color: #fff;
+    border-radius: 12px;
+    font-weight: 500;
+  }
+  #categoryChartContainer { max-width: 100%; height: 240px; }
+  #topEventsChartContainer { max-width: 100%; height: 300px; }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="narrow-wide"><h1>Reports & Analytics</h1><div class="stats"><div><span>Users</span><strong>{{ users }}</strong></div><div><span>Events</span><strong>{{ events }}</strong></div><div><span>Registrations</span><strong>{{ registrations }}</strong></div><div><span>Attendees</span><strong>{{ attendees }}</strong></div></div><div class="chart-card"><h2>System Insights</h2><p>Average feedback rating: <b>{{ avg_rating }}/5</b></p><p>Recorded paid-event revenue: <b>₹{{ '%.2f'|format(total_revenue) }}</b></p><div class="bars"><span style="height:{{ [users*8,20]|max }}px"></span><span style="height:{{ [events*15,20]|max }}px"></span><span style="height:{{ [registrations*4,20]|max }}px"></span><span style="height:{{ [attendees*4,20]|max }}px"></span></div><div class="bar-labels"><span>Users</span><span>Events</span><span>Registrations</span><span>Attendees</span></div></div></div>
+<div class="cems-page-header">
+  <div class="cems-page-header-top">
+    <div>
+      <h1 class="cems-page-title">Reports & Analytics</h1>
+      <p class="cems-page-description">System-wide statistics and feedback overview.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Core stats -->
+<div class="cems-stats-grid">
+  <div class="cems-stat-card">
+    <div class="cems-stat-icon primary">
+      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a1 1 0 011 0l8 4.5a1 1 0 01.5.866v5.054a3.001 3.001 0 01-1.5 2.663l-8 4.5a1 1 0 01-1.25 0l-8-4.5A3 3 0 013 13.779V8.72a1 1 0 01.5-.866l8-4.5a1 1 0 011 0z"></path></svg>
+    </div>
+    <div class="cems-stat-content">
+      <div class="cems-stat-value">{{ users }}</div>
+      <div class="cems-stat-label">Users</div>
+    </div>
+  </div>
+  <div class="cems-stat-card">
+    <div class="cems-stat-icon info">
+      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 000-2H5a2 2 000-2V7a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+    </div>
+    <div class="cems-stat-content">
+      <div class="cems-stat-value">{{ events }}</div>
+      <div class="cems-stat-label">Events</div>
+    </div>
+  </div>
+  <div class="cems-stat-card">
+    <div class="cems-stat-icon success">
+      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+    </div>
+    <div class="cems-stat-content">
+      <div class="cems-stat-value">{{ registrations }}</div>
+      <div class="cems-stat-label">Registrations</div>
+    </div>
+  </div>
+  <div class="cems-stat-card">
+    <div class="cems-stat-icon warning">
+      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h-5a2 2 0 01-2-2v-3m2-13h5a2 2 0 012 2v13a2 2 0 01-2 2h-5m-4 0h8m-8-16h8m-8 4h8m-8 4h8m-8 4h5"></path></svg>
+    </div>
+    <div class="cems-stat-content">
+      <div class="cems-stat-value">{{ attendees }}</div>
+      <div class="cems-stat-label">Attendees</div>
+    </div>
+  </div>
+  <div class="cems-stat-card">
+    <div class="cems-stat-icon primary">
+      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.25 11.25l.041-.020a.72.72 0 011.063.864l-.708 2.832a.72.72 0 001.065.862l.041-.021M21 12c0 9-9 21-9 21S3 21 3 12a9 9 0 1118 0z"></path></svg>
+    </div>
+    <div class="cems-stat-content">
+      <div class="cems-stat-value">₹{{ '%.2f'|format(total_revenue) }}</div>
+      <div class="cems-stat-label">Paid Revenue</div>
+    </div>
+  </div>
+</div>
+
+<!-- Feedback overview -->
+{% if total_feedbacks %}
+<div class="cems-stats-grid" style="margin-top: 24px;">
+  <div class="cems-stat-card">
+    <div class="cems-stat-icon info">
+      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 000-2H5a2 2 000-2V7a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+    </div>
+    <div class="cems-stat-content">
+      <div class="cems-stat-value">{{ total_feedbacks }}</div>
+      <div class="cems-stat-label">Total Feedbacks</div>
+    </div>
+  </div>
+  <div class="cems-stat-card">
+    <div class="cems-stat-icon success">
+      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.25 11.25l.041-.020a.72.72 0 011.063.864l-.708 2.832a.72.72 0 001.065.862l.041-.021M21 12c0 9-9 21-9 21S3 21 3 12a9 9 0 1118 0z"></path></svg>
+    </div>
+    <div class="cems-stat-content">
+      <div class="cems-stat-value">{{ avg_rating }}</div>
+      <div class="cems-stat-label">Avg Rating</div>
+    </div>
+  </div>
+  <div class="cems-stat-card">
+    <div class="cems-stat-icon warning">
+      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+    </div>
+    <div class="cems-stat-content">
+      <div class="cems-stat-value">{{ anonymous_count }}</div>
+      <div class="cems-stat-label">Anonymous</div>
+    </div>
+  </div>
+</div>
+
+<!-- Rating Distribution + Category Averages charts -->
+<div class="cems-grid cems-grid-cols-2" style="gap: 24px; margin-top: 24px;">
+  <div class="cems-card">
+    <div class="cems-card-header">
+      <div class="cems-card-title">Rating Distribution</div>
+    </div>
+    <div class="cems-card-body" id="ratingDistChartContainer" style="height: 240px;">
+      <canvas id="ratingDistChart"></canvas>
+    </div>
+  </div>
+  <div class="cems-card">
+    <div class="cems-card-header">
+      <div class="cems-card-title">Category Averages</div>
+    </div>
+    <div class="cems-card-body" id="categoryChartContainer" style="height: 240px;">
+      <canvas id="categoryChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- Top Events by Feedback + Theme Cloud -->
+<div class="cems-grid cems-grid-cols-2" style="gap: 24px; margin-top: 24px;">
+  <div class="cems-card">
+    <div class="cems-card-header">
+      <div class="cems-card-title">Top Events by Feedback</div>
+    </div>
+    <div class="cems-card-body" style="height: 300px; overflow-y: auto;">
+      <table class="cems-table" id="topEventsTable">
+        <thead>
+          <tr><th>Event</th><th>Feedbacks</th><th>Avg</th></tr>
+        </thead>
+        <tbody id="topEventsBody">
+          {% for te in top_events %}
+          <tr>
+            <td><strong>{{ te.title }}</strong><br><small style="color:var(--cems-text-muted);">{{ te.category }}</small></td>
+            <td>{{ te.feedback_count }}</td>
+            <td><span style="color:var(--cems-warning);">{% for i in range(1,6) %}{% if i <= (te.avg_rating|round|int) %}★{% else %}☆{% endif %}{% endfor %}</span> {{ te.avg_rating }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="cems-card">
+    <div class="cems-card-header">
+      <div class="cems-card-title">Top Themes</div>
+    </div>
+    <div class="cems-card-body">
+      {% if themes %}
+      <div id="themeCloud">
+        {% for t in themes %}
+        <span class="cems-theme-tag" style="font-size:{{ 12 + (t.count / (themes[0].count or 1)) * 8 | round | int }}px">{{ t.theme }} ({{ t.count }})</span>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div style="color: var(--cems-text-muted); font-size: 0.85rem;">No themes identified.</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="cems-card" style="margin-top: 24px;">
+  <div class="cems-card-body" style="text-align: center; padding: 48px;">
+    <div style="font-size: 3rem; margin-bottom: 12px;">💬</div>
+    <div class="cems-empty-title">No feedback submitted yet</div>
+    <div class="cems-empty-description">Feedback ratings and analytics will appear here once students start submitting evaluations.</div>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Rating distribution chart
+  const distCtx = document.getElementById('ratingDistChart').getContext('2d');
+  const distData = {
+    labels: ['5 Star', '4 Star', '3 Star', '2 Star', '1 Star'],
+    datasets: [{
+      label: 'Count',
+      data: [
+        {{ rating_distribution.get(5, 0) }},
+        {{ rating_distribution.get(4, 0) }},
+        {{ rating_distribution.get(3, 0) }},
+        {{ rating_distribution.get(2, 0) }},
+        {{ rating_distribution.get(1, 0) }}
+      ],
+      backgroundColor: ['#10b981', '#3b82f6', '#eab308', '#f97316', '#ef4444'],
+      borderColor: ['#10b981', '#3b82f6', '#eab308', '#f97316', '#ef4444'],
+      borderWidth: 1
+    }]
+  };
+  new Chart(distCtx, {
+    type: 'bar',
+    data: distData,
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: { x: { beginAtZero: true, ticks: { precision: 0 } } },
+      plugins: { legend: { display: false } }
+    }
+  });
+
+  // Category averages chart
+  const catCtx = document.getElementById('categoryChart').getContext('2d');
+  const catAvg = {{ category_averages | tojson }};
+  new Chart(catCtx, {
+    type: 'bar',
+    data: {
+      labels: ['Organization', 'Venue', 'Speaker', 'Registration'],
+      datasets: [{
+        label: 'Avg Rating',
+        data: [catAvg.organization || 0, catAvg.venue || 0, catAvg.speaker || 0, catAvg.registration || 0],
+        backgroundColor: ['#3b82f6', '#10b981', '#0ea5e2', '#f59e0b'],
+        borderColor: ['#3b82f6', '#10b981', '#0ea5e2', '#f59e0b'],
+        borderWidth: 1,
+        maxBarThickness: 40
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: { x: { beginAtZero: true, max: 5, ticks: { precision: 1 } } },
+      plugins: { legend: { display: false } }
+    }
+  });
+});
+</script>
 {% endblock %}

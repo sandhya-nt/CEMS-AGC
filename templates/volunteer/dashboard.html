@@ -1,24 +1,166 @@
 {% extends "base.html" %}
 {% block title %}Volunteer Dashboard — CEMS{% endblock %}
-{% block breadcrumb %}Dashboard{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{{ url_for('static', filename='css/volunteer.css') }}">{% endblock %}
 
 {% block content %}
 <div class="cems-page-header">
   <div class="cems-page-header-top">
     <div>
-      <h1 class="cems-page-title">Welcome, {{ current_user.name }}!</h1>
-      <p class="cems-page-description">Volunteer dashboard. More features coming soon.</p>
+      <h1 class="cems-page-title">Volunteer Dashboard</h1>
+      <p class="cems-page-description">Manage your applications, shifts, service hours, and event history.</p>
+    </div>
+    <div class="cems-page-actions">
+      <a href="{{ url_for('volunteer_opportunities') }}" class="cems-btn cems-btn-primary">Find Opportunities</a>
     </div>
   </div>
 </div>
 
-<div class="cems-card">
-  <div class="cems-card-body">
-    <div class="cems-empty">
-      <div class="cems-empty-icon">🤝</div>
-      <div class="cems-empty-title">Volunteer Portal</div>
-      <div class="cems-empty-description">Your volunteer assignments and event support tools will be available here.</div>
+<div class="volunteer-layout">
+  <aside class="volunteer-sidebar" aria-label="Volunteer navigation">
+    <a class="active" href="{{ url_for('volunteer_dashboard') }}">Dashboard</a>
+    <a href="{{ url_for('volunteer_opportunities') }}">Opportunities</a>
+    <a href="{{ url_for('volunteer_my_shifts') }}">My Shifts</a>
+    <a href="{{ url_for('volunteer_history') }}">History</a>
+  </aside>
+
+  <main>
+    <section class="volunteer-hero">
+      <h1>Welcome, {{ current_user.name }}</h1>
+      <p>Your volunteer activity helps make every AGC event welcoming, organized, and memorable.</p>
+    </section>
+
+    <div class="volunteer-stats">
+      <div class="volunteer-stat">
+        <span class="volunteer-stat-icon">◷</span>
+        <span class="volunteer-stat-value">{{ dashboard.upcoming|default([])|length }}</span>
+        <span class="volunteer-stat-label">Upcoming Assignments</span>
+      </div>
+      <div class="volunteer-stat">
+        <span class="volunteer-stat-icon">□</span>
+        <span class="volunteer-stat-value">{{ dashboard.today|default([])|length }}</span>
+        <span class="volunteer-stat-label">Today's Assignments</span>
+      </div>
+      <div class="volunteer-stat">
+        <span class="volunteer-stat-icon">✓</span>
+        <span class="volunteer-stat-value">{{ dashboard.completed|default([])|length }}</span>
+        <span class="volunteer-stat-label">Completed Shifts</span>
+      </div>
+      <div class="volunteer-stat">
+        <span class="volunteer-stat-icon">♧</span>
+        <span class="volunteer-stat-value">{{ dashboard.total_hours|default(0) }}h</span>
+        <span class="volunteer-stat-label">Total Volunteer Hours</span>
+      </div>
     </div>
-  </div>
+
+    <div class="volunteer-grid">
+      <section class="volunteer-card">
+        <div class="volunteer-card-header">
+          <div>
+            <h2 class="volunteer-card-title">Today's Assignments</h2>
+            <p class="volunteer-card-subtitle">Report on time and bring your student ID.</p>
+          </div>
+          <a href="{{ url_for('volunteer_my_shifts') }}" class="cems-btn cems-btn-secondary cems-btn-sm">View all</a>
+        </div>
+        <div class="volunteer-card-body">
+          <div class="assignment-list">
+            {% for assignment in dashboard.today|default([]) %}
+            <article class="assignment-item">
+              <div>
+                <h3 class="assignment-title">{{ assignment.role.name if assignment.role else assignment.task }}</h3>
+                <p class="assignment-meta">{{ assignment.event.title }}<br>{{ assignment.shift_start.strftime('%d %b %Y, %I:%M %p') if assignment.shift_start else 'Shift time pending' }} · {{ assignment.event.venue }}</p>
+              </div>
+              <div class="volunteer-actions">
+                <span class="volunteer-status {% if assignment.status == 'confirmed' %}success{% elif assignment.status == 'present' %}warning{% endif %}">{{ assignment.status|replace('_', ' ')|title }}</span>
+                <a href="{{ url_for('volunteer_my_shifts') }}" class="cems-btn cems-btn-secondary cems-btn-sm">Details</a>
+              </div>
+            </article>
+            {% else %}
+            <div class="volunteer-empty"><strong>No shifts today</strong>Your scheduled volunteer shifts will appear here.</div>
+            {% endfor %}
+          </div>
+        </div>
+      </section>
+
+      <section class="volunteer-card">
+        <div class="volunteer-card-header">
+          <div>
+            <h2 class="volunteer-card-title">Pending Applications</h2>
+            <p class="volunteer-card-subtitle">Organizers will review your requests.</p>
+          </div>
+          <a href="{{ url_for('volunteer_opportunities') }}" class="cems-btn cems-btn-secondary cems-btn-sm">Browse</a>
+        </div>
+        <div class="volunteer-card-body">
+          <div class="assignment-list">
+            {% for application in dashboard.applications|default([]) if application.status == 'pending' %}
+            <article class="assignment-item">
+              <div>
+                <h3 class="assignment-title">{{ application.role.name if application.role else 'Volunteer role' }}</h3>
+                <p class="assignment-meta">{{ application.event.title }}<br>Submitted {{ application.created_at.strftime('%d %b %Y') if application.created_at else '' }}</p>
+              </div>
+              <div class="volunteer-actions">
+                <span class="volunteer-status warning">Pending</span>
+                <form method="post" action="{{ url_for('volunteer_cancel_application', application_id=application.id) }}">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button class="cems-btn cems-btn-danger cems-btn-sm" type="submit">Cancel</button>
+                </form>
+              </div>
+            </article>
+            {% else %}
+            <div class="volunteer-empty"><strong>No pending applications</strong>Apply for an upcoming event to get started.</div>
+            {% endfor %}
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <section class="volunteer-section-head">
+      <h2>Upcoming Assignments</h2>
+      <a href="{{ url_for('volunteer_my_shifts') }}" class="cems-btn cems-btn-secondary cems-btn-sm">Open my shifts</a>
+    </section>
+    <section class="volunteer-card">
+      <div class="volunteer-card-body">
+        <div class="assignment-list">
+          {% for assignment in dashboard.upcoming|default([]) %}
+          <article class="assignment-item">
+            <div>
+              <h3 class="assignment-title">{{ assignment.role.name if assignment.role else assignment.task }}</h3>
+              <p class="assignment-meta">{{ assignment.event.title }} · {{ assignment.shift_start.strftime('%A, %d %B %Y') if assignment.shift_start else '' }}<br>{{ assignment.shift_start.strftime('%I:%M %p') if assignment.shift_start else '' }}–{{ assignment.shift_end.strftime('%I:%M %p') if assignment.shift_end else '' }} · {{ assignment.event.venue }}</p>
+              {% if assignment.notes %}<p class="volunteer-note" style="margin-top:10px;">{{ assignment.notes }}</p>{% endif %}
+            </div>
+            <div class="volunteer-actions">
+              <span class="volunteer-status {% if assignment.status == 'confirmed' %}success{% endif %}">{{ assignment.status|replace('_', ' ')|title }}</span>
+              <a href="{{ url_for('volunteer_my_shifts') }}" class="cems-btn cems-btn-secondary cems-btn-sm">View shift</a>
+            </div>
+          </article>
+          {% else %}
+          <div class="volunteer-empty"><strong>No upcoming assignments</strong>Explore volunteer opportunities for upcoming AGC events.</div>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+
+    <section class="volunteer-section-head">
+      <h2>Recent Event History</h2>
+      <a href="{{ url_for('volunteer_history') }}" class="cems-btn cems-btn-secondary cems-btn-sm">View history</a>
+    </section>
+    <section class="volunteer-card">
+      <div class="volunteer-card-body">
+        <div class="history-list">
+          {% set completed_recent = dashboard.completed|default([])|list %}
+          {% for assignment in completed_recent[:4] %}
+          <article class="history-item">
+            <div>
+              <h3 class="history-title">{{ assignment.event.title }}</h3>
+              <p class="history-meta">{{ assignment.role.name if assignment.role else assignment.task }} · {{ assignment.shift_start.strftime('%d %b %Y') if assignment.shift_start else '' }} · {{ assignment.hours_worked or 0 }} hours</p>
+            </div>
+            <span class="volunteer-status success">Completed</span>
+          </article>
+          {% else %}
+          <div class="volunteer-empty"><strong>No completed shifts yet</strong>Completed volunteer duties will build your service history here.</div>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+  </main>
 </div>
 {% endblock %}

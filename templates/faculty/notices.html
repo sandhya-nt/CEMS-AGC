@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block title %}Faculty Notice Board — CEMS{% endblock %}
+{% block breadcrumb %}Faculty Notices{% endblock %}
+
+{% block content %}
+<div class="cems-page-header">
+  <div class="cems-page-header-top">
+    <div>
+      <h1 class="cems-page-title">Faculty Notice Board 📋</h1>
+      <p class="cems-page-description">Campus announcements visible only to faculty</p>
+    </div>
+  </div>
+</div>
+
+<form method="post" enctype="multipart/form-data" class="cems-card" style="margin-bottom:24px;padding:24px;">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <h2 style="font-size:1.1rem;font-weight:700;margin-bottom:16px;">Post New Notice</h2>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+    <div class="cems-form-group" style="grid-column:span 2;">
+      <label class="cems-form-label">Title</label>
+      <input type="text" name="title" class="cems-form-input" required placeholder="Notice title">
+    </div>
+    <div class="cems-form-group">
+      <label class="cems-form-label">Category</label>
+      <select name="category" class="cems-form-select">
+        <option>General</option>
+        <option>Academic</option>
+        <option>Technical</option>
+        <option>Cultural</option>
+        <option>Sports</option>
+        <option>Workshop</option>
+        <option>Entrepreneurship</option>
+        <option>Social</option>
+        <option>Important Notice</option>
+        <option>Campus Update</option>
+      </select>
+    </div>
+    <div class="cems-form-group">
+      <label class="cems-form-label">Image</label>
+      <input type="file" name="image" class="cems-form-input" accept="image/*">
+      <small class="cems-form-hint">JPG, PNG, WEBP max 2MB</small>
+    </div>
+    <div class="cems-form-group" style="grid-column:span 2;">
+      <label class="cems-form-label">Description</label>
+      <textarea name="description" rows="3" class="cems-form-input" required placeholder="Notice description"></textarea>
+    </div>
+  </div>
+  <button type="submit" class="cems-btn cems-btn-primary" style="margin-top:12px;">Post Notice</button>
+</form>
+
+<form method="get" class="cems-filter-bar" style="margin-bottom:24px;">
+  <div class="cems-form-group">
+    <input type="text" name="q" class="cems-form-input" placeholder="Search notices..." value="{{ q }}">
+  </div>
+  <div class="cems-form-group">
+    <select name="category" class="cems-form-select">
+      <option value="">All Categories</option>
+      {% for c in categories %}
+      <option value="{{ c }}" {% if category==c %}selected{% endif %}>{{ c }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <button type="submit" class="cems-btn cems-btn-primary">Filter</button>
+</form>
+
+{% if notices %}
+<div class="cems-card-grid">
+  {% for notice in notices %}
+  <article class="cems-notice-card">
+    {% if notice.image %}
+    <div class="cems-notice-card-image-wrapper">
+      <img src="{{ image_url(notice.image) }}"
+           alt="{{ notice.title }}"
+           class="cems-notice-card-image"
+           loading="lazy"
+           onerror="this.onerror=null;this.src='{{ url_for('static', filename='images/placeholder.svg') }}';">
+    </div>
+    {% else %}
+    <div class="cems-notice-card-image-wrapper">
+      <div class="cems-notice-card-image cems-notice-placeholder">
+        <span class="cems-notice-placeholder-icon">{{ notice.category[:1] }}</span>
+      </div>
+    </div>
+    {% endif %}
+    <div class="cems-notice-card-body">
+      <span class="cems-notice-card-category">{{ notice.category }}</span>
+      <h3 class="cems-notice-card-title">{{ notice.title }}</h3>
+      <p class="cems-notice-card-description">
+        {{ notice.description[:180] }}{% if notice.description|length > 180 %}...{% endif %}
+      </p>
+      <div class="cems-notice-card-footer">
+        <span class="cems-text-muted" style="font-size: 0.8rem;">
+          📅 {{ notice.published_at.strftime('%d %b %Y') }}
+        </span>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:8px;">
+        <button type="button" onclick="location.href='{{ url_for('faculty_notice_edit_form', notice_id=notice.id) }}'" class="cems-btn cems-btn-secondary cems-btn-sm">Edit</button>
+        <form method="post" action="{{ url_for('faculty_notice_delete', notice_id=notice.id) }}" style="display:inline;" onsubmit="return confirm('Delete this notice?');">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="cems-btn cems-btn-danger cems-btn-sm">Delete</button>
+        </form>
+      </div>
+    </div>
+  </article>
+  {% endfor %}
+</div>
+
+{% if pagination and pagination.pages > 1 %}
+<div class="cems-pagination">
+  {% if pagination.has_prev %}
+  <a href="{{ url_for('faculty_notices', page=pagination.prev_num, q=q, category=category) }}" class="cems-pagination-btn">← Previous</a>
+  {% endif %}
+  <span class="cems-pagination-info">Page {{ pagination.page }} of {{ pagination.pages }}</span>
+  {% if pagination.has_next %}
+  <a href="{{ url_for('faculty_notices', page=pagination.next_num, q=q, category=category) }}" class="cems-pagination-btn">Next →</a>
+  {% endif %}
+</div>
+{% endif %}
+
+{% else %}
+<div class="cems-empty">
+  <div class="cems-empty-icon">📋</div>
+  <div class="cems-empty-title">No notices yet</div>
+  <div class="cems-empty-description">Post the first faculty notice.</div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Certificates — CEMS{% endblock %}
+{% block breadcrumb %}Certificates{% endblock %}
+{% block content %}
+<div class="cems-page-header">
+  <div class="cems-page-header-top">
+    <div>
+      <h1 class="cems-page-title">Certificates</h1>
+      <p class="cems-page-description">View and manage certificates for your completed events.</p>
+    </div>
+  </div>
+</div>
+<div class="cems-card">
+  <div class="cems-card-body" style="padding:0;">
+    {% if events %}
+    <div class="cems-overflow-x-auto">
+      <table class="cems-table">
+        <thead>
+          <tr><th>Event</th><th>Date</th><th>Venue</th><th>Certificates</th><th>Actions</th></tr>
+        </thead>
+        <tbody>
+          {% for event in events %}
+          <tr>
+            <td><strong>{{ event.title }}</strong></td>
+            <td>{{ event.date.strftime('%d %b %Y') if event.date else '—' }}</td>
+            <td>{{ event.venue }}</td>
+            <td>{{ event.registrations|selectattr('attended', 'equalto', true)|list|length }} issued</td>
+            <td><a href="{{ url_for('faculty_event_summary', event_id=event.id) }}" class="cems-btn cems-btn-sm cems-btn-secondary">View Details</a></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div style="text-align:center; padding:48px;">
+      <div style="font-size:3rem; margin-bottom:12px;">🏆</div>
+      <div class="cems-empty-title">No completed events with certificates</div>
+      <div class="cems-empty-description">Certificate generation is available for events with attendance.</div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

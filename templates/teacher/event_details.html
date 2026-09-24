@@ -1,0 +1,250 @@
+{% extends "base.html" %}
+{% import "macros/timeline.html" as timeline %}
+{% block title %}{{ event.title }} — CEMS{% endblock %}
+{% block breadcrumb %}Assigned Events{% endblock %}
+
+{% block content %}
+<div class="cems-page-header">
+  <div class="cems-page-header-top">
+    <div>
+      <h1 class="cems-page-title">{{ event.title }}</h1>
+      <p class="cems-page-description">{{ event.category }} · {{ event.venue }}</p>
+    </div>
+    <div class="cems-page-actions">
+      <a href="{{ url_for('faculty_assigned_events') }}" class="cems-btn cems-btn-secondary">
+        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+        Back
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- Event Info Cards -->
+<div class="cems-grid cems-grid-cols-2" style="margin-bottom: 24px;">
+  <div class="cems-card">
+    <div class="cems-card-header">
+      <div class="cems-card-title">Event Information</div>
+    </div>
+    <div class="cems-card-body">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+        <div>
+          <div style="font-size:0.75rem; color:var(--cems-text-muted);">Event Name</div>
+          <div style="font-weight:600;">{{ event.title }}</div>
+        </div>
+        <div>
+          <div style="font-size:0.75rem; color:var(--cems-text-muted);">Event Type</div>
+          <div style="font-weight:600;">{{ event.event_type|title if event.event_type else 'Free' }}</div>
+        </div>
+        <div>
+          <div style="font-size:0.75rem; color:var(--cems-text-muted);">Date</div>
+          <div style="font-weight:600;">{{ event.date.strftime('%d %B %Y') if event.date else '—' }}</div>
+        </div>
+        <div>
+          <div style="font-size:0.75rem; color:var(--cems-text-muted);">Start Time</div>
+          <div style="font-weight:600;">{{ event.start_time or '—' }}</div>
+        </div>
+        <div>
+          <div style="font-size:0.75rem; color:var(--cems-text-muted);">End Time</div>
+          <div style="font-weight:600;">{{ event.end_time or '—' }}</div>
+        </div>
+        <div>
+          <div style="font-size:0.75rem; color:var(--cems-text-muted);">Venue</div>
+          <div style="font-weight:600;">{{ event.venue }}</div>
+        </div>
+        <div>
+          <div style="font-size:0.75rem; color:var(--cems-text-muted);">Capacity</div>
+          <div style="font-weight:600;">{{ event.capacity }}</div>
+        </div>
+        <div>
+          <div style="font-size:0.75rem; color:var(--cems-text-muted);">Fee</div>
+          <div style="font-weight:600;">{{ 'Free' if event.fee <= 0 else ('₹' ~ event.fee) }}</div>
+        </div>
+      </div>
+      {% if event.description %}
+      <div style="margin-top:12px;">
+        <div style="font-size:0.75rem; color:var(--cems-text-muted);">Description</div>
+        <div>{{ event.description }}</div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="cems-card">
+    <div class="cems-card-header">
+      <div class="cems-card-title">Organizer Information</div>
+    </div>
+    <div class="cems-card-body">
+      {% if organizer %}
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+        <div>
+          <div style="font-size:0.75rem; color:var(--cems-text-muted);">Organizer Name</div>
+          <div style="font-weight:600;">{{ organizer.name }}</div>
+        </div>
+        <div>
+          <div style="font-size:0.75rem; color:var(--cems-text-muted);">Email</div>
+          <div style="font-weight:600;">{{ organizer.email }}</div>
+        </div>
+        <div>
+          <div style="font-size:0.75rem; color:var(--cems-text-muted);">Department</div>
+          <div style="font-weight:600;">{{ organizer.department or '—' }}</div>
+        </div>
+        <div>
+          <div style="font-size:0.75rem; color:var(--cems-text-muted);">Role</div>
+          <div style="font-weight:600;">{{ organizer.role|title }}</div>
+        </div>
+      </div>
+      {% else %}
+      <div>No organizer information available.</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{{ timeline.render_event_timeline(event) }}
+
+<!-- Statistics -->
+<div class="cems-stats-grid" style="margin-bottom: 24px;">
+  <div class="cems-stat-card">
+    <div class="cems-stat-icon primary">
+      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3.5a2 2 0 001.16 1.77l1.33 1A2 2 0 007 16.5V19a2 2 0 002 2h10a2 2 0 002-2v-2.5a2 2 0 011.16-1.77l1.33-1A2 2 0 0017 10.5V7a2 2 0 00-2-2H5z"></path></svg>
+    </div>
+    <div class="cems-stat-content">
+      <div class="cems-stat-value">{{ total_registrations }}</div>
+      <div class="cems-stat-label">Total Registrations</div>
+    </div>
+  </div>
+  <div class="cems-stat-card">
+    <div class="cems-stat-icon warning">
+      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+    </div>
+    <div class="cems-stat-content">
+      <div class="cems-stat-value">{{ pending_registrations }}</div>
+      <div class="cems-stat-label">Pending Registrations</div>
+    </div>
+  </div>
+  <div class="cems-stat-card">
+    <div class="cems-stat-icon success">
+      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+    </div>
+    <div class="cems-stat-content">
+      <div class="cems-stat-value">{{ approved_students }}</div>
+      <div class="cems-stat-label">Approved Students</div>
+    </div>
+  </div>
+  <div class="cems-stat-card">
+    <div class="cems-stat-icon info">
+      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+    </div>
+    <div class="cems-stat-content">
+      <div class="cems-stat-value">{{ attendance_count }}</div>
+      <div class="cems-stat-label">Attendance</div>
+    </div>
+  </div>
+  <div class="cems-stat-card">
+    <div class="cems-stat-icon primary">
+      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15a5 5 0 100-10 5 5 0 000 10zm0 0v6m-3-3h6"></path></svg>
+    </div>
+    <div class="cems-stat-content">
+      <div class="cems-stat-value">{{ certificates_count }}</div>
+      <div class="cems-stat-label">Certificates Generated</div>
+    </div>
+  </div>
+</div>
+
+<!-- Registrations Table -->
+<div class="cems-card" style="margin-bottom: 24px;">
+  <div class="cems-card-header">
+    <div class="cems-card-title">Registrations</div>
+  </div>
+  <div class="cems-card-body" style="padding: 0;">
+    {% if registrations %}
+    <div class="cems-overflow-x-auto">
+      <table class="cems-table">
+        <thead>
+          <tr>
+            <th>Participant</th>
+            <th>Email</th>
+            <th>Department</th>
+            <th>Registration Date</th>
+            <th>Status</th>
+            <th>Attended</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for reg in registrations %}
+          <tr>
+            <td><strong>{{ reg.user.name }}</strong></td>
+            <td>{{ reg.user.email }}</td>
+            <td>{{ reg.user.department or '—' }}</td>
+            <td>{{ reg.registered_at.strftime('%d %b %Y') if reg.registered_at else '—' }}</td>
+            <td>
+              <span class="cems-badge
+                {% if reg.status=='confirmed' %}cems-badge-success
+                {% elif reg.status=='pending' %}cems-badge-warning
+                {% elif reg.status=='cancelled' %}cems-badge-danger
+                {% else %}cems-badge-neutral{% endif %}">
+                {{ reg.status|title }}
+              </span>
+            </td>
+            <td>
+              <span class="cems-badge {{ 'cems-badge-success' if reg.attended else 'cems-badge-neutral' }}">
+                {{ 'Yes' if reg.attended else 'No' }}
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div style="text-align:center; padding:48px;">
+      <div class="cems-empty-icon">📋</div>
+      <div class="cems-empty-title">No registrations yet</div>
+      <div class="cems-empty-description">Registrations will appear here once students sign up.</div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Navigation Buttons -->
+<div class="cems-card">
+  <div class="cems-card-header">
+    <div class="cems-card-title">Manage Event</div>
+  </div>
+  <div class="cems-card-body">
+    <div style="display:flex; flex-wrap:wrap; gap:10px;">
+      <a href="{{ url_for('teacher_manage_registrations') }}" class="cems-btn cems-btn-primary">
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="vertical-align:middle;margin-right:4px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3.5a2 2 0 001.16 1.77l1.33 1A2 2 0 007 16.5V19a2 2 0 002 2h10a2 2 0 002-2v-2.5a2 2 0 011.16-1.77l1.33-1A2 2 0 0017 10.5V7a2 2 0 00-2-2H5z"></path></svg>
+        Manage Registrations
+      </a>
+      <a href="{{ url_for('teacher_attendance') }}" class="cems-btn cems-btn-secondary">
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="vertical-align:middle;margin-right:4px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V6a2 2 0 012-2h2m8 0h2a2 2 0 012 2v2m0 8v2a2 2 0 01-2 2h-2m-8 0H6a2 2 0 01-2-2v-2"/></svg>
+        Attendance
+      </a>
+      <a href="{{ url_for('teacher_qr_checkin') }}" class="cems-btn cems-btn-secondary">
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="vertical-align:middle;margin-right:4px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l14-6V8a6 6 0 01-6-6H8a6 6 0 010 12h8v8a6 6 0 01-6 6H4a6 6 0 010-12V8z"/></svg>
+        QR Check-in
+      </a>
+      <a href="{{ url_for('teacher_certificates') }}" class="cems-btn cems-btn-secondary">
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="vertical-align:middle;margin-right:4px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0zM12 17v4m-3-3h6"></path></svg>
+        Certificates
+      </a>
+      <a href="{{ url_for('teacher_reports') }}" class="cems-btn cems-btn-secondary">
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="vertical-align:middle;margin-right:4px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 20V10m6 10V4m6 16v-7m4 7H2"/></svg>
+        Reports
+      </a>
+      {% if event.status == 'completed' %}
+      <a href="{{ url_for('faculty_event_summary', event_id=event.id) }}" class="cems-btn cems-btn-info">
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="vertical-align:middle;margin-right:4px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+        Final Summary
+      </a>
+      {% else %}
+      <a href="{{ url_for('faculty_complete_event', event_id=event.id) }}" class="cems-btn cems-btn-success">
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="vertical-align:middle;margin-right:4px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+        Complete Event
+      </a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

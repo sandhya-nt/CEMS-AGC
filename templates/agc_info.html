@@ -1,10 +1,27 @@
 {% extends "base.html" %}
-{% block title %}{{ info.title }} — CEMS{% endblock %}
-{% block content %}
-<div class="narrow-card center">
-  <h1>{{ info.title }}</h1>
-  <p>{{ info.description }}</p>
-  <a class="btn" href="{{ url_for('landing') }}">← Back to Home</a>
-</div>
-{% endblock %}
 
+{% block content %}
+
+<section class="info-page">
+
+    <div class="info-container">
+
+        <div class="info-icon">
+            🏫
+        </div>
+
+        <h1>{{ info.title }}</h1>
+
+        <p>
+            {{ info.description }}
+        </p>
+
+        <a href="{{ url_for('home') }}" class="primary-btn">
+            ← Back to Home
+        </a>
+
+    </div>
+
+</section>
+
+{% endblock %}

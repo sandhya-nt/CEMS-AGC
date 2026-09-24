@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+{% block title %}Reports & Analytics — CEMS{% endblock %}
+{% block breadcrumb %}Reports & Analytics{% endblock %}
+
+{% block extra_css %}
+<style>
+.reg-report-status-pending { background: var(--cems-warning-bg, #fef3c7); color: #92400e; }
+.reg-report-status-approved { background: var(--cems-success-bg, #d1fae5); color: #065f46; }
+.reg-report-status-rejected { background: var(--cems-danger-bg, #fee2e2); color: #991b1b; }
+.reg-report-status-waitlisted { background: #e0e7ff; color: #3730a3; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="cems-page-header">
+  <div>
+    <h1 class="cems-page-title">Reports & Analytics</h1>
+    <p class="cems-page-description">Registration report for your assigned events.</p>
+  </div>
+</div>
+
+<!-- Event Selector -->
+<div class="cems-card" style="margin-bottom: 24px;">
+  <div class="cems-card-body">
+    <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
+      <div style="flex: 1; min-width: 240px;">
+        <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--cems-text-secondary);">Select Event</label>
+        <select id="report-event-select" style="width:100%; padding: 10px 12px; border: 1px solid var(--cems-border); border-radius: 8px; font-size: 0.95rem;">
+          <option value="">All Assigned Events</option>
+          {% for event in events %}
+          <option value="{{ event.id }}">{{ event.title }} ({{ event.date.strftime('%d %b %Y') if event.date else '—' }})</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div style="align-self: flex-end;">
+        <button id="btn-load-report" class="cems-btn cems-btn-primary">Load Report</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Summary Cards -->
+<div id="report-stats-cards" class="cems-grid cems-grid-cols-5" style="margin-bottom: 24px; display: none;">
+  <div class="cems-card">
+    <div class="cems-card-body" style="text-align:center; padding: 16px;">
+      <div style="font-size:1.8rem; font-weight:700; color: var(--cems-primary);" id="stat-all">0</div>
+      <div style="font-size:0.8rem; color: var(--cems-text-muted);">Total Registrations</div>
+    </div>
+  </div>
+  <div class="cems-card">
+    <div class="cems-card-body" style="text-align:center; padding: 16px;">
+      <div style="font-size:1.8rem; font-weight:700; color: var(--cems-warning);" id="stat-pending">0</div>
+      <div style="font-size:0.8rem; color: var(--cems-text-muted);">Pending</div>
+    </div>
+  </div>
+  <div class="cems-card">
+    <div class="cems-card-body" style="text-align:center; padding: 16px;">
+      <div style="font-size:1.8rem; font-weight:700; color: var(--cems-success);" id="stat-approved">0</div>
+      <div style="font-size:0.8rem; color: var(--cems-text-muted);">Approved</div>
+    </div>
+  </div>
+  <div class="cems-card">
+    <div class="cems-card-body" style="text-align:center; padding: 16px;">
+      <div style="font-size:1.8rem; font-weight:700; color: var(--cems-danger);" id="stat-rejected">0</div>
+      <div style="font-size:0.8rem; color: var(--cems-text-muted);">Rejected</div>
+    </div>
+  </div>
+  <div class="cems-card">
+    <div class="cems-card-body" style="text-align:center; padding: 16px;">
+      <div style="font-size:1.8rem; font-weight:700; color: #6366f1;" id="stat-waitlisted">0</div>
+      <div style="font-size:0.8rem; color: var(--cems-text-muted);">Waitlisted</div>
+    </div>
+  </div>
+</div>
+
+<!-- Registration Report -->
+<div id="report-section" style="display: none;">
+  <div class="cems-card">
+    <div class="cems-card-header">
+      <div class="cems-card-title">Registration Report</div>
+    </div>
+    <div class="cems-card-body" style="padding: 0;">
+      <div class="cems-overflow-x-auto">
+        <table class="cems-table" id="report-table">
+          <thead>
+            <tr>
+              <th>Student Name</th>
+              <th>Roll Number</th>
+              <th>Branch/Course</th>
+              <th>Semester</th>
+              <th>Event</th>
+              <th>Registration Date</th>
+              <th>Registration Status</th>
+            </tr>
+          </thead>
+          <tbody id="report-tbody">
+          </tbody>
+        </table>
+      </div>
+      <div id="report-empty" class="cems-empty" style="display: none; padding: 48px;">
+        <div class="cems-empty-icon">📋</div>
+        <div class="cems-empty-title" id="report-empty-title">No records found</div>
+        <div class="cems-empty-description" id="report-empty-desc"></div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('btn-load-report').addEventListener('click', loadReport);
+});
+
+function loadReport() {
+  var eventId = document.getElementById('report-event-select').value;
+  var params = new URLSearchParams();
+  if (eventId) {
+    params.set('event_id', eventId);
+  }
+  fetch('/api/teacher/reports/registration?' + params.toString())
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (!data.success) return;
+      updateStats(data.stats);
+      renderReportTable(data.registrations, data.empty_message);
+    })
+    .catch(function(err) {
+      console.error('Failed to load report:', err);
+    });
+}
+
+function updateStats(stats) {
+  var cards = document.getElementById('report-stats-cards');
+  cards.style.display = '';
+  document.getElementById('stat-all').textContent = stats.all;
+  document.getElementById('stat-pending').textContent = stats.pending;
+  document.getElementById('stat-approved').textContent = stats.approved;
+  document.getElementById('stat-rejected').textContent = stats.rejected;
+  document.getElementById('stat-waitlisted').textContent = stats.waitlisted;
+}
+
+function renderReportTable(registrations, emptyMessage) {
+  var tbody = document.getElementById('report-tbody');
+  var emptyDiv = document.getElementById('report-empty');
+  var emptyTitle = document.getElementById('report-empty-title');
+  var emptyDesc = document.getElementById('report-empty-desc');
+  var table = document.getElementById('report-table');
+  var section = document.getElementById('report-section');
+  section.style.display = '';
+
+  if (!registrations || registrations.length === 0) {
+    table.style.display = 'none';
+    emptyDiv.style.display = 'block';
+    emptyTitle.textContent = 'No registration records found';
+    emptyDesc.textContent = emptyMessage || 'No records match your selection.';
+    return;
+  }
+
+  table.style.display = 'table';
+  emptyDiv.style.display = 'none';
+
+  var statusBadge = {
+    pending: '<span class="cems-badge cems-badge-warning">Pending</span>',
+    approved: '<span class="cems-badge cems-badge-success">Approved</span>',
+    rejected: '<span class="cems-badge cems-badge-danger">Rejected</span>',
+    waitlisted: '<span class="cems-badge reg-report-status-waitlisted">Waitlisted</span>',
+  };
+
+  tbody.innerHTML = registrations.map(function(r) {
+    var branch = r.course;
+    if (r.department && r.department !== '—') {
+      branch = r.department;
+    }
+    return '<tr>' +
+      '<td><strong>' + esc(r.student_name) + '</strong></td>' +
+      '<td>' + esc(r.roll_no) + '</td>' +
+      '<td>' + esc(branch) + '</td>' +
+      '<td>' + esc(r.semester) + '</td>' +
+      '<td>' + esc(r.event_name) + '</td>' +
+      '<td>' + esc(r.registration_date) + '</td>' +
+      '<td>' + (statusBadge[r.status] || r.status) + '</td>' +
+    '</tr>';
+  }).join('');
+}
+
+function esc(str) {
+  if (!str) return '—';
+  var div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+</script>
+{% endblock %}

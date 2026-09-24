@@ -4,53 +4,59 @@
 
 <section class="contact-page">
 
-    <div class="contact-container">
+  <div class="contact-container">
 
-        <h1>Contact Amritsar Group of Colleges</h1>
+    <h1>Contact Amritsar Group of Colleges</h1>
 
-        <p>
-            Connect with AGC through the official contact channels for admissions, support, and campus information.
-        </p>
+    <p>
+      Connect with AGC through the official contact channels for admissions, support, and campus information.
+    </p>
 
-        <div class="contact-grid">
+    <div class="contact-grid">
 
-            <a href="tel:+918872009951" class="contact-card">
-                <span>📞</span>
-                <h3>Call AGC</h3>
-                <p>{{ agc_profile.phone_primary }}</p>
-            </a>
+      <a href="tel:+918872009951" class="contact-card">
+        <span>📞</span>
+        <h3>Call AGC</h3>
+        <p>{{ agc_profile.phone_primary }}</p>
+      </a>
 
-            <a href="tel:+918872009950" class="contact-card">
-                <span>🛟</span>
-                <h3>24/7 Support</h3>
-                <p>{{ agc_profile.phone_support }} (Support Line)</p>
-            </a>
+      <a href="tel:+918872009950" class="contact-card">
+        <span>🛟</span>
+        <h3>24/7 Support</h3>
+        <p>{{ agc_profile.phone_support }} (Support Line)</p>
+      </a>
 
-            <a href="{{ agc_profile.whatsapp }}"
-               target="_blank"
-               rel="noopener"
-               class="contact-card">
-                <span>💬</span>
-                <h3>WhatsApp</h3>
-                <p>Chat on WhatsApp with +91 88720 09950</p>
-            </a>
+      <a href="{{ agc_profile.whatsapp }}"
+         target="_blank"
+         rel="noopener"
+         class="contact-card">
+        <span>💬</span>
+        <h3>WhatsApp</h3>
+        <p>Chat on WhatsApp with +91 88720 09950</p>
+      </a>
 
-            <a href="mailto:{{ agc_profile.email }}" class="contact-card">
-                <span>✉️</span>
-                <h3>Email</h3>
-                <p>{{ agc_profile.email }}</p>
-            </a>
+      <a href="mailto:{{ agc_profile.email }}" class="contact-card">
+        <span>✉️</span>
+        <h3>Email</h3>
+        <p>{{ agc_profile.email }}</p>
+      </a>
 
-            <div class="contact-card contact-card-wide">
-                <span>📍</span>
-                <h3>Campus Address</h3>
-                <p>{{ agc_profile.address }}</p>
-            </div>
-
-        </div>
+      <div class="contact-card contact-card-wide">
+        <span>📍</span>
+        <h3>Campus Address</h3>
+        <p>{{ agc_profile.address }}</p>
+      </div>
 
     </div>
 
+  </div>
+
 </section>
+
+<div class="cems-bottom-actions">
+  <a href="tel:+918872009951" class="cems-btn cems-btn-primary">📞 Call</a>
+  <a href="{{ agc_profile.whatsapp }}" target="_blank" rel="noopener" class="cems-btn cems-btn-success">💬 WhatsApp</a>
+  <a href="mailto:{{ agc_profile.email }}" class="cems-btn cems-btn-secondary">✉️ Email</a>
+</div>
 
 {% endblock %}

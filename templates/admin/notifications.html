@@ -1,6 +1,232 @@
 {% extends "base.html" %}
 {% block title %}Notifications — CEMS{% endblock %}
-{% block content %}
-<div class="narrow-card"><h1>Send Announcement</h1><form method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><label>Audience<select name="audience"><option value="all">All Users</option><option value="student">Students</option><option value="organizer">Organizers</option></select></label><label>Title<input name="title" value="Campus Update" required></label><label>Message<textarea name="message" rows="6" required></textarea></label><button class="btn full">Send Notification</button></form></div>
+{% block breadcrumb %}Notifications{% endblock %}
+{% block extra_css %}
+<style>
+  .cems-notification-list { display: flex; flex-direction: column; }
+  .cems-notification-item {
+    display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px;
+    border-bottom: 1px solid var(--cems-border-light); transition: background var(--cems-transition-fast);
+    position: relative;
+  }
+  .cems-notification-item:hover { background: var(--cems-bg-secondary); }
+  .cems-notification-item:last-child { border-bottom: none; }
+  .cems-notification-item.unread { background: var(--cems-primary-bg); }
+  .cems-notification-item.unread:hover { background: #ffd6e8; }
+  .cems-notification-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 2px; }
+  .cems-notification-dot.unread { background: var(--cems-primary); }
+  .cems-notification-dot.read { background: var(--cems-text-muted); opacity: 0.4; }
+  .cems-notification-icon {
+    width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center;
+    justify-content: center; flex-shrink: 0; font-size: 1.1rem; background: var(--cems-bg-tertiary);
+  }
+  .cems-notification-content { flex: 1; min-width: 0; }
+  .cems-notification-title {
+    font-weight: 600; font-size: 0.9rem; color: var(--cems-text-primary); margin-bottom: 2px;
+  }
+  .cems-notification-message {
+    font-size: 0.8rem; color: var(--cems-text-secondary); line-height: 1.4; margin-bottom: 4px;
+  }
+  .cems-notification-time { font-size: 0.72rem; color: var(--cems-text-muted); }
+  .cems-notification-recipient { font-size: 0.72rem; color: var(--cems-info-dark); }
+  .cems-notification-actions {
+    display: flex; gap: 4px; opacity: 0; transition: opacity var(--cems-transition-fast);
+    flex-shrink: 0; margin-left: 8px;
+  }
+  .cems-notification-item:hover .cems-notification-actions { opacity: 1; }
+  .cems-btn-icon {
+    display: flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px; padding: 0; border-radius: 6px;
+    background: var(--cems-bg-tertiary); color: var(--cems-text-secondary);
+    border: 1px solid var(--cems-border); cursor: pointer; font-size: 0.85rem;
+  }
+  .cems-btn-icon:hover { background: var(--cems-bg-secondary); }
+  .cems-notification-empty { text-align: center; padding: 48px 20px; color: var(--cems-text-muted); }
+  .cems-notification-empty-icon { font-size: 3rem; margin-bottom: 12px; }
+  .cems-notification-filters { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .cems-notification-filter {
+    padding: 6px 14px; border-radius: 999px; font-size: 0.8rem; font-weight: 500;
+    background: var(--cems-bg-tertiary); color: var(--cems-text-secondary);
+    border: 1px solid var(--cems-border); cursor: pointer; transition: all var(--cems-transition-fast);
+  }
+  .cems-notification-filter:hover { background: var(--cems-bg-secondary); }
+  .cems-notification-filter.active { background: var(--cems-primary); color: var(--cems-bg-primary); border-color: var(--cems-primary); }
+</style>
 {% endblock %}
 
+{% block content %}
+<div class="cems-page-header">
+  <div class="cems-page-header-top">
+    <div>
+      <h1 class="cems-page-title">Notification Center</h1>
+      <p class="cems-page-description">Send announcements to users and view notification history.</p>
+    </div>
+  </div>
+</div>
+
+<div class="cems-grid cems-grid-cols-2" style="gap: 24px;">
+  <!-- Send Announcement Form -->
+  <div class="cems-card">
+    <div class="cems-card-header">
+      <div class="cems-card-title">Send Announcement</div>
+      <div class="cems-card-description">Send an in-app notification to a specific audience.</div>
+    </div>
+    <div class="cems-card-body">
+      <form method="post" id="send-notification-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="cems-form-group">
+          <label class="cems-form-label">Audience</label>
+          <select name="audience" class="cems-form-select">
+            <option value="all">All Users</option>
+            <option value="student">Students only</option>
+            <option value="organizer">Organizers only</option>
+            <option value="teacher">Faculty only</option>
+            <option value="volunteer">Volunteers only</option>
+          </select>
+        </div>
+        <div class="cems-form-group">
+          <label class="cems-form-label">Category</label>
+          <select name="category" class="cems-form-select">
+            <option value="system">System Announcement</option>
+            <option value="event_reminder">Event Reminder</option>
+            <option value="registration_deadline">Registration Deadline</option>
+            <option value="new_event">New Event Published</option>
+            <option value="feedback_reminder">Feedback Reminder</option>
+          </select>
+        </div>
+        <div class="cems-form-group">
+          <label class="cems-form-label">Title</label>
+          <input type="text" name="title" class="cems-form-input" placeholder="e.g. Campus Maintenance Notice" required>
+        </div>
+        <div class="cems-form-group">
+          <label class="cems-form-label">Message</label>
+          <textarea name="message" class="cems-form-textarea" rows="6" placeholder="Enter your announcement message..." required></textarea>
+        </div>
+        <button type="submit" class="cems-btn cems-btn-primary">Send Notification</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Notification History -->
+  <div class="cems-card">
+    <div class="cems-card-header">
+      <div class="cems-card-title">Recent Notifications</div>
+      <div class="cems-page-actions">
+        <button type="button" class="cems-btn cems-btn-sm cems-btn-outline" onclick="markAllRead()">
+          Mark all read
+        </button>
+      </div>
+    </div>
+    <div class="cems-card-body" style="padding:0;">
+      {% set admin_notes = notifications %}
+      {% set read_ids = admin_notes | selectattr('is_read') | map(attribute='id') | list %}
+      {% set csrf = csrf_token() %}
+      {% if admin_notes %}
+      <div class="cems-notification-filters" id="admin-notification-filters">
+        <button type="button" class="cems-notification-filter active" data-admin-filter="all">All</button>
+        <button type="button" class="cems-notification-filter" data-admin-filter="unread">Unread</button>
+      </div>
+      <div class="cems-notification-list">
+        {% for n in admin_notes %}
+        {% set cat_info = notification_categories.get(n.category, {}) %}
+        {% set badge_color = cat_info.color or 'primary' %}
+        <div class="cems-notification-item {% if not n.is_read %}unread{% endif %}" data-admin-category="{{ n.category }}" data-admin-read="{{ n.is_read|lower }}">
+          <span class="cems-notification-dot {% if not n.is_read %}unread{% else %}read{% endif %}"></span>
+          <div class="cems-notification-icon" style="background: var(--cems-{{ badge_color }}-bg, var(--cems-bg-tertiary));">
+            {{ cat_info.icon or '🔔' }}
+          </div>
+          <div class="cems-notification-content">
+            <div class="cems-notification-title">{{ n.title }}</div>
+            <div class="cems-notification-message">{{ n.message }}</div>
+            <div style="display: flex; gap: 8px; align-items: center; font-size: 0.72rem; color: var(--cems-text-muted);">
+              <span>{{ n.created_at.strftime('%d %b %Y, %H:%M') if n.created_at else '—' }}</span>
+              {% if n.event_id %}<span class="cems-notification-recipient">Event #{{ n.event_id }}</span>{% endif %}
+            </div>
+          </div>
+          <div class="cems-notification-actions">
+            {% if n.is_read %}
+            <button type="button" class="cems-btn-icon" title="Mark unread" onclick="adminToggleRead({{ n.id }}, false)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" r="9"/><path d="M12 7v5 5h0"/><path d="M12 11h4"/></svg>
+            </button>
+            {% else %}
+            <button type="button" class="cems-btn-icon" title="Mark read" onclick="adminToggleRead({{ n.id }}, true)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m5 13 4 4L19 7"/></svg>
+            </button>
+            {% endif %}
+            <button type="button" class="cems-btn-icon" title="Delete" onclick="adminDeleteNotif({{ n.id }})">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M9 6l1 14a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2l1-14M9 6h6"/></svg>
+            </button>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="cems-notification-empty">
+        <div class="cems-notification-empty-icon">🔔</div>
+        <div class="cems-empty-title">No notifications</div>
+        <div class="cems-empty-description">No announcements have been sent yet.</div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  var CEMS_ADMIN_NOTIF = {
+    csrf: '{{ csrf }}',
+    readIds: {{ read_ids|tojson }},
+    filters: document.getElementById('admin-notification-filters')
+  };
+
+  function adminCsfrHeaders() {
+    return { 'X-CSRFToken': CEMS_ADMIN_NOTIF.csrf, 'Content-Type': 'application/json' };
+  }
+
+  function adminApiFetch(path, data) {
+    return fetch(path, {
+      method: 'POST',
+      headers: adminCsfrHeaders(),
+      body: JSON.stringify(data)
+    }).then(function(r) { return r.json(); });
+  }
+
+  function adminToggleRead(id, markRead) {
+    var path = markRead ? '/api/notifications/mark-read' : '/api/notifications/mark-unread';
+    adminApiFetch(path, { ids: [id] }).then(function(data) {
+      if (data.success) location.reload();
+    });
+  }
+
+  function adminDeleteNotif(id) {
+    if (!confirm('Delete this notification?')) return;
+    adminApiFetch('/api/notifications/delete', { ids: [id] }).then(function(data) {
+      if (data.success) location.reload();
+    });
+  }
+
+  function markAllRead() {
+    adminApiFetch('/api/notifications/mark-read', { all: true }).then(function(data) {
+      if (data.success) location.reload();
+    });
+  }
+
+  if (CEMS_ADMIN_NOTIF.filters) {
+    CEMS_ADMIN_NOTIF.filters.addEventListener('click', function(e) {
+      var btn = e.target.closest('.cems-notification-filter');
+      if (!btn) return;
+      var filter = btn.getAttribute('data-admin-filter');
+      var allBtns = this.querySelectorAll('.cems-notification-filter');
+      allBtns.forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      var items = document.querySelectorAll('.cems-notification-item');
+      items.forEach(function(item) {
+        var isRead = item.getAttribute('data-admin-read') === 'true';
+        if (filter === 'all') { item.style.display = ''; }
+        else if (filter === 'unread') { item.style.display = isRead ? 'none' : ''; }
+      });
+    });
+  }
+</script>
+{% endblock %}

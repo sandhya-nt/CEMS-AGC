@@ -1,59 +1,228 @@
 {% extends "base.html" %}
 {% block title %}My Tickets — CEMS{% endblock %}
-{% block breadcrumb %}Tickets{% endblock %}
+{% block breadcrumb %}My Tickets{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* ===== My Tickets list ===== */
+  .cems-ticket-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+    gap: 20px;
+  }
+  .cems-ticket-card {
+    background: var(--cems-bg-primary);
+    border: 1px solid var(--cems-border);
+    border-radius: var(--cems-radius-lg);
+    overflow: hidden;
+    transition: all var(--cems-transition-base);
+    display: flex;
+    flex-direction: column;
+  }
+  .cems-ticket-card:hover {
+    box-shadow: var(--cems-shadow-lg);
+    transform: translateY(-3px);
+    border-color: var(--cems-primary-light);
+  }
+  .cems-ticket-card-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px 20px 12px;
+  }
+  .cems-ticket-event {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--cems-text-primary);
+    margin-bottom: 2px;
+  }
+  .cems-ticket-event-meta {
+    font-size: 0.82rem;
+    color: var(--cems-text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .cems-ticket-event-meta svg {
+    width: 14px;
+    height: 14px;
+    color: var(--cems-text-muted);
+  }
+  .cems-ticket-body {
+    display: grid;
+    grid-template-columns: 1fr 136px;
+    gap: 16px;
+    padding: 16px 20px;
+  }
+  .cems-ticket-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    font-size: 0.86rem;
+  }
+  .cems-ticket-field {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .cems-ticket-field-label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--cems-text-muted);
+  }
+  .cems-ticket-field-value {
+    font-weight: 600;
+    color: var(--cems-text-primary);
+  }
+  .cems-ticket-code {
+    font-family: "SFMono-Regular", ui-monospace, monospace;
+    letter-spacing: 0.8px;
+  }
+  .cems-ticket-qr-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+  .cems-ticket-qr-img {
+    width: 120px;
+    height: 120px;
+    border: 1px solid var(--cems-border);
+    border-radius: var(--cems-radius-md);
+    background: #ffffff;
+    padding: 6px;
+    box-shadow: var(--cems-shadow-sm);
+  }
+  .cems-ticket-qr-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+  .cems-ticket-qr-cap {
+    font-size: 0.7rem;
+    color: var(--cems-text-muted);
+    text-align: center;
+    line-height: 1.3;
+  }
+  .cems-ticket-card-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px 16px;
+    border-top: 1px solid var(--cems-border-light);
+  }
+  @media (max-width: 640px) {
+    .cems-ticket-body {
+      grid-template-columns: 1fr;
+      padding: 16px 20px;
+    }
+  }
+</style>
+{% endblock %}
 
 {% block content %}
 <div class="cems-page-header">
   <div class="cems-page-header-top">
     <div>
       <h1 class="cems-page-title">My Tickets</h1>
-      <p class="cems-page-description">View and download your event tickets.</p>
+      <p class="cems-page-description">Digital entry tickets for your confirmed event registrations. Present the QR code at the venue for check-in.</p>
+    </div>
+    <div class="cems-page-actions">
+      <a href="{{ url_for('events') }}" class="cems-btn cems-btn-outline cems-btn-sm">Browse Events</a>
     </div>
   </div>
 </div>
 
 {% if registrations %}
-<div style="display: flex; flex-direction: column; gap: 24px; max-width: 700px;">
+<div class="cems-ticket-list">
   {% for r in registrations %}
-  <div class="cems-ticket">
-    <div class="cems-ticket-left">
-      Ticket
-    </div>
-    <div class="cems-ticket-right">
-      <div class="cems-ticket-header">
-        <div>
-          <div class="cems-ticket-title">{{ r.event.title }}</div>
-          <p style="color: var(--cems-text-muted); font-size: 0.9rem; margin-top: 4px;">
-            {{ r.event.date.strftime('%d %b %Y') }} · {{ r.event.start_time }} · {{ r.event.venue }}
-          </p>
+  {% set ticket = r.ticket_record %}
+  {% set status_label = 'Attended' if r.attended else ('Cancelled' if (ticket and ticket.status == 'revoked') else 'Active') %}
+  {% set status_badge = 'cems-badge-success' if status_label == 'Attended' else ('cems-badge-danger' if status_label == 'Cancelled' else 'cems-badge-info') %}
+
+  <div class="cems-ticket-card">
+    <div class="cems-ticket-card-head">
+      <div>
+        <div class="cems-ticket-event">{{ r.event.title }}</div>
+        <div class="cems-ticket-event-meta">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          {{ r.event.date.strftime('%d %b %Y') if r.event.date else '—' }}
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+          {{ r.event.start_time }}
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243A8 8 0 0112 5a8 8 0 017.657 11.657z"/></svg>
+          {{ r.event.venue }}
         </div>
-        <img src="{{ url_for('ticket_qr', registration_id=r.id) }}" alt="QR Code" class="cems-ticket-qr">
       </div>
-      <div class="cems-ticket-info">
-        <div class="cems-ticket-info-item">
-          <span class="cems-ticket-info-label">Participant</span>
-          <span class="cems-ticket-info-value">{{ r.user.name }}</span>
+      <span class="cems-badge {{ status_badge }}">{{ status_label }}</span>
+    </div>
+
+    <div class="cems-ticket-body">
+      <div class="cems-ticket-fields">
+        <div class="cems-ticket-field">
+          <span class="cems-ticket-field-label">Student Name</span>
+          <span class="cems-ticket-field-value">{{ r.user.name }}</span>
         </div>
-        <div class="cems-ticket-info-item">
-          <span class="cems-ticket-info-label">Ticket ID</span>
-          <span class="cems-ticket-info-value">{{ r.ticket_code }}</span>
+        <div class="cems-ticket-field">
+          <span class="cems-ticket-field-label">Student ID / Roll No</span>
+          <span class="cems-ticket-field-value">{{ r.user.student_id or r.user.roll_no or '—' }}</span>
         </div>
-        <div class="cems-ticket-info-item">
-          <span class="cems-ticket-info-label">Registration Date</span>
-          <span class="cems-ticket-info-value">{{ r.registered_at.strftime('%d %b %Y') }}</span>
+        <div class="cems-ticket-field">
+          <span class="cems-ticket-field-label">Event</span>
+          <span class="cems-ticket-field-value">{{ r.event.title }}</span>
         </div>
-        <div class="cems-ticket-info-item">
-          <span class="cems-ticket-info-label">Status</span>
-          <span class="cems-ticket-info-value">
-            <span class="cems-badge cems-badge-success">Confirmed</span>
+        <div class="cems-ticket-field">
+          <span class="cems-ticket-field-label">Event Date</span>
+          <span class="cems-ticket-field-value">{{ r.event.date.strftime('%d %b %Y') if r.event.date else '—' }}</span>
+        </div>
+        <div class="cems-ticket-field">
+          <span class="cems-ticket-field-label">Venue</span>
+          <span class="cems-ticket-field-value">{{ r.event.venue }}</span>
+        </div>
+        <div class="cems-ticket-field">
+          <span class="cems-ticket-field-label">Registration Date</span>
+          <span class="cems-ticket-field-value">{{ r.registered_at.strftime('%d %b %Y') if r.registered_at else '—' }}</span>
+        </div>
+        <div class="cems-ticket-field">
+          <span class="cems-ticket-field-label">Ticket ID</span>
+          <span class="cems-ticket-field-value cems-ticket-code">#T-{{ ticket.id if ticket else r.id }}</span>
+        </div>
+        <div class="cems-ticket-field">
+          <span class="cems-ticket-field-label">Unique Ticket Code</span>
+          <span class="cems-ticket-field-value cems-ticket-code">{{ r.ticket_code or '—' }}</span>
+        </div>
+        <div class="cems-ticket-field">
+          <span class="cems-ticket-field-label">Ticket Status</span>
+          <span class="cems-ticket-field-value">
+            <span class="cems-badge {{ status_badge }}">{{ status_label }}</span>
           </span>
         </div>
       </div>
-      <div style="display: flex; gap: 10px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--cems-border-light);">
+
+      <div class="cems-ticket-qr-wrap">
+        <div class="cems-ticket-qr-img">
+          <img src="{{ url_for('ticket_qr', registration_id=r.id) }}" alt="QR Code for {{ r.event.title }}">
+        </div>
+        <div class="cems-ticket-qr-cap">
+          Encodes a secure token<br><br>(no personal data inside)
+        </div>
+      </div>
+    </div>
+
+    <div class="cems-ticket-card-foot">
+      <div>
+        {% if r.attended %}
+          <span class="cems-badge cems-badge-success">✓ Attended</span>
+        {% else %}
+          <span class="cems-badge cems-badge-info">Ready for entry</span>
+        {% endif %}
+      </div>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end;">
         <a href="{{ url_for('ticket', registration_id=r.id) }}" class="cems-btn cems-btn-primary cems-btn-sm">View Ticket</a>
-        <a href="{{ url_for('certificate', registration_id=r.id) if r.attended else '#' }}" class="cems-btn cems-btn-outline cems-btn-sm">
-          {{ 'Certificate' if r.attended else 'Pending' }}
-        </a>
+        <a href="{{ url_for('ticket_qr', registration_id=r.id) }}" class="cems-btn cems-btn-outline cems-btn-sm" download>Download QR</a>
+        <a href="{{ url_for('ticket_download', registration_id=r.id) }}" class="cems-btn cems-btn-secondary cems-btn-sm">PDF</a>
       </div>
     </div>
   </div>
@@ -63,7 +232,7 @@
 <div class="cems-empty">
   <div class="cems-empty-icon">🎟️</div>
   <div class="cems-empty-title">No tickets yet</div>
-  <div class="cems-empty-description">Register for events to get digital tickets.</div>
+  <div class="cems-empty-description">Register for events to receive your digital tickets with secure QR codes.</div>
   <a href="{{ url_for('events') }}" class="cems-btn cems-btn-primary" style="margin-top: 20px;">Browse Events</a>
 </div>
 {% endif %}

@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+{% block title %}Volunteer Management — CEMS{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{{ url_for('static', filename='css/volunteer.css') }}">{% endblock %}
+
+{% block content %}
+<div class="cems-page-header">
+  <div class="cems-page-header-top">
+    <div>
+      <h1 class="cems-page-title">Volunteer Management</h1>
+      <p class="cems-page-description">Define role requirements, review applications, and coordinate event shifts.</p>
+    </div>
+    <div class="cems-page-actions">
+      <a href="{{ url_for('organizer_dashboard') }}" class="cems-btn cems-btn-secondary">Back to Dashboard</a>
+    </div>
+  </div>
+</div>
+
+<form method="get" class="volunteer-card" style="margin-bottom:20px;">
+  <div class="volunteer-card-body volunteer-form-row">
+    <div class="cems-form-group">
+      <label class="cems-form-label" for="event-selector">Manage event</label>
+      <select id="event-selector" class="cems-form-select" name="event_id" onchange="this.form.submit()">
+        {% for event_option in events|default([]) %}
+        <option value="{{ event_option.id }}" {% if event is defined and event.id == event_option.id %}selected{% endif %}>{{ event_option.title }} · {{ event_option.date.strftime('%d %b %Y') if event_option.date else 'Date pending' }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <button class="cems-btn cems-btn-primary" type="submit">Load Event</button>
+    {% if event %}<a href="{{ url_for('manage_event', event_id=event.id) }}" class="cems-btn cems-btn-outline">Edit Event</a>{% endif %}
+  </div>
+</form>
+
+{% if event %}
+<div class="volunteer-stats">
+  <div class="volunteer-stat"><span class="volunteer-stat-icon">◫</span><span class="volunteer-stat-value">{{ roles|default([])|length }}</span><span class="volunteer-stat-label">Role Requirements</span></div>
+  <div class="volunteer-stat"><span class="volunteer-stat-icon">◷</span><span class="volunteer-stat-value">{{ applications|default([])|length }}</span><span class="volunteer-stat-label">Applications</span></div>
+  <div class="volunteer-stat"><span class="volunteer-stat-icon">✓</span><span class="volunteer-stat-value">{{ assignments|default([])|selectattr('status','in',['assigned','confirmed','present'])|list|length }}</span><span class="volunteer-stat-label">Active Assignments</span></div>
+  <div class="volunteer-stat"><span class="volunteer-stat-icon">♧</span><span class="volunteer-stat-value">{{ assignments|default([])|selectattr('status','equalto','completed')|list|length }}</span><span class="volunteer-stat-label">Completed</span></div>
+</div>
+
+<div class="volunteer-tabs">
+  <a class="volunteer-tab active" href="#requirements">Role Requirements</a>
+  <a class="volunteer-tab" href="#applications">Applications</a>
+  <a class="volunteer-tab" href="#assignments">Assignments</a>
+</div>
+
+<section id="requirements" class="volunteer-grid" style="margin-bottom:22px;">
+  <article class="volunteer-card">
+    <div class="volunteer-card-header"><div><h2 class="volunteer-card-title">Create Role Requirement</h2><p class="volunteer-card-subtitle">Set the number of volunteers needed for a role.</p></div></div>
+    <div class="volunteer-card-body">
+      <form method="post" action="{{ url_for('organizer_create_volunteer_role', event_id=event.id) }}" class="volunteer-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="cems-form-group">
+          <label class="cems-form-label" for="role-name">Role name</label>
+          <select id="role-name" class="cems-form-select" name="name" required>
+            <option value="">Choose a standard role or enter a custom role</option>
+            {% for role_name in default_role_names|default([]) %}<option value="{{ role_name }}">{{ role_name }}</option>{% endfor %}
+            <option value="Custom Role">Custom Role</option>
+          </select>
+        </div>
+        <div class="volunteer-form-grid">
+          <div class="cems-form-group">
+            <label class="cems-form-label" for="role-count">Number of volunteers</label>
+            <input id="role-count" class="cems-form-input" type="number" name="required_count" min="1" max="100" value="1" required>
+          </div>
+          <div class="cems-form-group">
+            <label class="cems-form-label" for="role-active">Status</label>
+            <select id="role-active" class="cems-form-select" name="active"><option value="1">Active</option><option value="0">Inactive</option></select>
+          </div>
+        </div>
+        <div class="cems-form-group">
+          <label class="cems-form-label" for="role-description">Description</label>
+          <textarea id="role-description" class="cems-form-textarea" name="description" rows="3" placeholder="Describe the responsibilities and reporting expectations."></textarea>
+        </div>
+        <button class="cems-btn cems-btn-primary" type="submit">Create Requirement</button>
+      </form>
+    </div>
+  </article>
+
+  <article class="volunteer-card">
+    <div class="volunteer-card-header"><div><h2 class="volunteer-card-title">Current Requirements</h2><p class="volunteer-card-subtitle">Update capacity or pause a role.</p></div></div>
+    <div class="volunteer-card-body">
+      <div class="opportunity-list">
+        {% for role in roles|default([]) %}
+        <article class="volunteer-role-card">
+          <div>
+            <h3>{{ role.name }}</h3>
+            <p>{{ role.description or 'No description provided.' }}</p>
+            <span class="volunteer-capacity {% if volunteer_role_available is defined and volunteer_role_available(role) == 0 %}full{% endif %}">{{ role.assignments|default([])|selectattr('status','notin',['cancelled','removed','rejected'])|list|length }} / {{ role.required_count }} assigned</span>
+          </div>
+          <form method="post" action="{{ url_for('organizer_update_volunteer_role', role_id=role.id) }}" class="volunteer-actions">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="event_id" value="{{ event.id }}">
+            <input class="cems-form-input" style="width:82px;padding:6px 8px;" type="number" name="required_count" min="1" max="100" value="{{ role.required_count }}" aria-label="Required volunteers">
+            <select class="cems-form-select" style="padding:6px 8px;" name="active" aria-label="Role status"><option value="1" {% if role.active %}selected{% endif %}>Active</option><option value="0" {% if not role.active %}selected{% endif %}>Inactive</option></select>
+            <button class="cems-btn cems-btn-secondary cems-btn-sm" type="submit">Update</button>
+          </form>
+        </article>
+        {% else %}
+        <div class="volunteer-empty"><strong>No role requirements yet</strong>Create the first role requirement to start accepting applications.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </article>
+</section>
+
+<section id="applications" class="volunteer-card" style="margin-bottom:22px;">
+  <div class="volunteer-card-header"><div><h2 class="volunteer-card-title">Applications</h2><p class="volunteer-card-subtitle">Review student requests and assign shifts when approving.</p></div><span class="cems-badge cems-badge-warning">{{ applications|default([])|selectattr('status','equalto','pending')|list|length }} pending</span></div>
+  <div class="volunteer-card-body">
+    <div class="volunteer-table-wrap">
+      <table class="volunteer-table">
+        <thead><tr><th>Student</th><th>Role</th><th>Applied</th><th>Preferred Shift</th><th>Notes</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>
+          {% for application in applications|default([]) %}
+          <tr>
+            <td><strong>{{ application.student.name }}</strong><br><span class="cems-page-description">{{ application.student.roll_no or application.student.email }}</span></td>
+            <td>{{ application.role.name if application.role else '—' }}</td>
+            <td>{{ application.created_at.strftime('%d %b %Y') if application.created_at else '—' }}</td>
+            <td>{{ application.shift_start.strftime('%d %b, %I:%M %p') if application.shift_start else 'Flexible' }}<br>{{ application.shift_end.strftime('%I:%M %p') if application.shift_end else '' }}</td>
+            <td>{{ application.notes or '—' }}</td>
+            <td><span class="volunteer-status {% if application.status == 'approved' %}success{% elif application.status == 'rejected' %}danger{% elif application.status == 'pending' %}warning{% endif %}">{{ application.status|replace('_', ' ')|title }}</span></td>
+            <td>
+              {% if application.status == 'pending' %}
+              <form method="post" action="{{ url_for('organizer_review_application', application_id=application.id) }}" class="volunteer-form-row">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="decision" value="approve">
+                <input type="datetime-local" name="shift_start" value="{{ application.shift_start.strftime('%Y-%m-%dT%H:%M') if application.shift_start else event.date.strftime('%Y-%m-%d') + 'T09:00' }}" aria-label="Approval shift start">
+                <input type="datetime-local" name="shift_end" value="{{ application.shift_end.strftime('%Y-%m-%dT%H:%M') if application.shift_end else event.date.strftime('%Y-%m-%d') + 'T17:00' }}" aria-label="Approval shift end">
+                <button class="cems-btn cems-btn-success cems-btn-sm" type="submit">Approve</button>
+              </form>
+              <form method="post" action="{{ url_for('organizer_review_application', application_id=application.id) }}" style="margin-top:7px;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="decision" value="reject">
+                <button class="cems-btn cems-btn-danger cems-btn-sm" type="submit">Reject</button>
+              </form>
+              {% else %}<span class="cems-page-description">Reviewed</span>{% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="7" class="volunteer-empty">No applications for this event.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="assignments" class="volunteer-card">
+  <div class="volunteer-card-header"><div><h2 class="volunteer-card-title">Assignments and Shifts</h2><p class="volunteer-card-subtitle">Assign a student directly or update an existing duty.</p></div></div>
+  <div class="volunteer-card-body">
+    <form method="post" action="{{ url_for('organizer_assign_volunteer', event_id=event.id) }}" class="volunteer-form" style="margin-bottom:20px;">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="volunteer-form-grid">
+        <div class="cems-form-group"><label class="cems-form-label" for="assign-student">Student</label><select id="assign-student" class="cems-form-select" name="student_id" required><option value="">Select student</option>{% for student in students|default([]) %}<option value="{{ student.id }}">{{ student.name }} · {{ student.roll_no or student.email }}</option>{% endfor %}</select></div>
+        <div class="cems-form-group"><label class="cems-form-label" for="assign-role">Role</label><select id="assign-role" class="cems-form-select" name="role_id" required><option value="">Select role</option>{% for role in roles|default([]) %}<option value="{{ role.id }}">{{ role.name }}</option>{% endfor %}</select></div>
+        <div class="cems-form-group"><label class="cems-form-label" for="assign-start">Shift start</label><input id="assign-start" class="cems-form-input" type="datetime-local" name="shift_start" required></div>
+        <div class="cems-form-group"><label class="cems-form-label" for="assign-end">Shift end</label><input id="assign-end" class="cems-form-input" type="datetime-local" name="shift_end" required></div>
+      </div>
+      <div class="cems-form-group"><label class="cems-form-label" for="assign-notes">Instructions</label><textarea id="assign-notes" class="cems-form-textarea" name="notes" rows="2" placeholder="Reporting point, uniform, equipment, or other instructions"></textarea></div>
+      <button class="cems-btn cems-btn-primary" type="submit">Assign Volunteer</button>
+    </form>
+
+    <div class="volunteer-table-wrap">
+      <table class="volunteer-table">
+        <thead><tr><th>Volunteer</th><th>Role</th><th>Shift</th><th>Status</th><th>Instructions</th><th>Actions</th></tr></thead>
+        <tbody>
+          {% for assignment in assignments|default([]) %}
+          <tr>
+            <td><strong>{{ assignment.student.name }}</strong><br><span class="cems-page-description">{{ assignment.student.roll_no or assignment.student.email }}</span></td>
+            <td>{{ assignment.role.name if assignment.role else assignment.task }}</td>
+            <td>{{ assignment.shift_start.strftime('%d %b, %I:%M %p') if assignment.shift_start else 'Pending' }} – {{ assignment.shift_end.strftime('%I:%M %p') if assignment.shift_end else '' }}</td>
+            <td><span class="volunteer-status {% if assignment.status == 'completed' %}success{% elif assignment.status in ['assigned','confirmed'] %}{% else %}warning{% endif %}">{{ assignment.status|replace('_', ' ')|title }}</span></td>
+            <td>{{ assignment.notes or '—' }}</td>
+            <td>
+              <form method="post" action="{{ url_for('organizer_update_assignment', assignment_id=assignment.id) }}" class="volunteer-form-row">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <select name="status" class="cems-form-select" style="padding:6px 8px;" aria-label="Assignment status"><option value="assigned" {% if assignment.status == 'assigned' %}selected{% endif %}>Assigned</option><option value="confirmed" {% if assignment.status == 'confirmed' %}selected{% endif %}>Confirmed</option><option value="present" {% if assignment.status == 'present' %}selected{% endif %}>Present</option><option value="completed" {% if assignment.status == 'completed' %}selected{% endif %}>Completed</option><option value="cancelled" {% if assignment.status == 'cancelled' %}selected{% endif %}>Cancelled</option><option value="removed" {% if assignment.status == 'removed' %}selected{% endif %}>Removed</option></select>
+                <input name="shift_start" class="cems-form-input" style="padding:6px 8px;" type="datetime-local" value="{{ assignment.shift_start.strftime('%Y-%m-%dT%H:%M') if assignment.shift_start else '' }}" aria-label="Update shift start">
+                <input name="shift_end" class="cems-form-input" style="padding:6px 8px;" type="datetime-local" value="{{ assignment.shift_end.strftime('%Y-%m-%dT%H:%M') if assignment.shift_end else '' }}" aria-label="Update shift end">
+                <button class="cems-btn cems-btn-secondary cems-btn-sm" type="submit">Update</button>
+              </form>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="6" class="volunteer-empty">No assignments yet. Approve an application or assign a student directly.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+{% else %}
+<div class="volunteer-empty" style="padding:48px;"><strong>Select an event</strong>Choose one of your events to manage its volunteer team.</div>
+{% endif %}
+{% endblock %}

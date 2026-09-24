@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: cems
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn --bind 0.0.0.0:$PORT --workers 2 --timeout 120 --access-logfile - --error-logfile - app:app
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: FLASK_ENV
+        value: production
+      - key: FLASK_DEBUG
+        value: "0"
+      - key: SESSION_COOKIE_SECURE
+        value: "true"
+      - key: SESSION_COOKIE_HTTPONLY
+        value: "true"
+      - key: SESSION_COOKIE_SAMESITE
+        value: Lax
+      - key: REMEMBER_COOKIE_SECURE
+        value: "true"
+      - key: REMEMBER_COOKIE_HTTPONLY
+        value: "true"
+      - key: REMEMBER_COOKIE_SAMESITE
+        value: Lax
+    healthCheck:
+      path: /health
+      intervalSeconds: 60
+      timeoutSeconds: 10

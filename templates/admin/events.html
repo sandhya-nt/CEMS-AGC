@@ -34,11 +34,19 @@
           <td>{{ e.date.strftime('%d %b %Y') if e.date else '—' }}</td>
           <td>
             <span class="cems-badge
-              {% if e.status=='approved' %}cems-badge-success
+              {% if e.status=='cancelled' %}cems-badge-danger
+              {% elif e.status=='cancellation_requested' %}cems-badge-warning
+              {% elif e.status=='reschedule_requested' %}cems-badge-info
+              {% elif e.status=='approved' and e.change_status=='rescheduled' %}cems-badge-info
+              {% elif e.status=='approved' %}cems-badge-success
               {% elif e.status in ('pending', 'waiting') %}cems-badge-warning
               {% elif e.status=='rejected' %}cems-badge-danger
               {% else %}cems-badge-neutral{% endif %}">
-              {{ e.status|replace('_', ' ')|title }}
+              {% if e.status=='cancelled' %}Cancelled
+              {% elif e.status=='cancellation_requested' %}Cancellation Requested
+              {% elif e.status=='reschedule_requested' %}Reschedule Requested
+              {% elif e.status=='approved' and e.change_status=='rescheduled' %}Rescheduled
+              {% else %}{{ e.status|replace('_', ' ')|title }}{% endif %}
             </span>
             {% if e.rejection_reason %}
             <br><small style="color: var(--cems-danger);">Reason: {{ e.rejection_reason }}</small>
@@ -46,7 +54,11 @@
           </td>
           <td>
             <div class="cems-table-actions">
-              {% if e.status == 'pending' %}
+              {% if e.status == 'cancellation_requested' %}
+              <a href="{{ url_for('admin_manage_cancellation', event_id=e.id) }}" class="cems-btn cems-btn-sm cems-btn-primary">Review</a>
+              {% elif e.status == 'reschedule_requested' %}
+              <a href="{{ url_for('admin_manage_reschedule', event_id=e.id) }}" class="cems-btn cems-btn-sm cems-btn-primary">Review</a>
+              {% elif e.status == 'pending' %}
               <form method="post" action="{{ url_for('event_action', event_id=e.id, action='approve') }}" style="display: inline;">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" class="cems-btn cems-btn-success cems-btn-sm">Approve</button>

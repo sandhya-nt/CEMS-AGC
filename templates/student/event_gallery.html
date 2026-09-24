@@ -150,7 +150,7 @@
     submitBtn.disabled = true;
     submitBtn.textContent = 'Uploading...';
 
-    fetch('{{ url_for("api_upload_gallery_image", gallery_id=event.id) }}', {
+     fetch('{{ url_for("api_upload_gallery_image", event_id=event.id) }}', {
       method: 'POST',
       body: formData,
       headers: { 'X-Requested-With': 'XMLHttpRequest' }

@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}ACEMS AGC Notice Board — CEMS{% endblock %}
+{% block breadcrumb %}Notice Board{% endblock %}
+
+{% block content %}
+<div class="cems-page-header">
+  <div class="cems-page-header-top">
+    <div>
+      <h1 class="cems-page-title">📢 ACEMS AGC Notice Board</h1>
+      <p class="cems-page-description">Latest campus announcements and updates from Amritsar Group of Colleges</p>
+    </div>
+    <div class="cems-btn-group">
+      <span class="cems-badge cems-badge-primary" style="font-size: 0.85rem; padding: 8px 16px;">
+        {{ pagination.total if pagination else notices|length }} notices
+      </span>
+    </div>
+  </div>
+</div>
+
+<!-- Category filter -->
+<form method="get" class="cems-filter-bar" style="margin-bottom: 24px;">
+  <div class="cems-form-group" style="flex: 1; margin-bottom: 0;">
+    <input type="text" name="q" value="{{ q or '' }}" class="cems-form-input" placeholder="Search notices by title or keyword…">
+  </div>
+  <div class="cems-form-group" style="width: 200px; margin-bottom: 0;">
+    <select name="category" class="cems-form-select">
+<option value="" {% if not category %}selected{% endif %}>All Categories</option>
+        {% for c in categories %}
+          <option value="{{ c }}" {% if category == c %}selected{% endif %}>{{ c }}</option>
+        {% endfor %}
+    </select>
+  </div>
+  <button type="submit" class="cems-btn cems-btn-primary" style="margin-bottom: 0;">Filter</button>
+</form>
+
+{% if notices %}
+<div class="cems-card-grid">
+  {% for notice in notices %}
+  <article class="cems-notice-card">
+    {% if notice.image %}
+    <div class="cems-notice-card-image-wrapper">
+      <img src="{{ image_url(notice.image) }}"
+           alt="{{ notice.title }}"
+           class="cems-notice-card-image"
+           loading="lazy"
+           onerror="this.onerror=null;this.src='{{ url_for('static', filename='images/placeholder.svg') }}';">
+    </div>
+    {% else %}
+    <div class="cems-notice-card-image-wrapper">
+      <div class="cems-notice-card-image cems-notice-placeholder">
+        <span class="cems-notice-placeholder-icon">{{ notice.category[:1] }}</span>
+      </div>
+    </div>
+    {% endif %}
+    <div class="cems-notice-card-body">
+      <div class="cems-notice-card-category">{{ notice.category }}</div>
+      <h3 class="cems-notice-card-title">{{ notice.title }}</h3>
+      <p class="cems-notice-card-description">
+        {{ notice.description[:200] }}{% if notice.description|length > 200 %}…{% endif %}
+      </p>
+      {% if notice.event %}
+      <div class="cems-notice-card-meta">
+        <span class="cems-badge cems-badge-info">📅 {{ notice.event.title }}</span>
+      </div>
+      {% endif %}
+      <div class="cems-notice-card-footer">
+        <span class="cems-text-muted" style="font-size: 0.8rem;">
+          📅 {{ notice.published_at.strftime('%d %b %Y') }}
+        </span>
+        <a href="{{ url_for('agc_notice_detail', notice_id=notice.id) }}" class="cems-btn cems-btn-primary cems-btn-sm">Read More</a>
+      </div>
+    </div>
+  </article>
+  {% endfor %}
+</div>
+
+{% if pagination and pagination.pages > 1 %}
+<div class="cems-pagination">
+  {% if pagination.has_prev %}
+  <a href="{{ url_for('agc_notices', page=pagination.prev_num) }}" class="cems-pagination-btn">← Previous</a>
+  {% endif %}
+  <span class="cems-pagination-info">Page {{ pagination.page }} of {{ pagination.pages }}</span>
+  {% if pagination.has_next %}
+  <a href="{{ url_for('agc_notices', page=pagination.next_num) }}" class="cems-pagination-btn">Next →</a>
+  {% endif %}
+</div>
+{% endif %}
+
+{% else %}
+<div class="cems-empty">
+  <div class="cems-empty-icon">📢</div>
+  <div class="cems-empty-title">No notices published yet</div>
+  <div class="cems-empty-description">There are currently no published notices on the board. Please check back later for updates.</div>
+</div>
+{% endif %}
+{% endblock %}

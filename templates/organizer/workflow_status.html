@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% block title %}Workflow Status — CEMS{% endblock %}
+{% block breadcrumb %}Workflow Status{% endblock %}
+
+{% block content %}
+<div class="cems-page-header">
+  <div class="cems-page-header-top">
+    <div>
+      <h1 class="cems-page-title">{{ event.title }}</h1>
+      <p class="cems-page-description">Workflow status, history, and audit trail.</p>
+    </div>
+    <div class="cems-page-actions">
+      <a href="{{ url_for('manage_event', event_id=event.id) }}" class="cems-btn cems-btn-secondary">Back to Event</a>
+    </div>
+  </div>
+</div>
+
+<!-- Current Status -->
+<div class="cems-card" style="margin-bottom: 24px;">
+  <div class="cems-card-header">
+    <div class="cems-card-title">Current Status</div>
+  </div>
+  <div class="cems-card-body">
+    <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px;">
+      <span class="cems-badge" style="font-size: 1.1rem; padding: 8px 24px;
+        {% if workflow_status(event) == 'Cancelled' %}background: var(--cems-danger-bg); color: var(--cems-danger-dark);
+        {% elif workflow_status(event) in ('Cancellation Requested', 'Reschedule Requested') %}background: var(--cems-warning-bg); color: var(--cems-warning-dark);
+        {% elif workflow_status(event) == 'Rescheduled' %}background: var(--cems-info-bg); color: var(--cems-info-dark);
+        {% elif workflow_status(event) == 'Completed' %}background: var(--cems-success-bg); color: var(--cems-success-dark);
+        {% else %}background: var(--cems-success-bg); color: var(--cems-success-dark);
+        {% endif %}">
+        {{ workflow_status(event) }}
+      </span>
+      <span style="font-size: 13px; color: var(--cems-text-secondary);">
+        Last updated: {{ event.updated_at.strftime('%d %b %Y %H:%M') if event.updated_at else '—' }}
+      </span>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; font-size: 13px;">
+      <div><strong>Event:</strong> {{ event.title }}</div>
+      <div><strong>Category:</strong> {{ event.category }}</div>
+      <div><strong>Date:</strong> {{ event.date.strftime('%d %B %Y') if event.date else '—' }}</div>
+      <div><strong>Time:</strong> {{ event.start_time }} – {{ event.end_time }}</div>
+      <div><strong>Venue:</strong> {{ event.venue }}</div>
+      <div><strong>Capacity:</strong> {{ event.capacity }}</div>
+      <div><strong>Organizer:</strong> {{ event.organizer.name if event.organizer else '—' }}</div>
+      <div><strong>Created:</strong> {{ event.created_at.strftime('%d %b %Y') if event.created_at else '—' }}</div>
+      {% if event.cancellation_reason %}
+      <div><strong>Cancellation Reason:</strong> {{ event.cancellation_reason }}</div>
+      {% endif %}
+      {% if event.reschedule_reason %}
+      <div><strong>Reschedule Reason:</strong> {{ event.reschedule_reason }}</div>
+      {% endif %}
+      {% if event.original_data %}
+      <div style="grid-column: 1 / -1; padding-top: 8px;"><strong>Original Data (Preserved):</strong></div>
+      <div style="grid-column: 1 / -1; font-family: monospace; font-size: 12px; background: var(--cems-bg-tertiary); padding: 12px; border-radius: 8px;">
+        <pre style="margin: 0; white-space: pre-wrap;">{{ event.original_data | tojson(indent=2) }}</pre>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Status History -->
+<div class="cems-card" style="margin-bottom: 24px;">
+  <div class="cems-card-header">
+    <div class="cems-card-title">Status History</div>
+    <div class="cems-card-subtitle">Every workflow status transition is recorded</div>
+  </div>
+  <div class="cems-card-body">
+    {% if status_history %}
+    <div class="cems-overflow-x-auto">
+      <table class="cems-table">
+        <thead>
+          <tr>
+            <th>Date/Time</th>
+            <th>From → To</th>
+            <th>Changed By</th>
+            <th>Reason</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for h in status_history %}
+          <tr>
+            <td>{{ h.created_at.strftime('%d %b %Y %H:%M:%S') if h.created_at else '—' }}</td>
+            <td>
+              <span class="cems-badge cems-badge-neutral">{{ h.previous_status or 'initial' }}</span>
+              <span style="color: var(--cems-text-secondary); margin: 0 6px;">→</span>
+              <span class="cems-badge
+                {% if h.status in ('cancelled','cancelled') %}cems-badge-danger
+                {% elif h.status in ('cancellation_requested','reschedule_requested') %}cems-badge-warning
+                {% else %}cems-badge-success{% endif %}">
+                {{ h.status | replace('_', ' ') | title }}
+              </span>
+            </td>
+            <td>{{ h.actor.name if h.actor else 'System' }}</td>
+            <td>{{ h.change_reason or '—' }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div style="text-align: center; padding: 30px; color: var(--cems-text-secondary);">
+      No status history recorded yet.
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Activity Log -->
+<div class="cems-card">
+  <div class="cems-card-header">
+    <div class="cems-card-title">Activity Log</div>
+    <div class="cems-card-subtitle">Detailed audit trail of all actions</div>
+  </div>
+  <div class="cems-card-body">
+    {% if activities %}
+    <div class="cems-overflow-x-auto">
+      <table class="cems-table">
+        <thead>
+          <tr>
+            <th>Date/Time</th>
+            <th>Actor</th>
+            <th>Action</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for a in activities %}
+          <tr>
+            <td>{{ a.created_at.strftime('%d %b %Y %H:%M:%S') if a.created_at else '—' }}</td>
+            <td>{{ a.actor.name if a.actor else 'System' }}</td>
+            <td><code style="background: var(--cems-bg-tertiary); padding: 2px 8px; border-radius: 4px;">{{ a.action }}</code></td>
+            <td>{{ a.description or '—' }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div style="text-align: center; padding: 30px; color: var(--cems-text-secondary);">
+      No activity recorded yet.
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% if event.status in ('cancellation_requested', 'reschedule_requested') %}
+<div class="cems-card" style="margin-top: 24px;">
+  <div class="cems-card-body">
+    <div style="display: flex; gap: 12px;">
+      {% if event.status == 'cancellation_requested' %}
+      <a href="{{ url_for('organizer_cancel_event', event_id=event.id) }}" class="cems-btn cems-btn-secondary cems-btn-sm">Update Cancellation Request</a>
+      {% elif event.status == 'reschedule_requested' %}
+      <a href="{{ url_for('organizer_reschedule_event', event_id=event.id) }}" class="cems-btn cems-btn-secondary cems-btn-sm">Update Reschedule Request</a>
+      {% endif %}
+      <span style="font-size: 13px; color: var(--cems-text-secondary); align-self: center;">
+        A request is currently pending admin review.
+      </span>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

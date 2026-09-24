@@ -1,0 +1,786 @@
+{% extends "base.html" %}
+
+{% block title %}Date of Birth Picker — CEMS{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* ============================================
+     DATE PICKER WIDGET STYLES
+     ============================================ */
+
+  .dob-page {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 32px 20px 60px;
+  }
+
+  .dob-header {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+
+  .dob-header h1 {
+    font-size: 1.85rem;
+    font-weight: 800;
+    color: var(--cems-text-primary);
+    margin-bottom: 8px;
+  }
+
+  .dob-header .dob-subtitle {
+    color: var(--cems-text-secondary);
+    font-size: 0.95rem;
+  }
+
+  .dob-header .dob-hindi {
+    display: inline-block;
+    margin-top: 10px;
+    padding: 6px 14px;
+    background: var(--cems-primary-bg);
+    color: var(--cems-primary-dark);
+    border-radius: 999px;
+    font-size: 0.82rem;
+    font-weight: 600;
+  }
+
+  .dob-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 28px;
+    align-items: start;
+  }
+
+  @media (max-width: 720px) {
+    .dob-layout {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* ===== Calendar Card ===== */
+  .dob-calendar-card {
+    background: var(--cems-bg-primary);
+    border: 1px solid var(--cems-border);
+    border-radius: var(--cems-radius-xl);
+    padding: 24px;
+    box-shadow: var(--cems-shadow-sm);
+  }
+
+  .dob-calendar-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+
+  .dob-calendar-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--cems-text-primary);
+    letter-spacing: -0.01em;
+  }
+
+  .dob-nav-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: var(--cems-radius-md);
+    border: 1px solid var(--cems-border);
+    background: var(--cems-white, #ffffff);
+    color: var(--cems-text-primary);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background var(--cems-transition-fast), border-color var(--cems-transition-fast);
+  }
+
+  .dob-nav-btn:hover {
+    background: var(--cems-bg-secondary);
+    border-color: var(--cems-primary-light);
+  }
+
+  .dob-nav-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .dob-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+    margin-bottom: 4px;
+  }
+
+  .dob-weekday {
+    text-align: center;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--cems-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 6px 0;
+  }
+
+  .dob-days-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+  }
+
+  .dob-day {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--cems-text-primary);
+    border-radius: var(--cems-radius-md);
+    cursor: pointer;
+    transition: all var(--cems-transition-fast);
+    border: 1.5px solid transparent;
+    position: relative;
+    user-select: none;
+  }
+
+  .dob-day:hover {
+    background: var(--cems-bg-secondary);
+    border-color: var(--cems-primary-light);
+  }
+
+  .dob-day.other-month {
+    color: var(--cems-text-muted);
+    cursor: default;
+    pointer-events: none;
+    opacity: 0.4;
+  }
+
+  .dob-day.today {
+    background: var(--cems-info-bg);
+    color: var(--cems-info-dark);
+    font-weight: 700;
+    border-color: var(--cems-info);
+  }
+
+  .dob-day.selected {
+    background: var(--cems-primary);
+    color: var(--cems-text-inverse);
+    font-weight: 700;
+    border-color: var(--cems-primary-dark);
+    box-shadow: 0 2px 8px rgba(255, 77, 141, 0.35);
+  }
+
+  .dob-day.today.selected {
+    background: var(--cems-primary);
+    color: var(--cems-text-inverse);
+    border-color: var(--cems-primary-dark);
+  }
+
+  /* ===== Shortcut Buttons ===== */
+  .dob-shortcuts {
+    display: flex;
+    gap: 10px;
+    margin-top: 18px;
+    flex-wrap: wrap;
+  }
+
+  .dob-shortcut-btn {
+    padding: 8px 18px;
+    border-radius: var(--cems-radius-md);
+    border: 1px solid var(--cems-border);
+    background: var(--cems-white, #ffffff);
+    color: var(--cems-text-secondary);
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--cems-transition-fast);
+  }
+
+  .dob-shortcut-btn:hover {
+    background: var(--cems-bg-secondary);
+    border-color: var(--cems-primary-light);
+    color: var(--cems-primary-dark);
+  }
+
+  .dob-shortcut-btn.active {
+    background: var(--cems-primary);
+    color: var(--cems-text-inverse);
+    border-color: var(--cems-primary-dark);
+  }
+
+  /* ===== Selected Date Display ===== */
+  .dob-info-card {
+    background: var(--cems-bg-primary);
+    border: 1px solid var(--cems-border);
+    border-radius: var(--cems-radius-xl);
+    padding: 28px;
+    box-shadow: var(--cems-shadow-sm);
+  }
+
+  .dob-info-card h2 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--cems-text-primary);
+    margin-bottom: 18px;
+  }
+
+  .dob-selected-display {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 18px 22px;
+    background: var(--cems-white, #ffffff);
+    border: 1.5px dashed var(--cems-border);
+    border-radius: var(--cems-radius-lg);
+    margin-bottom: 22px;
+    min-height: 64px;
+    transition: border-color var(--cems-transition-fast);
+  }
+
+  .dob-selected-display.has-date {
+    border-style: solid;
+    border-color: var(--cems-primary-light);
+    background: var(--cems-primary-bg);
+  }
+
+  .dob-selected-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: var(--cems-radius-md);
+    background: var(--cems-bg-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .dob-selected-icon svg {
+    width: 20px;
+    height: 20px;
+    color: var(--cems-text-muted);
+  }
+
+  .dob-selected-text {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--cems-text-muted);
+  }
+
+  .dob-selected-text.has-date {
+    color: var(--cems-primary-dark);
+  }
+
+  .dob-meta-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 22px;
+  }
+
+  .dob-meta-item {
+    padding: 14px 16px;
+    background: var(--cems-white, #ffffff);
+    border: 1px solid var(--cems-border-light);
+    border-radius: var(--cems-radius-md);
+  }
+
+  .dob-meta-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--cems-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 4px;
+  }
+
+  .dob-meta-value {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--cems-text-primary);
+  }
+
+  /* ===== Demo Forms ===== */
+  .dob-demo-section {
+    margin-top: 8px;
+  }
+
+  .dob-demo-section h3 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--cems-text-secondary);
+    margin-bottom: 12px;
+  }
+
+  .dob-demo-form {
+    background: var(--cems-white, #ffffff);
+    border: 1px solid var(--cems-border-light);
+    border-radius: var(--cems-radius-lg);
+    padding: 20px;
+  }
+
+  .dob-demo-form label {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--cems-text-secondary);
+    margin-bottom: 6px;
+  }
+
+  .dob-demo-input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1.5px solid var(--cems-border);
+    border-radius: var(--cems-radius-md);
+    font-size: 0.9rem;
+    color: var(--cems-text-primary);
+    background: var(--cems-white, #ffffff);
+    font-family: inherit;
+    transition: border-color var(--cems-transition-fast);
+    outline: none;
+  }
+
+  .dob-demo-input:focus {
+    border-color: var(--cems-primary);
+    box-shadow: 0 0 0 3px var(--cems-primary-bg);
+  }
+
+  .dob-demo-input::placeholder {
+    color: var(--cems-text-muted);
+  }
+
+  .dob-demo-btn {
+    margin-top: 14px;
+    width: 100%;
+    padding: 10px;
+    border-radius: var(--cems-radius-md);
+    border: none;
+    background: var(--cems-primary);
+    color: var(--cems-text-inverse);
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background var(--cems-transition-fast);
+  }
+
+  .dob-demo-btn:hover {
+    background: var(--cems-primary-dark);
+  }
+
+  /* ===== Footer link ===== */
+  .dob-back-link {
+    text-align: center;
+    margin-top: 36px;
+  }
+
+  .dob-back-link a {
+    color: var(--cems-primary-dark);
+    font-weight: 600;
+    text-decoration: none;
+    font-size: 0.9rem;
+  }
+
+  .dob-back-link a:hover {
+    text-decoration: underline;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="dob-page">
+
+  <!-- ===== Header ===== -->
+  <div class="dob-header">
+    <h1>📅 Date of Birth Picker</h1>
+    <p class="dob-subtitle">Interactive Calendar Widget — Select any date without typing</p>
+    <span class="dob-hindi">कैशबैक/कैलेंडर पॉपअप) जानकारी</span>
+  </div>
+
+  <!-- ===== Main Layout ===== -->
+  <div class="dob-layout">
+
+    <!-- ===== Calendar Widget ===== -->
+    <div class="dob-calendar-card">
+
+      <!-- Toolbar: Month/Year + Nav -->
+      <div class="dob-calendar-toolbar">
+        <button class="dob-nav-btn" id="dob-prev" type="button" aria-label="Previous month">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        </button>
+        <span class="dob-calendar-title" id="dob-month-year">September, 2026</span>
+        <button class="dob-nav-btn" id="dob-next" type="button" aria-label="Next month">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+        </button>
+      </div>
+
+      <!-- Weekday Headers -->
+      <div class="dob-weekdays">
+        <div class="dob-weekday">Sun</div>
+        <div class="dob-weekday">Mon</div>
+        <div class="dob-weekday">Tue</div>
+        <div class="dob-weekday">Wed</div>
+        <div class="dob-weekday">Thu</div>
+        <div class="dob-weekday">Fri</div>
+        <div class="dob-weekday">Sat</div>
+      </div>
+
+      <!-- Days Grid -->
+      <div class="dob-days-grid" id="dob-days-grid">
+        <!-- Populated by JavaScript -->
+      </div>
+
+      <!-- Shortcut Buttons -->
+      <div class="dob-shortcuts">
+        <button class="dob-shortcut-btn" id="dob-clear" type="button">Clear</button>
+        <button class="dob-shortcut-btn" id="dob-today" type="button">Today</button>
+      </div>
+
+    </div>
+
+    <!-- ===== Info & Demo Panel ===== -->
+    <div>
+      <div class="dob-info-card">
+        <h2>Selected Date</h2>
+
+        <!-- Display area -->
+        <div class="dob-selected-display" id="dob-selected-display">
+          <div class="dob-selected-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>
+          </div>
+          <div class="dob-selected-text" id="dob-selected-text">No date selected</div>
+        </div>
+
+        <!-- Meta info -->
+        <div class="dob-meta-grid">
+          <div class="dob-meta-item">
+            <div class="dob-meta-label">Day</div>
+            <div class="dob-meta-value" id="dob-meta-day">—</div>
+          </div>
+          <div class="dob-meta-item">
+            <div class="dob-meta-label">Month</div>
+            <div class="dob-meta-value" id="dob-meta-month">—</div>
+          </div>
+          <div class="dob-meta-item">
+            <div class="dob-meta-label">Year</div>
+            <div class="dob-meta-value" id="dob-meta-year">—</div>
+          </div>
+          <div class="dob-meta-item">
+            <div class="dob-meta-label">Day of Week</div>
+            <div class="dob-meta-value" id="dob-meta-dow">—</div>
+          </div>
+        </div>
+
+        <!-- Demo: Form integration -->
+        <div class="dob-demo-section">
+          <h3>Form Integration Demo</h3>
+          <div class="dob-demo-form">
+            <label for="dob-demo-name">Full Name</label>
+            <input type="text" id="dob-demo-name" class="dob-demo-input" placeholder="Enter your name">
+
+            <label style="margin-top:14px;">Date of Birth <span style="color:var(--cems-primary-dark); font-weight:700;">*(pick from calendar above)</span></label>
+            <input type="text" id="dob-demo-input" class="dob-demo-input" placeholder="DD/MM/YYYY" readonly>
+
+            <button class="dob-demo-btn" id="dob-demo-submit" type="button">Submit</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <div class="dob-back-link">
+    <a href="{{ url_for('landing') }}">← Back to Home</a>
+  </div>
+
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+  'use strict';
+
+  // ============================================
+  // Calendar State
+  // ============================================
+  var state = {
+    currentYear: 2026,
+    currentMonth: 8, // September (0-indexed)
+    selectedDate: null
+  };
+
+  // ============================================
+  // DOM References
+  // ============================================
+  var elMonthYear = document.getElementById('dob-month-year');
+  var elDaysGrid = document.getElementById('dob-days-grid');
+  var elPrev = document.getElementById('dob-prev');
+  var elNext = document.getElementById('dob-next');
+  var elClear = document.getElementById('dob-clear');
+  var elToday = document.getElementById('dob-today');
+  var elSelectedDisplay = document.getElementById('dob-selected-display');
+  var elSelectedText = document.getElementById('dob-selected-text');
+  var elMetaDay = document.getElementById('dob-meta-day');
+  var elMetaMonth = document.getElementById('dob-meta-month');
+  var elMetaYear = document.getElementById('dob-meta-year');
+  var elMetaDow = document.getElementById('dob-meta-dow');
+  var elDemoInput = document.getElementById('dob-demo-input');
+  var elDemoSubmit = document.getElementById('dob-demo-submit');
+  var elDemoName = document.getElementById('dob-demo-name');
+
+  // ============================================
+  // Utility Functions
+  // ============================================
+  var MONTH_NAMES = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+
+  var DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  var DAY_NAMES_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  function pad(n) {
+    return n < 10 ? '0' + n : '' + n;
+  }
+
+  function formatDate(date) {
+    if (!date) return '';
+    return pad(date.getDate()) + '/' + pad(date.getMonth() + 1) + '/' + date.getFullYear();
+  }
+
+  function isSameDay(a, b) {
+    if (!a || !b) return false;
+    return a.getFullYear() === b.getFullYear() &&
+           a.getMonth() === b.getMonth() &&
+           a.getDate() === b.getDate();
+  }
+
+  // ============================================
+  // Render Calendar
+  // ============================================
+  function renderCalendar() {
+    // Update month/year header
+    elMonthYear.textContent = MONTH_NAMES[state.currentMonth] + ', ' + state.currentYear;
+
+    // Clear grid
+    elDaysGrid.innerHTML = '';
+
+    // Get first day and total days
+    var firstDay = new Date(state.currentYear, state.currentMonth, 1);
+    var lastDay = new Date(state.currentYear, state.currentMonth + 1, 0);
+    var totalDays = lastDay.getDate();
+    var startDow = firstDay.getDay(); // 0 = Sunday
+
+    // Get "today" reference
+    var today = new Date();
+
+    // Previous month filler days
+    var prevMonthLastDay = new Date(state.currentYear, state.currentMonth, 0).getDate();
+    for (var i = startDow - 1; i >= 0; i--) {
+      var dayEl = document.createElement('div');
+      dayEl.className = 'dob-day other-month';
+      dayEl.textContent = prevMonthLastDay - i;
+      elDaysGrid.appendChild(dayEl);
+    }
+
+    // Current month days
+    for (var d = 1; d <= totalDays; d++) {
+      (function(day) {
+        var dateObj = new Date(state.currentYear, state.currentMonth, day);
+        var el = document.createElement('div');
+        el.className = 'dob-day';
+        el.textContent = day;
+
+        // Highlight today
+        if (isSameDay(dateObj, today)) {
+          el.classList.add('today');
+        }
+
+        // Highlight selected
+        if (state.selectedDate && isSameDay(dateObj, state.selectedDate)) {
+          el.classList.add('selected');
+        }
+
+        // Click handler
+        el.addEventListener('click', function() {
+          selectDate(dateObj);
+        });
+
+        elDaysGrid.appendChild(el);
+      })(d);
+    }
+
+    // Next month filler days (fill remaining grid cells)
+    var totalCells = startDow + totalDays;
+    var remaining = 42 - totalCells; // 6 rows * 7 cols
+    if (remaining < 0) remaining = 0;
+    for (var j = 1; j <= remaining; j++) {
+      var nextEl = document.createElement('div');
+      nextEl.className = 'dob-day other-month';
+      nextEl.textContent = j;
+      elDaysGrid.appendChild(nextEl);
+    }
+  }
+
+  // ============================================
+  // Select Date
+  // ============================================
+  function selectDate(date) {
+    state.selectedDate = date;
+    renderCalendar(); // re-render to update selected highlight
+    updateSelectionDisplay();
+  }
+
+  function clearSelection() {
+    state.selectedDate = null;
+    renderCalendar(); // re-render
+    updateSelectionDisplay();
+  }
+
+  function selectToday() {
+    var today = new Date();
+    // Navigate to today's month if needed
+    state.currentYear = today.getFullYear();
+    state.currentMonth = today.getMonth();
+    selectDate(today);
+  }
+
+  // ============================================
+  // Update Selection Display Panel
+  // ============================================
+  function updateSelectionDisplay() {
+    if (state.selectedDate) {
+      var d = state.selectedDate;
+
+      // Display text
+      elSelectedText.textContent = formatDate(d);
+      elSelectedDisplay.classList.add('has-date');
+      elSelectedText.classList.add('has-date');
+
+      // Meta info
+      elMetaDay.textContent = d.getDate();
+      elMetaMonth.textContent = MONTH_NAMES[d.getMonth()];
+      elMetaYear.textContent = d.getFullYear();
+      elMetaDow.textContent = DAY_NAMES[d.getDay()];
+
+      // Demo input
+      elDemoInput.value = formatDate(d);
+    } else {
+      elSelectedText.textContent = 'No date selected';
+      elSelectedDisplay.classList.remove('has-date');
+      elSelectedText.classList.remove('has-date');
+
+      elMetaDay.textContent = '—';
+      elMetaMonth.textContent = '—';
+      elMetaYear.textContent = '—';
+      elMetaDow.textContent = '—';
+
+      elDemoInput.value = '';
+    }
+  }
+
+  // ============================================
+  // Event Listeners
+  // ============================================
+  elPrev.addEventListener('click', function() {
+    state.currentMonth--;
+    if (state.currentMonth < 0) {
+      state.currentMonth = 11;
+      state.currentYear--;
+    }
+    renderCalendar();
+  });
+
+  elNext.addEventListener('click', function() {
+    state.currentMonth++;
+    if (state.currentMonth > 11) {
+      state.currentMonth = 0;
+      state.currentYear++;
+    }
+    renderCalendar();
+  });
+
+  elClear.addEventListener('click', function() {
+    clearSelection();
+    // Visual feedback
+    elClear.classList.add('active');
+    setTimeout(function() { elClear.classList.remove('active'); }, 300);
+  });
+
+  elToday.addEventListener('click', function() {
+    selectToday();
+    // Visual feedback
+    elToday.classList.add('active');
+    setTimeout(function() { elToday.classList.remove('active'); }, 300);
+  });
+
+  elDemoSubmit.addEventListener('click', function() {
+    var name = elDemoName.value.trim();
+    if (!state.selectedDate) {
+      flashMessage('Please select a date of birth from the calendar.');
+      return;
+    }
+    if (!name) {
+      flashMessage('Please enter your name.');
+      return;
+    }
+    flashMessage('Submitted! Name: ' + name + ', DOB: ' + formatDate(state.selectedDate), 'success');
+  });
+
+  // ============================================
+  // Flash Message (simple inline notification)
+  // ============================================
+  function flashMessage(text, type) {
+    type = type || 'info';
+    var existing = document.getElementById('dob-flash');
+    if (existing) existing.remove();
+
+    var flash = document.createElement('div');
+    flash.id = 'dob-flash';
+    flash.style.cssText = [
+      'position:fixed', 'top:20px', 'right:20px', 'z-index:9999',
+      'padding:14px 20px', 'border-radius:8px',
+      'background:' + (type === 'success' ? '#d1fae5' : '#fef3c7'),
+      'color:' + (type === 'success' ? '#059669' : '#92400e'),
+      'font-size:0.88rem', 'font-weight:600',
+      'box-shadow:0 8px 24px rgba(0,0,0,0.12)',
+      'max-width:340px', 'animation:dobSlideIn 0.3s ease'
+    ].join(';');
+    flash.textContent = text;
+    document.body.appendChild(flash);
+
+    setTimeout(function() {
+      flash.style.opacity = '0';
+      flash.style.transition = 'opacity 0.3s';
+      setTimeout(function() { if (flash.parentNode) flash.remove(); }, 300);
+    }, 3000);
+  }
+
+  // ============================================
+  // Keyboard navigation support
+  // ============================================
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowLeft') {
+      elPrev.click();
+    } else if (e.key === 'ArrowRight') {
+      elNext.click();
+    }
+  });
+
+  // ============================================
+  // Initialize
+  // ============================================
+  renderCalendar();
+
+})();
+</script>
+
+<style>
+  @keyframes dobSlideIn {
+    from { transform: translateX(100px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+</style>
+{% endblock %}
+
+{% endblock %}

@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Waitlist — {{ event.title }}{% endblock %}
+{% block breadcrumb %}{{ event.title }} · Waitlist{% endblock %}
+
+{% block content %}
+<div class="cems-page-header">
+  <div class="cems-page-header-top">
+    <div>
+      <h1 class="cems-page-title">Waitlist for "{{ event.title }}"</h1>
+      <p class="cems-page-description">Your position and status on the event waitlist</p>
+    </div>
+    <div class="cems-btn-group">
+      <a href="{{ url_for('events') }}" class="cems-btn cems-btn-secondary cems-btn-sm">← Back to Events</a>
+    </div>
+  </div>
+</div>
+
+<div class="cems-grid cems-grid-2" style="margin-top: 24px;">
+  <div class="cems-card">
+    <div class="cems-card-header">
+      <h3 class="cems-card-title">Your Waitlist Position</h3>
+    </div>
+    <div class="cems-card-body" style="text-align: center; padding: 32px 20px;">
+      {% if student_waitlist %}
+      <div style="font-size: 2.5rem; font-weight: 700; color: var(--cems-primary); margin-bottom: 8px;">
+        #{{ student_waitlist.waitlist_position }}
+      </div>
+      <p style="color: var(--cems-text-muted); margin-bottom: 16px;">
+        {% if student_waitlist.status == "waiting" %}
+        You are waiting for a seat to become available.
+        {% elif student_waitlist.status == "promoted" %}
+        <span style="color: var(--cems-success);">{{ student_waitlist.status | title }}</span> — You have been promoted!
+        {% endif %}
+      </p>
+      <div class="cems-text-center">
+        <div style="display: flex; gap: 24px; justify-content: center; margin-top: 20px;">
+          <div class="cems-text-center">
+            <div style="font-size: 1.5rem; font-weight: 600; color: var(--cems-text-primary);">{{ waitlist_ahead }}</div>
+            <div style="font-size: 0.8rem; color: var(--cems-text-muted);">Ahead of You</div>
+          </div>
+          <div class="cems-text-center">
+            <div style="font-size: 1.5rem; font-weight: 600; color: var(--cems-text-primary);">{{ waitlist_total }}</div>
+            <div style="font-size: 0.8rem; color: var(--cems-text-muted);">Total Waitlist</div>
+          </div>
+          <div class="cems-text-center">
+            <div style="font-size: 1.5rem; font-weight: 600; color: var(--cems-text-primary);">{{ seats_available }}</div>
+            <div style="font-size: 0.8rem; color: var(--cems-text-muted);">Seats Available</div>
+          </div>
+        </div>
+      </div>
+      {% else %}
+      <div style="color: var(--cems-text-muted);">
+        You are not currently on the waitlist for this event.
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="cems-card">
+    <div class="cems-card-header">
+      <h3 class="cems-card-title">Event Details</h3>
+    </div>
+    <div class="cems-card-body">
+      <div class="cems-form-group">
+        <label class="cems-form-label">Event</label>
+        <div>{{ event.title }}</div>
+      </div>
+      <div class="cems-form-group">
+        <label class="cems-form-label">Date & Time</label>
+        <div>{{ event.date.strftime('%d %B %Y') if event.date else '—' }} · {{ event.start_time }} - {{ event.end_time }}</div>
+      </div>
+      <div class="cems-form-group">
+        <label class="cems-form-label">Venue</label>
+        <div>{{ event.venue }}</div>
+      </div>
+      <div class="cems-form-group">
+        <label class="cems-form-label">Capacity</label>
+        <div>{{ event.capacity }} total seats</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="cems-card" style="margin-top: 24px;">
+  <div class="cems-card-header">
+    <h3 class="cems-card-title">How the Waitlist Works</h3>
+  </div>
+  <div class="cems-card-body">
+    <ul style="padding-left: 20px; line-height: 1.8;">
+      <li>You will be automatically notified if a seat becomes available.</li>
+      <li>You have <strong>24 hours</strong> to confirm your spot once promoted from the waitlist.</li>
+      <li>If you can no longer attend, you may remove yourself from the waitlist.</li>
+      <li>The waitlist follows a first-come, first-served basis.</li>
+    </ul>
+  </div>
+</div>
+{% endblock %}

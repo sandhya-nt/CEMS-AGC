@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Volunteer History — CEMS{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{{ url_for('static', filename='css/volunteer.css') }}">{% endblock %}
+
+{% block content %}
+<div class="cems-page-header">
+  <div class="cems-page-header-top">
+    <div>
+      <h1 class="cems-page-title">Volunteer History</h1>
+      <p class="cems-page-description">A record of your event service, completed shifts, and volunteer hours.</p>
+    </div>
+    <div class="cems-page-actions">
+      <a href="{{ url_for('volunteer_dashboard') }}" class="cems-btn cems-btn-secondary">Dashboard</a>
+    </div>
+  </div>
+</div>
+
+<div class="volunteer-layout">
+  <aside class="volunteer-sidebar" aria-label="Volunteer navigation">
+    <a href="{{ url_for('volunteer_dashboard') }}">Dashboard</a>
+    <a href="{{ url_for('volunteer_opportunities') }}">Opportunities</a>
+    <a href="{{ url_for('volunteer_my_shifts') }}">My Shifts</a>
+    <a class="active" href="{{ url_for('volunteer_history') }}">History</a>
+  </aside>
+
+  <main>
+    <div class="volunteer-stats">
+      <div class="volunteer-stat"><span class="volunteer-stat-icon">✓</span><span class="volunteer-stat-value">{{ history|default([])|length }}</span><span class="volunteer-stat-label">Events Served</span></div>
+      <div class="volunteer-stat"><span class="volunteer-stat-icon">♧</span><span class="volunteer-stat-value">{{ total_hours|default(0) }}h</span><span class="volunteer-stat-label">Total Hours</span></div>
+      <div class="volunteer-stat"><span class="volunteer-stat-icon">□</span><span class="volunteer-stat-value">{{ completed_count|default(0) }}</span><span class="volunteer-stat-label">Completed Shifts</span></div>
+      <div class="volunteer-stat"><span class="volunteer-stat-icon">☆</span><span class="volunteer-stat-value">{{ roles_completed|default([])|unique|list|length if roles_completed is defined else history|default([])|map(attribute='role.name')|select('defined')|list|unique|list|length }}</span><span class="volunteer-stat-label">Roles Completed</span></div>
+    </div>
+
+    <section class="volunteer-card">
+      <div class="volunteer-card-header">
+        <div><h2 class="volunteer-card-title">Service Timeline</h2><p class="volunteer-card-subtitle">Completed assignments are listed from newest to oldest.</p></div>
+        <form method="get" class="volunteer-form-row">
+          <div class="cems-form-group">
+            <label class="cems-form-label" for="history-year">Year</label>
+            <select id="history-year" class="cems-form-select" name="year">
+              <option value="">All years</option>
+              {% for year in years|default([]) %}<option value="{{ year }}" {% if request.args.get('year') == year|string %}selected{% endif %}>{{ year }}</option>{% endfor %}
+            </select>
+          </div>
+          <button class="cems-btn cems-btn-primary" type="submit">Filter</button>
+        </form>
+      </div>
+      <div class="volunteer-card-body">
+        <div class="history-list">
+          {% for assignment in history|default([]) %}
+          <article class="history-item">
+            <div>
+              <div class="volunteer-form-row" style="margin:0 0 7px;">
+                <h3 class="history-title">{{ assignment.event.title }}</h3>
+                <span class="volunteer-status success">Completed</span>
+              </div>
+              <p class="history-meta">{{ assignment.role.name if assignment.role else assignment.task }} · {{ assignment.shift_start.strftime('%d %b %Y') if assignment.shift_start else '' }} · {{ assignment.event.venue }}<br>{{ assignment.hours_worked or 0 }} volunteer hours recorded</p>
+              {% if assignment.notes %}<p class="volunteer-note" style="margin-top:10px;">{{ assignment.notes }}</p>{% endif %}
+            </div>
+            <div class="volunteer-actions">
+              <a href="{{ url_for('volunteer_my_shifts') }}" class="cems-btn cems-btn-secondary cems-btn-sm">View shift</a>
+            </div>
+          </article>
+          {% else %}
+          <div class="volunteer-empty"><strong>No completed volunteer shifts yet</strong>Once an organizer marks a shift complete, it will appear in your service timeline.</div>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+{% endblock %}

@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% block title %}Feedback Forms — CEMS{% endblock %}
+{% block breadcrumb %}<a href="{{ url_for('organizer_dashboard') }}">Dashboard</a> / Feedback Forms{% endblock %}
+
+{% block extra_css %}
+<style>
+  .cems-form-status-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 600;
+  }
+  .cems-form-active { background: var(--cems-success-bg); color: var(--cems-success-dark); }
+  .cems-form-inactive { background: var(--cems-danger-bg); color: var(--cems-danger-dark); }
+  .cems-form-card { transition: box-shadow 0.2s; }
+  .cems-form-card:hover { box-shadow: 0 4px 12px rgba(99, 110, 230, 0.1); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="cems-page-header">
+  <div class="cems-page-header-top">
+    <div>
+      <h1 class="cems-page-title">Feedback Forms</h1>
+      <p class="cems-page-description">Create and manage custom feedback forms for your events.</p>
+    </div>
+    <div class="cems-page-actions">
+      <a href="{{ url_for('organizer_feedback_form_create_select') }}" class="cems-btn cems-btn-primary">
+        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+        Create Feedback Form
+      </a>
+      <a href="{{ url_for('organizer_feedback') }}" class="cems-btn cems-btn-secondary">
+        Feedback Analytics
+      </a>
+    </div>
+  </div>
+</div>
+
+{% if templates %}
+<div class="cems-grid" style="grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 20px;">
+  {% for t in templates %}
+  <div class="cems-card cems-form-card">
+    <div class="cems-card-header" style="border-radius: 12px 12px 0 0;">
+      <div class="cems-card-title">{{ t.title }}</div>
+      <span class="cems-form-status-badge {% if t.is_active %}cems-form-active{% else %}cems-form-inactive{% endif %}">
+        {{ 'Active' if t.is_active else 'Inactive' }}
+      </span>
+    </div>
+    <div class="cems-card-body">
+      <div style="font-size: 0.85rem; color: var(--cems-text-muted); margin-bottom: 16px;">
+        {{ t.description[:120] + '…' if t.description and t.description|length > 120 else (t.description or 'No description provided.') }}
+      </div>
+      <div style="display: flex; gap: 12px; font-size: 0.8rem; color: var(--cems-text-muted); margin-bottom: 16px;">
+        <span><strong>{{ t.questions|length }}</strong> Questions</span>
+        <span><strong>{{ t.responses|length }}</strong> Responses</span>
+      </div>
+      <div style="font-size: 0.8rem; color: var(--cems-text-muted);">
+        Event: <strong>{{ t.event.title }}</strong>
+      </div>
+      <div style="font-size: 0.75rem; color: var(--cems-text-muted); margin-top: 4px;">
+        Created: {{ t.created_at.strftime('%d %b %Y') if t.created_at else '—' }}
+      </div>
+    </div>
+    <div class="cems-card-body" style="border-top: 1px solid var(--cems-border-color); padding-top: 12px;">
+      <div class="cems-table-actions">
+        <a href="{{ url_for('organizer_feedback_form_edit', form_id=t.id) }}" class="cems-btn cems-btn-sm cems-btn-secondary">Edit Form</a>
+        <a href="{{ url_for('organizer_feedback_form_responses', form_id=t.id) }}" class="cems-btn cems-btn-sm cems-btn-primary">View Responses</a>
+        <a href="{{ url_for('organizer_feedback_form_toggle', form_id=t.id) }}" class="cems-btn cems-btn-sm cems-btn-secondary"
+           onclick="return confirm('{{ 'Deactivate' if t.is_active else 'Activate' }} this feedback form?');">
+          {{ 'Deactivate' if t.is_active else 'Activate' }}
+        </a>
+        {% if t.responses|length == 0 %}
+        <a href="{{ url_for('organizer_feedback_form_delete', form_id=t.id) }}" class="cems-btn cems-btn-sm cems-btn-danger"
+           onclick="return confirm('Are you sure you want to delete this feedback form? This cannot be undone.');">Delete</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="cems-empty">
+  <div class="cems-empty-icon">📝</div>
+  <div class="cems-empty-title">No feedback forms yet</div>
+  <div class="cems-empty-description">Create custom feedback forms for your events to collect structured responses from attendees.</div>
+  <a href="{{ url_for('organizer_feedback_form_create_select') }}" class="cems-btn cems-btn-primary" style="margin-top: 20px;">
+    Create Your First Feedback Form
+  </a>
+</div>
+{% endif %}
+
+{% if events %}
+<div class="cems-card" style="margin-top: 24px;">
+  <div class="cems-card-header">
+    <div class="cems-card-title">Events Without Custom Forms</div>
+  </div>
+  <div class="cems-card-body" style="padding: 0;">
+    <div class="cems-overflow-x-auto">
+      <table class="cems-table">
+        <thead>
+          <tr>
+            <th>Event</th>
+            <th>Status</th>
+            <th>Date</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for e in events %}
+          {% if e.id not in [t.event_id for t in templates] %}
+          <tr>
+            <td><strong>{{ e.title }}</strong><br><small style="color: var(--cems-text-muted);">{{ e.category }}</small></td>
+            <td><span class="cems-badge cems-badge-success">{{ e.status }}</span></td>
+            <td>{{ e.date.strftime('%d %b %Y') if e.date else '—' }}</td>
+            <td>
+              <a href="{{ url_for('organizer_feedback_form_create', event_id=e.id) }}" class="cems-btn cems-btn-sm cems-btn-primary">Create Form</a>
+            </td>
+          </tr>
+          {% endif %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

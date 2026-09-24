@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+{% block title %}Notifications — CEMS{% endblock %}
+{% block breadcrumb %}Notifications{% endblock %}
+
+{% block extra_css %}
+<style>
+  .cems-notification-list { display: flex; flex-direction: column; }
+  .cems-notification-item {
+    display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px;
+    border-bottom: 1px solid var(--cems-border-light); transition: background var(--cems-transition-fast);
+    position: relative;
+  }
+  .cems-notification-item:hover { background: var(--cems-bg-secondary); }
+  .cems-notification-item:last-child { border-bottom: none; }
+  .cems-notification-item.unread { background: var(--cems-primary-bg); }
+  .cems-notification-item.unread:hover { background: #ffd6e8; }
+  .cems-notification-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 2px; }
+  .cems-notification-dot.unread { background: var(--cems-primary); }
+  .cems-notification-dot.read { background: var(--cems-text-muted); opacity: 0.4; }
+  .cems-notification-icon {
+    width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center;
+    justify-content: center; flex-shrink: 0; font-size: 1.1rem; background: var(--cems-bg-tertiary);
+  }
+  .cems-notification-content { flex: 1; min-width: 0; }
+  .cems-notification-title {
+    font-weight: 600; font-size: 0.9rem; color: var(--cems-text-primary); margin-bottom: 2px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .cems-notification-message {
+    font-size: 0.8rem; color: var(--cems-text-secondary); line-height: 1.4; margin-bottom: 4px;
+  }
+  .cems-notification-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .cems-notification-time { font-size: 0.72rem; color: var(--cems-text-muted); white-space: nowrap; }
+  .cems-notification-actions {
+    display: flex; gap: 4px; opacity: 0; transition: opacity var(--cems-transition-fast);
+    flex-shrink: 0; margin-left: 8px;
+  }
+  .cems-notification-item:hover .cems-notification-actions { opacity: 1; }
+  .cems-btn-icon {
+    display: flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px; padding: 0; border-radius: 6px;
+    background: var(--cems-bg-tertiary); color: var(--cems-text-secondary);
+    border: 1px solid var(--cems-border); cursor: pointer; font-size: 0.85rem;
+  }
+  .cems-btn-icon:hover { background: var(--cems-bg-secondary); }
+  .cems-notification-empty { text-align: center; padding: 48px 20px; color: var(--cems-text-muted); }
+  .cems-notification-empty-icon { font-size: 3rem; margin-bottom: 12px; }
+  .cems-notification-filters { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .cems-notification-filter {
+    padding: 6px 14px; border-radius: 999px; font-size: 0.8rem; font-weight: 500;
+    background: var(--cems-bg-tertiary); color: var(--cems-text-secondary);
+    border: 1px solid var(--cems-border); cursor: pointer; transition: all var(--cems-transition-fast);
+  }
+  .cems-notification-filter:hover { background: var(--cems-bg-secondary); }
+  .cems-notification-filter.active { background: var(--cems-primary); color: var(--cems-bg-primary); border-color: var(--cems-primary); }
+  .cems-notification-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: gap: 8px; }
+  .cems-notification-header .cems-btn-group { display: flex; gap: 8px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="cems-page-header">
+  <div class="cems-page-header-top">
+    <div>
+      <div class="cems-notification-header">
+        <div>
+          <h1 class="cems-page-title">Notifications</h1>
+          <p class="cems-page-description">
+            Stay updated with your event-related notifications.
+            You have <strong>{{ notifications|selectattr('is_read', 'equalto', false)|list|length }}</strong> unread.
+          </p>
+        </div>
+        <div class="cems-btn-group">
+          <button type="button" class="cems-btn cems-btn-sm cems-btn-outline" onclick="markAllRead()">
+            Mark all as read
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% set read_ids = notifications | selectattr('is_read') | map(attribute='id') | list %}
+{% set csrf = csrf_token() %}
+
+{% if notifications %}
+<div class="cems-notification-filters" id="notification-filters">
+  <button type="button" class="cems-notification-filter active" data-filter="all">All</button>
+  <button type="button" class="cems-notification-filter" data-filter="unread">Unread</button>
+  {% for cat_key, cat_info in notification_categories.items() %}
+  <button type="button" class="cems-notification-filter" data-filter="{{ cat_key }}">{{ cat_info.icon }} {{ cat_info.label }}</button>
+  {% endfor %}
+</div>
+
+<div class="cems-card">
+  <div class="cems-card-body" style="padding:0;">
+    <div class="cems-notification-list">
+      {% for n in notifications %}
+      {% set cat_info = notification_categories.get(n.category, {}) %}
+      {% set badge_color = cat_info.color or 'primary' %}
+      <div class="cems-notification-item {% if not n.is_read %}unread{% endif %}" data-category="{{ n.category }}" data-read="{{ n.is_read|lower }}">
+        <span class="cems-notification-dot {% if not n.is_read %}unread{% else %}read{% endif %}"></span>
+        <div class="cems-notification-icon" style="background: var(--cems-{{ badge_color }}-bg, var(--cems-bg-tertiary));">
+          {{ cat_info.icon or '🔔' }}
+        </div>
+        <div class="cems-notification-content">
+          <div class="cems-notification-title">
+            {{ n.title }}
+            {% if not n.is_read %}<span class="cems-badge cems-badge-{{ badge_color }}" style="position: static; margin-left: 6px; font-size: 0.65rem; padding: 2px 8px;">New</span>{% endif %}
+          </div>
+          <div class="cems-notification-message">{{ n.message }}</div>
+          <div class="cems-notification-meta">
+            <span class="cems-notification-time">{{ n.created_at.strftime('%d %b %Y, %H:%M') if n.created_at else '—' }}</span>
+            {% if cat_info.label %}<span class="cems-notification-time">·</span><span class="cems-notification-time">{{ cat_info.label }}</span>{% endif %}
+            {% if n.priority in ('high', 'urgent') %}<span class="cems-notification-time">·</span><span style="color: var(--cems-danger); font-size: 0.72rem;">⚠ {{ n.priority|title }}</span>{% endif %}
+          </div>
+        </div>
+        <div class="cems-notification-actions">
+          {% if n.is_read %}
+          <button type="button" class="cems-btn-icon" title="Mark as unread" onclick="toggleRead({{ n.id }}, false)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" r="9"/><path d="M12 7v5 5h0"/><path d="M12 11h4"/></svg>
+          </button>
+          {% else %}
+          <button type="button" class="cems-btn-icon" title="Mark as read" onclick="toggleRead({{ n.id }}, true)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m5 13 4 4L19 7"/></svg>
+          </button>
+          {% endif %}
+          <button type="button" class="cems-btn-icon" title="Archive" onclick="archiveNotif({{ n.id }})">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6v6H9z"/></svg>
+          </button>
+        </div>
+        {% if n.action_url %}
+        <a href="{{ n.action_url }}" style="position:absolute; inset:0; width:100%; height:100%; text-decoration:none;"></a>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="cems-card">
+  <div class="cems-card-body" style="padding:0;">
+    <div class="cems-notification-empty">
+      <div class="cems-notification-empty-icon">🔔</div>
+      <div class="cems-empty-title">No notifications</div>
+      <div class="cems-empty-description">You have no notifications at this time.</div>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  var CEMS_NOTIFICATION = {
+    csrf: '{{ csrf }}',
+    readIds: {{ read_ids|tojson }},
+    filters: document.getElementById('notification-filters')
+  };
+
+  function csrfHeaders() {
+    return { 'X-CSRFToken': CEMS_NOTIFICATION.csrf, 'Content-Type': 'application/json' };
+  }
+
+  function apiFetch(path, data) {
+    return fetch(path, {
+      method: 'POST',
+      headers: csrfHeaders(),
+      body: JSON.stringify(data)
+    }).then(function(r) { return r.json(); });
+  }
+
+  function toggleRead(id, markRead) {
+    var path = markRead ? '/api/notifications/mark-read' : '/api/notifications/mark-unread';
+    apiFetch(path, { ids: [id] }).then(function(data) {
+      if (data.success) location.reload();
+    });
+  }
+
+  function archiveNotif(id) {
+    apiFetch('/api/notifications/archive', { ids: [id] }).then(function(data) {
+      if (data.success) location.reload();
+    });
+  }
+
+  function markAllRead() {
+    apiFetch('/api/notifications/mark-read', { all: true }).then(function(data) {
+      if (data.success) location.reload();
+    });
+  }
+
+  if (CEMS_NOTIFICATION.filters) {
+    CEMS_NOTIFICATION.filters.addEventListener('click', function(e) {
+      var btn = e.target.closest('.cems-notification-filter');
+      if (!btn) return;
+      var filter = btn.getAttribute('data-filter');
+      var allBtns = this.querySelectorAll('.cems-notification-filter');
+      allBtns.forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      var items = document.querySelectorAll('.cems-notification-item');
+      items.forEach(function(item) {
+        var cat = item.getAttribute('data-category');
+        var isRead = item.getAttribute('data-read') === 'true';
+        if (filter === 'all') { item.style.display = ''; }
+        else if (filter === 'unread') { item.style.display = isRead ? 'none' : ''; }
+        else { item.style.display = cat === filter ? '' : 'none'; }
+      });
+    });
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <title>CEMS Kiosk — Check-in</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/cems-design.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/kiosk.css') }}">
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <script defer src="{{ url_for('static', filename='js/kiosk.js') }}"></script>
+</head>
+<body class="kiosk-body">
+  <div id="kiosk-root" class="kiosk-root">
+
+    <!-- ========= EVENT SELECTION SCREEN ========= -->
+    <section id="kiosk-event-select" class="kiosk-screen kiosk-screen--active">
+      <div class="kiosk-header">
+        <div class="kiosk-header-brand">
+          <span class="kiosk-logo">📷</span>
+          <span class="kiosk-title">Check-in Kiosk</span>
+        </div>
+        <div id="kiosk-user-info" class="kiosk-user-info">
+          {{ current_user.name }} • {{ current_user.role|title }}
+        </div>
+      </div>
+
+      <div class="kiosk-event-list" id="kiosk-event-list">
+        <div class="kiosk-event-list__empty">Loading events…</div>
+      </div>
+    </section>
+
+    <!-- ========= SCANNER SCREEN ========= -->
+    <section id="kiosk-scanner" class="kiosk-screen">
+      <div class="kiosk-scanner-header">
+        <button id="kiosk-back-btn" class="kiosk-back-btn" type="button">
+          ← Back
+        </button>
+        <div class="kiosk-scanner-title" id="kiosk-scanner-event-title">Event</div>
+        <button id="kiosk-fullscreen-btn" class="kiosk-fullscreen-btn" type="button">
+          ⛶ Fullscreen
+        </button>
+      </div>
+
+      <div class="kiosk-scanner-body">
+        <!-- Camera / QR View -->
+        <div class="kiosk-camera-wrap">
+          <div class="kiosk-camera-frame" id="kiosk-camera-frame">
+            <div class="kiosk-camera-viewfinder"></div>
+            <div class="kiosk-camera-placeholder" id="kiosk-camera-placeholder">
+              <span class="kiosk-camera-placeholder__icon">📷</span>
+              <span class="kiosk-camera-placeholder__text">Camera unavailable</span>
+              <span class="kiosk-camera-placeholder__sub">Use manual entry below</span>
+            </div>
+            <video id="kiosk-video" playsinline autoplay muted></video>
+            <canvas id="kiosk-canvas" style="display:none;"></canvas>
+          </div>
+        </div>
+
+        <!-- Instant Result Card -->
+        <div class="kiosk-result" id="kiosk-result">
+          <div class="kiosk-result__inner">
+            <div class="kiosk-result__icon" id="kiosk-result-icon">✓</div>
+            <div class="kiosk-result__status" id="kiosk-result-status">Attendance Marked</div>
+            <div class="kiosk-result__field">
+              <span class="kiosk-result__label">Student</span>
+              <span class="kiosk-result__value" id="kiosk-result-student">—</span>
+            </div>
+            <div class="kiosk-result__field">
+              <span class="kiosk-result__label">Ticket ID</span>
+              <span class="kiosk-result__value" id="kiosk-result-ticket">—</span>
+            </div>
+            <div class="kiosk-result__field">
+              <span class="kiosk-result__label">Time</span>
+              <span class="kiosk-result__value" id="kiosk-result-time">—</span>
+            </div>
+            <div class="kiosk-result__footer">
+              <span class="kiosk-result__counter-label">Live Attendance</span>
+              <span class="kiosk-result__counter-value" id="kiosk-live-count">0 / 0</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Manual Entry Overlay -->
+        <div class="kiosk-manual" id="kiosk-manual">
+          <div class="kiosk-manual__form">
+            <input type="text"
+                   id="kiosk-manual-input"
+                   class="kiosk-manual__input"
+                   placeholder="Enter ticket ID (e.g. AGC-XXXX)"
+                   autocomplete="off"
+                   maxlength="30"
+                   autofocus>
+            <button id="kiosk-manual-submit" class="kiosk-manual__btn" type="button">
+              Check In
+            </button>
+            <button id="kiosk-manual-cancel" class="kiosk-manual__cancel" type="button">
+              ✕
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scanner Controls -->
+      <div class="kiosk-scanner-controls">
+        <button id="kiosk-manual-btn" class="kiosk-control-btn" type="button">
+          <span class="kiosk-control-btn__icon">⌨</span> Manual Entry
+        </button>
+        <button id="kiosk-reset-btn" class="kiosk-control-btn" type="button" style="display:none;">
+          <span class="kiosk-control-btn__icon">↶</span> Scan Next
+        </button>
+        <button id="kiosk-exit-btn" class="kiosk-control-btn kiosk-control-btn--exit" type="button">
+          <span class="kiosk-control-btn__icon">🡙</span> Exit Kiosk
+        </button>
+      </div>
+    </section>
+
+  </div> <!-- /kiosk-root -->
+</body>
+</html>

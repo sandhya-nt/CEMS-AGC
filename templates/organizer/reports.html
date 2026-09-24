@@ -1,5 +1,373 @@
 {% extends "base.html" %}
-{% block title %}Reports — CEMS{% endblock %}
+{% block title %}Event Reports & Analytics — CEMS{% endblock %}
+{% block breadcrumb %}<a href="{{ url_for('organizer_dashboard') }}">Dashboard</a> / Reports & Analytics{% endblock %}
+
+{% block extra_css %}
+<style>
+  .cems-rating-stars { display: flex; gap: 2px; color: var(--cems-warning); font-size: 1.1rem; }
+  .cems-chart-card {
+    background: var(--cems-bg-primary);
+    border: 1px solid var(--cems-border);
+    border-radius: var(--cems-radius-lg);
+    padding: 20px;
+    margin-bottom: 24px;
+    box-shadow: var(--cems-shadow-sm);
+  }
+  .cems-chart-card .cems-chart-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--cems-text-primary);
+    margin-bottom: 4px;
+  }
+  .cems-chart-card .cems-chart-subtitle {
+    font-size: 0.8rem;
+    color: var(--cems-text-muted);
+    margin-bottom: 16px;
+  }
+  .cems-chart-wrap {
+    position: relative;
+    width: 100%;
+    height: 260px;
+  }
+  .cems-chart-wrap canvas { width: 100% !important; height: 100% !important; }
+  .cems-analytics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+    gap: 24px;
+  }
+  .cems-export-section {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    padding: 16px 20px;
+    background: var(--cems-bg-primary);
+    border: 1px solid var(--cems-border);
+    border-radius: var(--cems-radius-lg);
+  }
+  .cems-export-info {
+    font-size: 0.9rem;
+    color: var(--cems-text-secondary);
+  }
+  @media (max-width: 768px) {
+    .cems-analytics-grid { grid-template-columns: 1fr; }
+    .cems-export-section { flex-direction: column; gap: 12px; align-items: stretch; }
+  }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="narrow-wide"><div class="page-head"><h1>Reports & Analytics</h1></div><div class="stats"><div><span>Total Events</span><strong>{{ total_events }}</strong></div><div><span>Registrations</span><strong>{{ total_reg }}</strong></div><div><span>Attendees</span><strong>{{ total_att }}</strong></div><div><span>Revenue</span><strong>₹{{ '%.0f'|format(revenue) }}</strong></div></div><div class="table-card"><table><thead><tr><th>Event</th><th>Registrations</th><th>Attendance</th><th>Revenue</th></tr></thead><tbody>{% for e in events %}<tr><td>{{ e.title }}</td><td>{{ e.registrations|length }}</td><td>{{ e.registrations|selectattr('attended')|list|length }}</td><td>₹{{ '%.0f'|format(e.fee * (e.registrations|selectattr('payment_status','equalto','paid')|list|length)) }}</td></tr>{% endfor %}</tbody></table></div></div>
+<div class="cems-page-header">
+  <div class="cems-page-header-top">
+    <div>
+      <h1 class="cems-page-title">Reports & Analytics</h1>
+      <p class="cems-page-description">Event performance, registration insights, attendance, and revenue analytics.</p>
+    </div>
+    <div class="cems-page-actions">
+      <a href="{{ url_for('organizer_feedback') }}" class="cems-btn cems-btn-primary cems-btn-sm">
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.25 11.25l.041-.020a.72.72 0 011.063.864l-.708 2.832a.72.72 0 001.065.862l.041-.021M21 12c0 9-9 21-9 21S3 21 3 12a9 9 0 1118 0z"></path></svg>
+        Feedback Analytics
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="cems-stats-grid">
+  <div class="cems-stat-card">
+    <div class="cems-stat-icon primary">
+      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z"/></svg>
+    </div>
+    <div class="cems-stat-content">
+      <div class="cems-stat-value">{{ total_events }}</div>
+      <div class="cems-stat-label">Total Events</div>
+    </div>
+  </div>
+  <div class="cems-stat-card">
+    <div class="cems-stat-icon info">
+      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5h11M9 12h11M9 19h11"/><path d="m3 5 1.5 1.5L7 4m-4 8 1.5 1.5L7 12m-4 8 1.5 1.5L7 20"/></svg>
+    </div>
+    <div class="cems-stat-content">
+      <div class="cems-stat-value">{{ total_reg }}</div>
+      <div class="cems-stat-label">Registrations</div>
+    </div>
+  </div>
+  <div class="cems-stat-card">
+    <div class="cems-stat-icon success">
+      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+    </div>
+    <div class="cems-stat-content">
+      <div class="cems-stat-value">{{ total_att }}</div>
+      <div class="cems-stat-label">Attendees</div>
+    </div>
+  </div>
+  <div class="cems-stat-card">
+    <div class="cems-stat-icon primary">
+      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8v4l3 3m-3-3v8"></path></svg>
+    </div>
+    <div class="cems-stat-content">
+      <div class="cems-stat-value">₹{{ '%.0f'|format(revenue) }}</div>
+      <div class="cems-stat-label">Revenue</div>
+    </div>
+  </div>
+</div>
+
+<!-- Analytics Charts -->
+<div class="cems-analytics-grid">
+  <!-- Monthly Registrations Line Graph -->
+  <div class="cems-chart-card">
+    <div class="cems-chart-title">📈 Monthly Registrations</div>
+    <div class="cems-chart-subtitle">Registration trend (Apr 2026 – Sep 2026)</div>
+    <div class="cems-chart-wrap">
+      <canvas id="monthlyRegistrationsChart"></canvas>
+    </div>
+  </div>
+
+  <!-- My Events by Status Donut Chart -->
+  <div class="cems-chart-card">
+    <div class="cems-chart-title">🍩 My Events by Status</div>
+    <div class="cems-chart-subtitle">Event distribution across workflow stages</div>
+    <div class="cems-chart-wrap">
+      <canvas id="eventsByStatusChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Revenue by Event Bar Chart -->
+  <div class="cems-chart-card">
+    <div class="cems-chart-title">💰 Revenue by Event</div>
+    <div class="cems-chart-subtitle">Total revenue generated per paid event</div>
+    <div class="cems-chart-wrap">
+      <canvas id="revenueByEventChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- Export Section -->
+<div class="cems-export-section">
+  <div class="cems-export-info">
+    <b>📊 Export Analytics Data</b>
+    <div>Download a CSV report of your events, registrations, attendees, and revenue.</div>
+  </div>
+  <a href="{{ url_for('organizer_reports_export_csv') }}" class="cems-btn cems-btn-success">
+    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3M7 20h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v11a2 2 0 002 2z"></path></svg>
+    Export CSV
+  </a>
+</div>
+
+<!-- Events Table -->
+<div class="cems-card">
+  <div class="cems-card-header">
+    <div class="cems-card-title">My Events</div>
+  </div>
+  <div class="cems-card-body" style="padding: 0;">
+    <div class="cems-overflow-x-auto">
+      <table class="cems-table">
+        <thead>
+          <tr>
+            <th>Event</th>
+            <th>Category</th>
+            <th>Date</th>
+            <th>Venue</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for e in events %}
+          <tr>
+            <td><strong>{{ e.title }}</strong></td>
+            <td><span class="cems-badge cems-badge-primary">{{ e.category }}</span></td>
+            <td>{{ e.date.strftime('%d %b %Y') if e.date else '—' }}</td>
+            <td>{{ e.venue }}</td>
+            <td>
+              <span class="cems-badge
+                {% if e.status=='cancelled' %}cems-badge-danger
+                {% elif e.status=='cancellation_requested' %}cems-badge-warning
+                {% elif e.status=='reschedule_requested' %}cems-badge-info
+                {% elif e.status=='approved' and e.change_status=='rescheduled' %}cems-badge-info
+                {% elif e.status=='approved' %}cems-badge-success
+                {% elif e.status in ('pending', 'waiting') %}cems-badge-warning
+                {% elif e.status=='rejected' %}cems-badge-danger
+                {% else %}cems-badge-neutral{% endif %}">
+                {{ e.status|replace('_', ' ')|title }}
+              </span>
+            </td>
+            <td>
+              <a href="{{ url_for('organizer_registrations', event_id=e.id) }}" class="cems-btn cems-btn-secondary cems-btn-sm">Registrations</a>
+              {% if e.status == 'completed' %}
+              <a href="{{ url_for('organizer_event_feedback', event_id=e.id) }}" class="cems-btn cems-btn-secondary cems-btn-sm">Feedback</a>
+              {% endif %}
+              <a href="{{ url_for('generate_certificates', event_id=e.id) }}" class="cems-btn cems-btn-secondary cems-btn-sm">Certificates</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const monthlyData = {{ monthly_registrations | tojson }};
+  const monthlyLabels = {{ months_ordered | tojson }};
+  const statusData = {{ events_by_status | tojson }};
+  const revenueData = {{ revenue_by_event | tojson }};
+
+  const palette = {
+    primary: '#ff6ba8', pink: '#ec4899', cyan: '#06b6d4', amber: '#f59e0b',
+    green: '#10b981', red: '#ef4444', blue: '#3b82f6', indigo: '#6366f1',
+    muted: '#94a3b8', grid: 'rgba(148, 163, 184, 0.16)'
+  };
+
+  // 1. Monthly Registrations Line Graph
+  const lineCtx = document.getElementById('monthlyRegistrationsChart').getContext('2d');
+  new Chart(lineCtx, {
+    type: 'line',
+    data: {
+      labels: monthlyLabels,
+      datasets: [{
+        label: 'Registrations',
+        data: monthlyData,
+        borderColor: palette.cyan,
+        backgroundColor: palette.cyan + '22',
+        fill: true,
+        tension: 0.38,
+        borderWidth: 2,
+        pointRadius: 4,
+        pointBackgroundColor: palette.cyan,
+        pointHoverRadius: 6
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#111827',
+          titleColor: '#fff',
+          bodyColor: '#cbd5e1',
+          padding: 10,
+          cornerRadius: 8,
+          displayColors: false
+        }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: palette.muted, font: { size: 10 } } },
+        y: { beginAtZero: true, grid: { color: palette.grid }, ticks: { color: palette.muted, font: { size: 10 }, precision: 0 } }
+      }
+    }
+  });
+
+  // 2. My Events by Status Donut Chart
+  const statusLabels = Object.keys(statusData);
+  const statusValues = Object.values(statusData);
+  const statusColors = {
+    'Pending': palette.amber,
+    'Approved': palette.green,
+    'Rejected': palette.red,
+    'Draft': palette.muted,
+    'Completed': palette.blue,
+    'Pending Review': palette.warning || palette.amber
+  };
+  const backgroundColor = statusLabels.map(label => statusColors[label] || palette.primary);
+
+  const donutCtx = document.getElementById('eventsByStatusChart').getContext('2d');
+  new Chart(donutCtx, {
+    type: 'doughnut',
+    data: {
+      labels: statusLabels,
+      datasets: [{
+        data: statusValues,
+        backgroundColor: backgroundColor,
+        borderWidth: 0,
+        hoverOffset: 6
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '66%',
+      plugins: {
+        legend: {
+          position: 'right',
+          labels: {
+            color: palette.muted,
+            usePointStyle: true,
+            boxWidth: 8,
+            font: { size: 11 },
+            padding: 12
+          }
+        },
+        tooltip: {
+          backgroundColor: '#111827',
+          titleColor: '#fff',
+          bodyColor: '#cbd5e1',
+          padding: 10,
+          cornerRadius: 8
+        }
+      }
+    }
+  });
+
+  // 3. Revenue by Event Bar Chart
+  const revLabels = revenueData.map(r => r.title);
+  const revValues = revenueData.map(r => r.revenue);
+
+  const barCtx = document.getElementById('revenueByEventChart').getContext('2d');
+  new Chart(barCtx, {
+    type: 'bar',
+    data: {
+      labels: revLabels,
+      datasets: [{
+        label: 'Revenue (₹)',
+        data: revValues,
+        backgroundColor: revValues.map((_, i) => i % 2 ? palette.primary + 'cc' : palette.primary),
+        borderColor: revValues.map(() => palette.primary),
+        borderWidth: 1,
+        borderRadius: 5,
+        maxBarThickness: 48
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      indexAxis: 'y',
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#111827',
+          titleColor: '#fff',
+          bodyColor: '#cbd5e1',
+          padding: 10,
+          cornerRadius: 8,
+          callbacks: {
+            label: function(context) {
+              return '₹' + context.raw.toFixed(2);
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          beginAtZero: true,
+          grid: { color: palette.grid },
+          ticks: { color: palette.muted, font: { size: 10 }, precision: 0 },
+          callback: function(value) {
+            return '₹' + value;
+          }
+        },
+        y: {
+          grid: { display: false },
+          ticks: { color: palette.muted, font: { size: 10 } }
+        }
+      }
+    }
+  });
+});
+</script>
 {% endblock %}

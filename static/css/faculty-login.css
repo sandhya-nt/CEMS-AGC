@@ -1,0 +1,446 @@
+/* ============================================
+   ACEMS AGC — Faculty Login Page
+   Elegant · Calm · Academic · Sophisticated
+   Accent: Deep Indigo (distinct from Student Pink)
+   ============================================ */
+
+.acems-faculty-login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  background:
+    radial-gradient(circle at 10% 15%, rgba(55, 48, 163, 0.06), transparent 30rem),
+    radial-gradient(circle at 90% 85%, rgba(55, 48, 163, 0.05), transparent 28rem),
+    linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+}
+
+.acems-faculty-login-container {
+  width: 100%;
+  max-width: 520px;
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 48px 44px;
+  box-shadow:
+    0 1px 3px rgba(15, 23, 42, 0.04),
+    0 8px 24px rgba(15, 23, 42, 0.06),
+    0 24px 48px rgba(55, 48, 163, 0.06);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  position: relative;
+  max-height: 92vh;
+  overflow-y: auto;
+}
+
+/* ===== HEADER ===== */
+
+.acems-faculty-login-header {
+  margin-bottom: 32px;
+}
+
+.acems-faculty-login-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.acems-faculty-login-brand-mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #3730a3 0%, #4338ca 100%);
+  color: #ffffff;
+  flex-shrink: 0;
+}
+
+.acems-faculty-login-brand-mark svg {
+  width: 22px;
+  height: 22px;
+}
+
+.acems-faculty-login-brand-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.acems-faculty-login-brand-text strong {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.01em;
+}
+
+.acems-faculty-login-brand-text small {
+  font-size: 0.72rem;
+  color: #64748b;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+/* Divider with academic icon */
+
+.acems-faculty-login-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.acems-faculty-login-divider-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #c7d2fe, transparent);
+}
+
+.acems-faculty-login-divider-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #eef2ff;
+  color: #4338ca;
+}
+
+.acems-faculty-login-divider-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* ===== WELCOME ===== */
+
+.acems-faculty-login-welcome {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.acems-faculty-login-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 14px;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #4338ca;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+
+.acems-faculty-login-welcome h1 {
+  font-size: 1.55rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 10px;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+}
+
+.acems-faculty-login-welcome p {
+  font-size: 0.9rem;
+  color: #475569;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ===== FORM ===== */
+
+.acems-faculty-login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.acems-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.acems-form-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.acems-form-label svg {
+  width: 16px;
+  height: 16px;
+  color: #4338ca;
+  flex-shrink: 0;
+}
+
+.acems-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.acems-input-wrap input {
+  width: 100%;
+  padding: 11px 14px;
+  font-size: 0.92rem;
+  font-family: inherit;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #0f172a;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+  box-sizing: border-box;
+  outline: none;
+}
+
+.acems-input-wrap input:focus {
+  border-color: #4338ca;
+  box-shadow: 0 0 0 3px rgba(67, 56, 202, 0.12);
+}
+
+.acems-input-wrap input.has-error {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.acems-input-wrap input::placeholder {
+  color: #94a3b8;
+}
+
+/* Password toggle */
+
+.acems-input-wrap-with-toggle input {
+  padding-right: 44px;
+}
+
+.acems-password-toggle {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #64748b;
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease;
+}
+
+.acems-password-toggle:hover {
+  background: #f1f5f9;
+  color: #4338ca;
+}
+
+.acems-password-toggle svg {
+  width: 18px;
+  height: 18px;
+}
+
+.acems-password-toggle .acems-eye-closed {
+  display: none;
+}
+
+.acems-password-toggle[aria-pressed="true"] .acems-eye-open {
+  display: none;
+}
+
+.acems-password-toggle[aria-pressed="true"] .acems-eye-closed {
+  display: block;
+}
+
+/* ===== SUBMIT BUTTON ===== */
+
+.acems-faculty-login-submit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 13px 20px;
+  margin-top: 4px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  font-family: inherit;
+  color: #ffffff;
+  background: linear-gradient(135deg, #4338ca 0%, #3730a3 100%);
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: transform 150ms ease, box-shadow 150ms ease, background 150ms ease;
+  box-shadow: 0 4px 14px rgba(55, 48, 163, 0.25);
+}
+
+.acems-faculty-login-submit:hover {
+  background: linear-gradient(135deg, #3730a3 0%, #312e81 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(55, 48, 163, 0.3);
+}
+
+.acems-faculty-login-submit:focus-visible {
+  outline: 3px solid #c7d2fe;
+  outline-offset: 2px;
+}
+
+.acems-faculty-login-submit:active {
+  transform: translateY(0);
+}
+
+.acems-faculty-login-submit:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.acems-faculty-login-submit svg {
+  width: 18px;
+  height: 18px;
+  transition: transform 200ms ease;
+}
+
+.acems-faculty-login-submit:hover svg {
+  transform: translateX(3px);
+}
+
+/* ===== FOOTER ===== */
+
+.acems-faculty-login-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 1px solid #f1f5f9;
+  gap: 12px;
+}
+
+.acems-faculty-login-footer-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #4338ca;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 150ms ease, transform 150ms ease;
+  white-space: nowrap;
+}
+
+.acems-faculty-login-footer-link:hover {
+  color: #3730a3;
+  transform: translateY(-1px);
+}
+
+.acems-faculty-login-footer-link svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+}
+
+.acems-faculty-login-footer-sep {
+  width: 1px;
+  height: 20px;
+  background: #e2e8f0;
+  flex-shrink: 0;
+}
+
+/* ===== ACADEMIC ACCENT DECORATION ===== */
+
+.acems-faculty-login-accent {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100px;
+  color: #c7d2fe;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.acems-faculty-login-accent svg {
+  width: 100%;
+  height: auto;
+}
+
+/* ===== ERROR ===== */
+
+.acems-auth-error {
+  background: #fef2f2;
+  color: #7f1d1d;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-bottom: 14px;
+  border-left: 3px solid #ef4444;
+  animation: acemsFadeIn 0.3s ease-out;
+}
+
+@keyframes acemsFadeIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== RESPONSIVE ===== */
+
+@media (max-width: 560px) {
+  .acems-faculty-login-page {
+    padding: 24px 16px;
+    align-items: flex-start;
+    padding-top: 32px;
+  }
+
+  .acems-faculty-login-container {
+    padding: 32px 24px;
+    border-radius: 20px;
+  }
+
+  .acems-faculty-login-welcome h1 {
+    font-size: 1.3rem;
+  }
+
+  .acems-faculty-login-footer {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .acems-faculty-login-footer-sep {
+    width: 32px;
+    height: 1px;
+  }
+
+  .acems-faculty-login-brand-text strong {
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 380px) {
+  .acems-faculty-login-container {
+    padding: 28px 18px;
+  }
+
+  .acems-faculty-login-welcome h1 {
+    font-size: 1.15rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

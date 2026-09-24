@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% block title %}Calendar — CEMS{% endblock %}
+{% block breadcrumb %}Calendar{% endblock %}
+{% block content %}
+<div class="cems-page-header">
+  <div class="cems-page-header-top">
+    <div>
+      <h1 class="cems-page-title">Faculty Calendar</h1>
+      <p class="cems-page-description">Your assigned events schedule.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Calendar Navigation -->
+<div class="cems-card" style="margin-bottom: 24px;">
+  <div class="cems-card-body">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <button id="cal-prev" class="cems-btn cems-btn-secondary">◀ Prev</button>
+        <h2 id="cal-month-year" style="display: inline; margin: 0 20px; font-size: 1.4rem;"></h2>
+        <button id="cal-next" class="cems-btn cems-btn-secondary">Next ▶</button>
+      </div>
+      <div>
+        <button id="cal-today" class="cems-btn cems-btn-secondary">Today</button>
+        <a href="{{ url_for('teacher_assigned_events') }}" class="cems-btn cems-btn-secondary">List View</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Calendar Grid -->
+<div class="cems-card">
+  <div class="cems-card-body" style="padding: 0;">
+    <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: var(--cems-border);">
+      <div style="padding: 12px; text-align: center; font-weight: 600; background: var(--cems-bg);">Sun</div>
+      <div style="padding: 12px; text-align: center; font-weight: 600; background: var(--cems-bg);">Mon</div>
+      <div style="padding: 12px; text-align: center; font-weight: 600; background: var(--cems-bg);">Tue</div>
+      <div style="padding: 12px; text-align: center; font-weight: 600; background: var(--cems-bg);">Wed</div>
+      <div style="padding: 12px; text-align: center; font-weight: 600; background: var(--cems-bg);">Thu</div>
+      <div style="padding: 12px; text-align: center; font-weight: 600; background: var(--cems-bg);">Fri</div>
+      <div style="padding: 12px; text-align: center; font-weight: 600; background: var(--cems-bg);">Sat</div>
+    </div>
+    <div id="cal-grid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px;"></div>
+  </div>
+</div>
+
+<!-- Day Detail Modal -->
+<div class="modal-backdrop" id="day-modal" role="dialog" aria-modal="true" aria-hidden="true">
+  <div class="modal-card" style="max-width: 600px;">
+    <div class="modal-card-header">
+      <h3 id="day-modal-title">Events</h3>
+      <button type="button" class="modal-close" onclick="closeDayModal()">×</button>
+    </div>
+    <div class="modal-card-body" id="day-modal-body"></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+var calDate = new Date();
+var currentYear, currentMonth;
+
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('cal-prev').addEventListener('click', function() { calDate.setMonth(calDate.getMonth() - 1); renderCalendar(); });
+  document.getElementById('cal-next').addEventListener('click', function() { calDate.setMonth(calDate.getMonth() + 1); renderCalendar(); });
+  document.getElementById('cal-today').addEventListener('click', function() { calDate = new Date(); renderCalendar(); });
+  renderCalendar();
+});
+
+function renderCalendar() {
+  currentYear = calDate.getFullYear();
+  currentMonth = calDate.getMonth();
+
+  var monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('cal-month-year').textContent = monthNames[currentMonth] + ' ' + currentYear;
+
+  var firstDay = new Date(currentYear, currentMonth, 1).getDay();
+  var daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+  var today = new Date();
+
+  loadEvents(currentYear, currentMonth).then(function(events) {
+    var grid = document.getElementById('cal-grid');
+    var html = '';
+    for (var i = 0; i < firstDay; i++) {
+      html += '<div style="min-height: 100px; padding: 4px; background: var(--cems-card-bg); opacity: 0.3;"></div>';
+    }
+    for (var day = 1; day <= daysInMonth; day++) {
+      var dateStr = currentYear + '-' + String(currentMonth+1).padStart(2,'0') + '-' + String(day).padStart(2,'0');
+      var dayEvents = events.filter(function(e) { return e.date === dateStr; });
+      var isToday = day === today.getDate() && currentMonth === today.getMonth() && currentYear === today.getFullYear();
+      var cellStyle = 'min-height: 100px; padding: 4px; background: var(--cems-card-bg); cursor: pointer;';
+      if (isToday) cellStyle += ' border: 2px solid var(--cems-primary);';
+      html += '<div style="' + cellStyle + '" onclick="showDayEvents(\'' + dateStr + '\')">';
+      html += '<div style="font-weight: 600; font-size: 0.85rem; margin-bottom: 4px;">' + day + '</div>';
+      dayEvents.slice(0, 3).forEach(function(e) {
+        var statusColor = e.status === 'approved' ? 'var(--cems-success)' : e.status === 'completed' ? 'var(--cems-info)' : 'var(--cems-primary)';
+        html += '<div style="font-size: 0.7rem; padding: 2px 4px; border-radius: 3px; margin-bottom: 2px; background: ' + statusColor + '20; color: ' + statusColor + '; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="' + e.title + '">' + e.title + '</div>';
+      });
+      if (dayEvents.length > 3) {
+        html += '<div style="font-size: 0.7rem; color: var(--cems-text-muted);">+' + (dayEvents.length-3) + ' more</div>';
+      }
+      html += '</div>';
+    }
+    grid.innerHTML = html;
+  });
+}
+
+function loadEvents(year, month) {
+  return fetch('/api/teacher/calendar/events?year=' + year + '&month=' + (month+1))
+    .then(r => r.json())
+    .then(data => data.events || [])
+    .catch(err => { console.error(err); return []; });
+}
+
+function showDayEvents(dateStr) {
+  loadEvents(currentYear, currentMonth).then(function(allEvents) {
+    var dayEvents = allEvents.filter(function(e) { return e.date === dateStr; });
+    document.getElementById('day-modal-title').textContent = dateStr + ' — ' + dayEvents.length + ' event(s)';
+    var body = document.getElementById('day-modal-body');
+    if (dayEvents.length === 0) {
+      body.innerHTML = '<div style="text-align:center; padding: 40px; color: var(--cems-text-muted);">No events scheduled</div>';
+    } else {
+      body.innerHTML = dayEvents.map(function(e) {
+        return '<div style="padding: 12px; border-bottom: 1px solid var(--cems-border);">' +
+          '<strong>' + e.title + '</strong><br>' +
+          '<small style="color: var(--cems-text-muted);">' + (e.start_time || '') + ' — ' + (e.end_time || '') + ' @ ' + e.venue + '</small><br>' +
+          '<span class="cems-badge cems-badge-' + (e.status === 'approved' ? 'success' : 'warning') + '">' + e.status + '</span>' +
+        '</div>';
+      }).join('');
+    }
+    document.getElementById('day-modal').classList.remove('hidden');
+    document.getElementById('day-modal').setAttribute('aria-hidden', 'false');
+  });
+}
+function closeDayModal() {
+  document.getElementById('day-modal').classList.add('hidden');
+  document.getElementById('day-modal').setAttribute('aria-hidden', 'true');
+}
+</script>
+{% endblock %}

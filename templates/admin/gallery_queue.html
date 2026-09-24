@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% block title %}Gallery Moderation — CEMS{% endblock %}
+{% block breadcrumb %}Gallery Moderation Queue{% endblock %}
+
+{% block extra_css %}
+<style>
+  .cems-gallery-queue-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+    margin-top: 20px;
+  }
+  .cems-gallery-queue-item {
+    border-radius: var(--cems-radius-lg);
+    overflow: hidden;
+    box-shadow: var(--cems-shadow-sm);
+    background: var(--cems-bg-primary);
+    border: 1px solid var(--cems-border);
+  }
+  .cems-gallery-queue-image {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    display: block;
+  }
+  .cems-gallery-queue-info {
+    padding: 12px;
+    font-size: 0.85rem;
+  }
+  .cems-gallery-queue-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--cems-border-light);
+  }
+  .cems-moderation-form textarea {
+    width: 100%;
+    min-height: 60px;
+    font-size: 0.85rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="cems-page-header">
+  <div class="cems-page-header-top">
+    <div>
+      <h1 class="cems-page-title">Gallery Moderation Queue</h1>
+      <p class="cems-page-description">Review and approve/reject student-submitted event photos.</p>
+    </div>
+    <div class="cems-btn-group">
+      <span class="cems-badge cems-badge-warning">{{ pending_images | length }} pending</span>
+    </div>
+  </div>
+</div>
+
+{% if pending_images %}
+<div class="cems-gallery-queue-grid">
+  {% for image in pending_images %}
+  <div class="cems-gallery-queue-item">
+    <img src="{{ url_for('static', filename=image.image) }}" alt="Pending event photo" class="cems-gallery-queue-image"
+         onerror="this.onerror=null;this.src='{{ url_for('static', filename='images/placeholder.svg') }}';">
+    <div class="cems-gallery-queue-info">
+      <div style="font-weight: 600; margin-bottom: 4px;">{{ image.event.title if image.event else 'Event not found' }}</div>
+      <div style="color: var(--cems-text-muted); margin-bottom: 8px;">
+        Uploaded by {{ image.uploader.name if image.uploader else 'Unknown' }}
+        <span style="display: block; font-size: 0.75rem;">{{ image.uploaded_at.strftime('%d %b %Y %H:%M') if image.uploaded_at else '—' }}</span>
+      </div>
+      
+      <div class="cems-moderation-form">
+        <form method="post" action="{{ url_for('moderate_gallery_image', gallery_id=image.id) }}" class="cems-moderate-form" data-image-id="{{ image.id }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="action" value="approve">
+          <div class="cems-gallery-queue-actions">
+            <button type="submit" class="cems-btn cems-btn-sm cems-btn-success" style="flex: 1;">Approve</button>
+          </div>
+        </form>
+        
+        <form method="post" action="{{ url_for('moderate_gallery_image', gallery_id=image.id) }}" class="cems-moderate-reject-form" data-image-id="{{ image.id }}" style="margin-top: 8px;">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="action" value="reject">
+          <div class="cems-gallery-queue-actions">
+            <textarea name="reason" placeholder="Rejection reason (optional)" class="cems-form-input" style="font-size: 0.8rem;"></textarea>
+            <button type="submit" class="cems-btn cems-btn-sm cems-btn-danger">Reject</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="cems-empty">
+  <div class="cems-empty-icon">✅</div>
+  <div class="cems-empty-title">No Pending Images</div>
+  <div class="cems-empty-description">All gallery images have been reviewed.</div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Handle approve forms
+  document.querySelectorAll('.cems-moderate-form').forEach(function(form) {
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const formData = new FormData(form);
+      formData.append('action', 'approve');
+      
+      fetch(form.action, {
+        method: 'POST',
+        body: formData,
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          const item = form.closest('.cems-gallery-queue-item');
+          item.style.opacity = '0.5';
+          item.style.transition = 'opacity 0.3s';
+          setTimeout(() => item.remove(), 300);
+        }
+      })
+      .catch(err => console.error(err));
+    });
+  });
+  
+  // Handle reject forms
+  document.querySelectorAll('.cems-moderate-reject-form').forEach(function(form) {
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const formData = new FormData(form);
+      
+      fetch(form.action, {
+        method: 'POST',
+        body: formData,
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          const item = form.closest('.cems-gallery-queue-item');
+          item.style.opacity = '0.5';
+          item.style.transition = 'opacity 0.3s';
+          setTimeout(() => item.remove(), 300);
+        }
+      })
+      .catch(err => console.error(err));
+    });
+  });
+});
+</script>
+{% endblock %}

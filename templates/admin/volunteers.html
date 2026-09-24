@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block title %}Volunteer Operations — CEMS{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{{ url_for('static', filename='css/volunteer.css') }}">{% endblock %}
+
+{% block content %}
+<div class="cems-page-header">
+  <div class="cems-page-header-top">
+    <div>
+      <h1 class="cems-page-title">Volunteer Operations</h1>
+      <p class="cems-page-description">Monitor staffing, applications, assignments, and volunteer service across campus events.</p>
+    </div>
+    <div class="cems-page-actions">
+      <a href="{{ url_for('admin_dashboard') }}" class="cems-btn cems-btn-secondary">Admin Dashboard</a>
+    </div>
+  </div>
+</div>
+
+<div class="volunteer-stats">
+  <div class="volunteer-stat"><span class="volunteer-stat-icon">♧</span><span class="volunteer-stat-value">{{ stats.total_volunteers|default(0) }}</span><span class="volunteer-stat-label">Unique Volunteers</span></div>
+  <div class="volunteer-stat"><span class="volunteer-stat-icon">◷</span><span class="volunteer-stat-value">{{ stats.active_assignments|default(0) }}</span><span class="volunteer-stat-label">Active Assignments</span></div>
+  <div class="volunteer-stat"><span class="volunteer-stat-icon">◫</span><span class="volunteer-stat-value">{{ stats.pending_applications|default(0) }}</span><span class="volunteer-stat-label">Pending Applications</span></div>
+  <div class="volunteer-stat"><span class="volunteer-stat-icon">✓</span><span class="volunteer-stat-value">{{ stats.completed_assignments|default(0) }}</span><span class="volunteer-stat-label">Completed Shifts</span></div>
+  <div class="volunteer-stat"><span class="volunteer-stat-icon">♧</span><span class="volunteer-stat-value">{{ stats.total_hours|default(0) }}h</span><span class="volunteer-stat-label">Total Hours</span></div>
+  <div class="volunteer-stat"><span class="volunteer-stat-icon">□</span><span class="volunteer-stat-value">{{ stats.events_with_roles|default(0) }}</span><span class="volunteer-stat-label">Events Staffed</span></div>
+</div>
+
+<div class="volunteer-tabs">
+  <a class="volunteer-tab active" href="#staffing">Event Staffing</a>
+  <a class="volunteer-tab" href="#applications">Applications</a>
+  <a class="volunteer-tab" href="#assignments">Assignments</a>
+  <a class="volunteer-tab" href="#intervention">Intervention</a>
+</div>
+
+<section id="staffing" class="volunteer-card" style="margin-bottom:22px;">
+  <div class="volunteer-card-header"><div><h2 class="volunteer-card-title">Event Staffing</h2><p class="volunteer-card-subtitle">Compare required and confirmed volunteer capacity.</p></div></div>
+  <div class="volunteer-card-body">
+    <div class="volunteer-table-wrap">
+      <table class="volunteer-table">
+        <thead><tr><th>Event</th><th>Date</th><th>Roles</th><th>Required</th><th>Assigned</th><th>Fill Rate</th><th>Status</th></tr></thead>
+        <tbody>
+          {% for row in staffing|default([]) %}
+          <tr>
+            <td><strong>{{ row.event.title }}</strong><br><span class="cems-page-description">{{ row.event.venue }}</span></td>
+            <td>{{ row.event.date.strftime('%d %b %Y') if row.event.date else '—' }}</td>
+            <td>{{ row.roles|default([])|length }}</td>
+            <td>{{ row.required_count|default(0) }}</td>
+            <td>{{ row.assigned_count|default(0) }}</td>
+            <td>{{ row.fill_rate|default(0) }}%</td>
+            <td><span class="volunteer-status {% if row.fill_rate|default(0) >= 100 %}success{% elif row.fill_rate|default(0) >= 50 %}warning{% else %}danger{% endif %}">{{ row.status|default('Needs volunteers') }}</span></td>
+          </tr>
+          {% else %}
+          <tr><td colspan="7" class="volunteer-empty">No event staffing data is available yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="applications" class="volunteer-card" style="margin-bottom:22px;">
+  <div class="volunteer-card-header"><div><h2 class="volunteer-card-title">Applications</h2><p class="volunteer-card-subtitle">Campus-wide view of pending and reviewed requests.</p></div></div>
+  <div class="volunteer-card-body">
+    <div class="volunteer-table-wrap">
+      <table class="volunteer-table">
+        <thead><tr><th>Student</th><th>Event</th><th>Role</th><th>Applied</th><th>Status</th><th>Organizer</th></tr></thead>
+        <tbody>
+          {% for application in applications|default([]) %}
+          <tr>
+            <td><strong>{{ application.student.name }}</strong><br><span class="cems-page-description">{{ application.student.email }}</span></td>
+            <td>{{ application.event.title }}</td>
+            <td>{{ application.role.name if application.role else '—' }}</td>
+            <td>{{ application.created_at.strftime('%d %b %Y') if application.created_at else '—' }}</td>
+            <td><span class="volunteer-status {% if application.status == 'approved' %}success{% elif application.status == 'rejected' %}danger{% elif application.status == 'pending' %}warning{% endif %}">{{ application.status|replace('_', ' ')|title }}</span></td>
+            <td>{{ application.assigned_by_user.name if application.assigned_by_user else 'Pending' }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="6" class="volunteer-empty">No volunteer applications found.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="assignments" class="volunteer-card" style="margin-bottom:22px;">
+  <div class="volunteer-card-header"><div><h2 class="volunteer-card-title">Assignments</h2><p class="volunteer-card-subtitle">Review active and completed volunteer shifts.</p></div></div>
+  <div class="volunteer-card-body">
+    <div class="volunteer-table-wrap">
+      <table class="volunteer-table">
+        <thead><tr><th>Volunteer</th><th>Event</th><th>Role</th><th>Shift</th><th>Status</th><th>Hours</th></tr></thead>
+        <tbody>
+          {% for assignment in assignments|default([]) %}
+          <tr>
+            <td><strong>{{ assignment.student.name }}</strong><br><span class="cems-page-description">{{ assignment.student.roll_no or assignment.student.email }}</span></td>
+            <td>{{ assignment.event.title }}</td>
+            <td>{{ assignment.role.name if assignment.role else assignment.task }}</td>
+            <td>{{ assignment.shift_start.strftime('%d %b, %I:%M %p') if assignment.shift_start else 'Pending' }} – {{ assignment.shift_end.strftime('%I:%M %p') if assignment.shift_end else '' }}</td>
+            <td><span class="volunteer-status {% if assignment.status == 'completed' %}success{% elif assignment.status in ['cancelled','removed'] %}danger{% elif assignment.status in ['assigned','confirmed'] %}{% else %}warning{% endif %}">{{ assignment.status|replace('_', ' ')|title }}</span></td>
+            <td>{{ assignment.hours_worked or 0 }}h</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="6" class="volunteer-empty">No volunteer assignments found.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="intervention" class="volunteer-card">
+  <div class="volunteer-card-header"><div><h2 class="volunteer-card-title">Administrative Intervention</h2><p class="volunteer-card-subtitle">Resolve conflicts, update a shift, or remove an assignment when required.</p></div></div>
+  <div class="volunteer-card-body">
+    <form method="post" action="{{ url_for('admin_volunteer_intervene') }}" class="volunteer-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="volunteer-form-grid">
+        <div class="cems-form-group"><label class="cems-form-label" for="intervention-assignment">Assignment</label><select id="intervention-assignment" class="cems-form-select" name="assignment_id" required><option value="">Select assignment</option>{% for assignment in assignments|default([]) %}<option value="{{ assignment.id }}">{{ assignment.student.name }} · {{ assignment.event.title }} · {{ assignment.role.name if assignment.role else assignment.task }}</option>{% endfor %}</select></div>
+        <div class="cems-form-group"><label class="cems-form-label" for="intervention-action">Action</label><select id="intervention-action" class="cems-form-select" name="action" required><option value="update">Update status / shift</option><option value="cancel">Cancel assignment</option><option value="remove">Remove assignment</option></select></div>
+        <div class="cems-form-group"><label class="cems-form-label" for="intervention-status">Status</label><select id="intervention-status" class="cems-form-select" name="status"><option value="assigned">Assigned</option><option value="confirmed">Confirmed</option><option value="present">Present</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option><option value="removed">Removed</option></select></div>
+        <div class="cems-form-group"><label class="cems-form-label" for="intervention-notes">Administrative notes</label><input id="intervention-notes" class="cems-form-input" name="notes" placeholder="Reason for intervention"></div>
+      </div>
+      <button class="cems-btn cems-btn-danger" type="submit">Apply Intervention</button>
+    </form>
+  </div>
+</section>
+{% endblock %}

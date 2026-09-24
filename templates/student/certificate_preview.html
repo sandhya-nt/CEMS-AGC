@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Certificate Preview — CEMS{% endblock %}
+{% block breadcrumb %}Certificate Preview{% endblock %}
+
+{% block content %}
+<div class="cems-page-header">
+  <div>
+    <h1 class="cems-page-title">Certificate Preview</h1>
+    <p class="cems-page-description">Review your certificate details before downloading.</p>
+  </div>
+  <div class="cems-page-actions">
+    <a href="{{ url_for('certificate', registration_id=reg.id) }}" class="cems-btn cems-btn-primary">
+      Download PDF
+    </a>
+  </div>
+</div>
+
+<div class="cems-grid cems-grid-cols-2" style="gap: 24px;">
+  <!-- Certificate Visual -->
+  <div class="cems-card" style="border: 3px solid var(--cems-primary); padding: 0; overflow: hidden;">
+    <div style="padding: 48px 32px; text-align: center; background: linear-gradient(135deg, rgba(99,102,241,0.04) 0%, rgba(217,119,6,0.04) 100%);">
+      <div style="width: 60px; height: 60px; border-radius: 50%; background: var(--cems-primary); color: white; display: inline-flex; align-items: center; justify-content: center; font-size: 24px; margin-bottom: 16px; border: 3px solid var(--cems-gold, #d97706);">
+        ✓
+      </div>
+      <h2 style="font-size: 1.5rem; font-weight: 700; color: var(--cems-text-primary); margin: 0 0 4px;">{{ COLLEGE }}</h2>
+      <p style="color: var(--cems-text-muted); font-size: 0.8rem; margin: 0 0 24px;">Campus Event Management System</p>
+
+      <div style="border: 2px solid var(--cems-border); padding: 24px; border-radius: var(--cems-radius); background: white;">
+        <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--cems-text-muted); margin-bottom: 8px;">{{ cert.achievement or 'Certificate of Participation' }}</div>
+        <div style="font-family: 'Georgia', serif; font-size: 0.95rem; color: var(--cems-text-secondary); font-style: italic; margin-bottom: 12px;">This is to certify that</div>
+        <div style="font-family: 'Georgia', serif; font-size: 1.8rem; font-weight: 700; color: var(--cems-primary); margin-bottom: 16px;">{{ reg.user.name }}</div>
+        <div style="font-size: 0.9rem; color: var(--cems-text-secondary); margin-bottom: 4px;">for participation in</div>
+        <div style="font-weight: 700; color: var(--cems-text-primary); margin-bottom: 16px;">{{ reg.event.title }}</div>
+        <div style="font-size: 0.85rem; color: var(--cems-text-muted);">
+          {{ reg.event.venue }} · {{ reg.event.date.strftime('%d %B %Y') if reg.event.date else '—' }}
+        </div>
+      </div>
+
+      <div style="margin-top: 24px; display: flex; justify-content: center; gap: 24px;">
+        <div style="text-align: center;">
+          <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--cems-success-bg); color: var(--cems-success); display: inline-flex; align-items: center; justify-content: center; font-size: 16px; margin-bottom: 4px;">✓</div>
+          <div style="font-size: 0.7rem; color: var(--cems-text-muted);">Verified</div>
+        </div>
+        <div style="text-align: center;">
+          <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--cems-primary-bg); color: var(--cems-primary); display: inline-flex; align-items: center; justify-content: center; font-size: 16px; margin-bottom: 4px;">🔒</div>
+          <div style="font-size: 0.7rem; color: var(--cems-text-muted);">Secure</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Certificate Details -->
+  <div>
+    <div class="cems-card">
+      <div class="cems-card-header">
+        <div class="cems-card-title">Certificate Details</div>
+      </div>
+      <div class="cems-card-body" style="padding: 0;">
+        <table class="cems-table" style="margin: 0;">
+          <tbody>
+            <tr>
+              <td style="width: 40%; font-size: 0.8rem; color: var(--cems-text-muted); padding: 12px 16px; border-bottom: 1px solid var(--cems-border-light);">Student Name</td>
+              <td style="font-weight: 600; padding: 12px 16px; border-bottom: 1px solid var(--cems-border-light);">{{ reg.user.name }}</td>
+            </tr>
+            <tr>
+              <td style="font-size: 0.8rem; color: var(--cems-text-muted); padding: 12px 16px; border-bottom: 1px solid var(--cems-border-light);">Certificate Type</td>
+              <td style="font-weight: 600; padding: 12px 16px; border-bottom: 1px solid var(--cems-border-light);">{{ cert.achievement or 'Certificate of Participation' }}</td>
+            </tr>
+            <tr>
+              <td style="font-size: 0.8rem; color: var(--cems-text-muted); padding: 12px 16px; border-bottom: 1px solid var(--cems-border-light);">Event</td>
+              <td style="font-weight: 600; padding: 12px 16px; border-bottom: 1px solid var(--cems-border-light);">{{ reg.event.title }}</td>
+            </tr>
+            <tr>
+              <td style="font-size: 0.8rem; color: var(--cems-text-muted); padding: 12px 16px; border-bottom: 1px solid var(--cems-border-light);">Issue Date</td>
+              <td style="font-weight: 600; padding: 12px 16px; border-bottom: 1px solid var(--cems-border-light);">{{ cert.issued_date.strftime('%d %B %Y') if cert.issued_date else '—' }}</td>
+            </tr>
+            <tr>
+              <td style="font-size: 0.8rem; color: var(--cems-text-muted); padding: 12px 16px; border-bottom: 1px solid var(--cems-border-light);">Certificate ID</td>
+              <td style="font-weight: 600; font-family: monospace; padding: 12px 16px; border-bottom: 1px solid var(--cems-border-light);">{{ cert.certificate_code }}</td>
+            </tr>
+            <tr>
+              <td style="font-size: 0.8rem; color: var(--cems-text-muted); padding: 12px 16px; border-bottom: 1px solid var(--cems-border-light);">Issuer</td>
+              <td style="font-weight: 600; padding: 12px 16px; border-bottom: 1px solid var(--cems-border-light);">{{ issuer.name if issuer else COLLEGE }}</td>
+            </tr>
+            <tr>
+              <td style="font-size: 0.8rem; color: var(--cems-text-muted); padding: 12px 16px;">Status</td>
+              <td style="padding: 12px 16px;">
+                <span class="cems-badge cems-badge-success">{{ 'Verified' if cert.verified else 'Not Verified' }}</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

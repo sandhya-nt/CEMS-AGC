@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}View Certificate — CEMS{% endblock %}
+{% block breadcrumb %}View Certificate{% endblock %}
+
+{% block content %}
+<div class="cems-page-header">
+  <div>
+    <h1 class="cems-page-title">Certificate Preview</h1>
+    <p class="cems-page-description">Review the issued certificate before downloading or sharing it.</p>
+  </div>
+  <div class="cems-page-actions">
+    <a href="/certificate/{{ reg.id }}" class="cems-btn cems-btn-primary">Download PDF</a>
+    <a href="/teacher/certificates{% if event %}?event_id={{ event.id }}{% endif %}" class="cems-btn cems-btn-secondary">Back to Certificates</a>
+  </div>
+</div>
+
+<div class="cems-grid-2" style="gap:24px; align-items:start;">
+  <div class="cems-card">
+    <div class="cems-card-header">
+      <div class="cems-card-title">Certificate Details</div>
+      <span class="cems-badge cems-badge-success">Generated</span>
+    </div>
+    <div class="cems-card-body">
+      <div style="display:grid; gap:14px;">
+        <div style="display:flex; justify-content:space-between; gap:16px; border-bottom:1px solid var(--cems-border-light); padding-bottom:12px;">
+          <span style="color:var(--cems-text-muted);">Student Name</span><strong>{{ reg.user.name }}</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; gap:16px; border-bottom:1px solid var(--cems-border-light); padding-bottom:12px;">
+          <span style="color:var(--cems-text-muted);">Event</span><strong>{{ reg.event.title }}</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; gap:16px; border-bottom:1px solid var(--cems-border-light); padding-bottom:12px;">
+          <span style="color:var(--cems-text-muted);">Certificate ID</span><strong style="font-family:monospace;">{{ cert.certificate_code }}</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; gap:16px; border-bottom:1px solid var(--cems-border-light); padding-bottom:12px;">
+          <span style="color:var(--cems-text-muted);">Issue Date</span><strong>{{ cert.issued_date.strftime('%d %B %Y') if cert.issued_date else '—' }}</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; gap:16px; border-bottom:1px solid var(--cems-border-light); padding-bottom:12px;">
+          <span style="color:var(--cems-text-muted);">Certificate Status</span><strong>Generated and verifiable</strong>
+        </div>
+      </div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:20px;">
+        <a href="{{ url_for('verify_certificate', code=cert.certificate_code) }}" class="cems-btn cems-btn-outline cems-btn-sm" target="_blank" rel="noopener">Public Verification</a>
+        <button type="button" class="cems-btn cems-btn-outline cems-btn-sm copy-verify" data-url="{{ url_for('verify_certificate', code=cert.certificate_code, _external=True) }}">Copy Verification Link</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="cems-card">
+    <div class="cems-card-header">
+      <div class="cems-card-title">PDF Preview</div>
+      <span class="cems-badge cems-badge-neutral">One page</span>
+    </div>
+    <div style="background:var(--cems-bg-secondary); padding:16px; border-radius:12px;">
+      <iframe src="/certificate/{{ reg.id }}?preview=1" title="Certificate PDF preview" style="width:100%; height:760px; border:0; background:white; border-radius:8px;"></iframe>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var copyButton = document.querySelector('.copy-verify');
+  if (copyButton) {
+    copyButton.addEventListener('click', function () {
+      navigator.clipboard.writeText(copyButton.getAttribute('data-url')).then(function () {
+        var original = copyButton.textContent;
+        copyButton.textContent = 'Copied';
+        setTimeout(function () { copyButton.textContent = original; }, 1200);
+      });
+    });
+  }
+});
+</script>
+{% endblock %}

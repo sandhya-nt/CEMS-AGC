@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% from 'macros/event_card.html' import render_event_card %}
+{% block title %}Upcoming Events — {{ college_short }}{% endblock %}
+{% block breadcrumb %}Upcoming Events{% endblock %}
+
+{% block content %}
+<div class="cems-page-header">
+  <div class="cems-page-header-top">
+    <div>
+      <h1 class="cems-page-title">आगामी इवेंट्स ग्रिड</h1>
+      <p class="cems-page-description">Discover upcoming campus events and check available seats so you can choose events that match your interests.</p>
+    </div>
+    <div class="cems-page-actions">
+      <a href="{{ url_for('student_dashboard') }}" class="cems-btn cems-btn-outline">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 13a8 8 0 1116 0"/><path d="M12 13l4-4"/><path d="M4 13h4l2-3h4l2 3h4"/></svg>
+        Dashboard
+      </a>
+    </div>
+  </div>
+
+  <form class="cems-filter-bar" method="get">
+    <div class="cems-form-group">
+      <input type="text" name="q" class="cems-form-input" placeholder="Search events..." value="{{ q }}">
+    </div>
+    <div class="cems-form-group">
+      <select name="category" class="cems-form-select">
+        <option value="">All Categories</option>
+        {% for c in categories %}
+        <option value="{{ c }}" {% if category==c %}selected{% endif %}>{{ c }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="cems-form-group">
+      <select name="status" class="cems-form-select">
+        <option value="open" {% if status=='open' %}selected{% endif %}>Registration Open</option>
+        <option value="full" {% if status=='full' %}selected{% endif %}>Full</option>
+        <option value="upcoming" {% if status=='upcoming' %}selected{% endif %}>Upcoming</option>
+      </select>
+    </div>
+    <button type="submit" class="cems-btn cems-btn-primary">
+      <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+      Filter
+    </button>
+  </form>
+</div>
+
+{% if events %}
+<div class="cems-card-grid">
+  {% for item in events %}
+  {% set event = item.event %}
+  {% set seats_left = item.seats_available %}
+  {% set reg_closed = event.registration_deadline is not none and now().date() > event.registration_deadline %}
+  {{ render_event_card(event, registered=item.is_registered, seats_left=seats_left, registration_closed=reg_closed, show_organizer=True, show_registration=True, show_action=True) }}
+  {% endfor %}
+</div>
+
+{% if pagination and pagination.pages > 1 %}
+<div class="cems-pagination">
+  {% if pagination.has_prev %}
+  <a href="{{ url_for('student_events', page=pagination.prev_num, q=q, category=category, status=status) }}" class="cems-pagination-btn">← Previous</a>
+  {% endif %}
+  <span class="cems-pagination-info">Page {{ pagination.page }} of {{ pagination.pages }}</span>
+  {% if pagination.has_next %}
+  <a href="{{ url_for('student_events', page=pagination.next_num, q=q, category=category, status=status) }}" class="cems-pagination-btn">Next →</a>
+  {% endif %}
+</div>
+{% endif %}
+
+{% else %}
+<div class="cems-empty">
+  <div class="cems-empty-icon">📅</div>
+  <div class="cems-empty-title">No upcoming events</div>
+  <div class="cems-empty-description">There are no upcoming events at the moment. Check back soon for new listings.</div>
+  <a class="cems-btn cems-btn-primary cems-btn-sm" style="margin-top: 16px;" href="{{ url_for('student_dashboard') }}">Back to Dashboard</a>
+</div>
+{% endif %}
+{% endblock %}

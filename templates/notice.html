@@ -1,9 +1,9 @@
 {% extends "base.html" %}
-{% block title %}{{ info.title }} — CEMS{% endblock %}
+{% block title %}{{ notice }} — CEMS{% endblock %}
 {% block content %}
 <div class="narrow-card center">
-  <h1>{{ info.title }}</h1>
-  <p>{{ info.description }}</p>
+  <h1>{{ notice }}</h1>
+  <p>{{ notice }}</p>
   <a class="btn" href="{{ url_for('landing') }}">← Back to Home</a>
 </div>
 {% endblock %}

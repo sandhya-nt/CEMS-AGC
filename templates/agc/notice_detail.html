@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}{{ notice.title }} — Notice{% endblock %}
+{% block breadcrumb %}Notice Board{% endblock %}
+
+{% block content %}
+<div class="cems-page-header">
+  <div class="cems-page-header-top">
+    <div>
+      <h1 class="cems-page-title">{{ notice.title }}</h1>
+      <p class="cems-page-description">ACEMS AGC Notice Board</p>
+    </div>
+    <div class="cems-btn-group">
+      <a href="{{ url_for('agc_notices') }}" class="cems-btn cems-btn-outline cems-btn-sm">← Back to Notice Board</a>
+    </div>
+  </div>
+</div>
+
+<div class="cems-card" style="max-width: 860px; margin: 0 auto; padding: 32px;">
+
+  <!-- Meta row -->
+  <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 20px;">
+    <span class="cems-badge cems-badge-primary" style="font-size: 0.8rem; padding: 6px 14px;">
+      {{ notice.category }}
+    </span>
+    <span style="color: var(--cems-text-muted); font-size: 0.9rem;">
+      📅 Published on {{ notice.published_at.strftime('%d %b %Y') }}
+    </span>
+  </div>
+
+  <!-- Related Event -->
+  {% if notice.event %}
+  <div style="background: var(--cems-primary-bg); padding: 14px 18px; border-radius: var(--cems-radius-md); margin-bottom: 20px; font-size: 0.9rem;">
+    <strong>📅 Related Event:</strong>
+    <a href="{{ url_for('event_details', event_id=notice.event.id) }}" style="color: var(--cems-primary-dark); font-weight: 600;">
+      {{ notice.event.title }}
+    </a>
+    <span style="color: var(--cems-text-muted);"> · {{ notice.event.date.strftime('%d %b %Y') }} · {{ notice.event.venue }}</span>
+  </div>
+  {% endif %}
+
+  <!-- Image -->
+  {% if notice.image %}
+  <img src="{{ image_url(notice.image) }}"
+       alt="{{ notice.title }}"
+       style="width: 100%; border-radius: var(--cems-radius-lg); margin-bottom: 24px; box-shadow: var(--cems-shadow-md); object-fit: cover; max-height: 400px;"
+       onerror="this.onerror=null;this.src='{{ url_for('static', filename='images/placeholder.svg') }}';">
+  {% endif %}
+
+  <!-- Description -->
+  <div style="color: var(--cems-text-secondary); line-height: 1.8; font-size: 1rem; margin-bottom: 24px;">
+    {{ notice.description|nl2br }}
+  </div>
+
+  <!-- Attachment/PDF -->
+  {% if notice.attachment %}
+  <div style="margin-top: 24px; padding: 16px 20px; background: var(--cems-bg-secondary); border-radius: var(--cems-radius-md); border: 1px solid var(--cems-border-light);">
+    <strong style="font-size: 0.9rem;">📎 Attachment</strong>
+    <div style="margin-top: 8px;">
+      <a href="{{ image_url(notice.attachment) }}"
+         class="cems-btn cems-btn-secondary cems-btn-sm"
+         {% if notice.attachment.endswith('.pdf') %}target="_blank"{% endif %}>
+        {{ notice.attachment_name or 'Download Attachment' }}
+      </a>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Footer -->
+  <div style="margin-top: 32px; padding-top: 16px; border-top: 1px solid var(--cems-border); display: flex; justify-content: space-between; align-items: center;">
+    <span style="color: var(--cems-text-muted); font-size: 0.8rem;">
+      Published by {{ notice.author.name if notice.author else 'Admin' }} · {{ notice.published_at.strftime('%d %b %Y %I:%M %p') }}
+    </span>
+    <a href="{{ url_for('agc_notices') }}" class="cems-btn cems-btn-outline cems-btn-sm">← Back to Notice Board</a>
+  </div>
+
+</div>
+{% endblock %}

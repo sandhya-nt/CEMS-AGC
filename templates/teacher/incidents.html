@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+{% block title %}Incidents — CEMS{% endblock %}
+{% block breadcrumb %}Incidents{% endblock %}
+{% block content %}
+<div class="cems-page-header">
+  <div class="cems-page-header-top">
+    <div>
+      <h1 class="cems-page-title">Incident Reporting</h1>
+      <p class="cems-page-description">Report and track incidents during your events.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Event Selector -->
+<div class="cems-card" style="margin-bottom: 24px;">
+  <div class="cems-card-body">
+    <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
+      <div style="flex: 1; min-width: 240px;">
+        <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--cems-text-secondary);">Select Event</label>
+        <select id="incident-event-select" style="width:100%; padding: 10px 12px; border: 1px solid var(--cems-border); border-radius: 8px; font-size: 0.95rem;">
+          <option value="">All Assigned Events</option>
+          {% for event in events %}
+          <option value="{{ event.id }}">{{ event.title }} ({{ event.date.strftime('%d %b %Y') if event.date else '—' }})</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div style="align-self: flex-end;">
+        <button id="btn-load-incidents" class="cems-btn cems-btn-primary">Load Incidents</button>
+      </div>
+      <div style="align-self: flex-end;">
+        <a href="#" id="btn-report-incident" class="cems-btn cems-btn-danger" onclick="openIncidentModal(); return false;">🚨 Report Incident</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Stats Summary -->
+<div class="cems-grid cems-grid-cols-4" id="incident-stats" style="display: none; margin-bottom: 24px;">
+  <div class="cems-card"><div class="cems-card-body" style="text-align:center;"><div style="font-size:2rem; font-weight:700; color: var(--cems-danger);">🔴</div><div style="font-size:0.85rem; color: var(--cems-text-muted);">Critical</div><div id="stat-critical" style="font-size:1.5rem; font-weight:700;">0</div></div></div>
+  <div class="cems-card"><div class="cems-card-body" style="text-align:center;"><div style="font-size:2rem; font-weight:700; color: var(--cems-warning);">🟠</div><div style="font-size:0.85rem; color: var(--cems-text-muted);">High</div><div id="stat-high" style="font-size:1.5rem; font-weight:700;">0</div></div></div>
+  <div class="cems-card"><div class="cems-card-body" style="text-align:center;"><div style="font-size:2rem; font-weight:700; color: #6366f1;">🟡</div><div style="font-size:0.85rem; color: var(--cems-text-muted);">Medium</div><div id="stat-medium" style="font-size:1.5rem; font-weight:700;">0</div></div></div>
+  <div class="cems-card"><div class="cems-card-body" style="text-align:center;"><div style="font-size:2rem; font-weight:700; color: var(--cems-success);">🟢</div><div style="font-size:0.85rem; color: var(--cems-text-muted);">Resolved</div><div id="stat-resolved" style="font-size:1.5rem; font-weight:700;">0</div></div></div>
+</div>
+
+<!-- Incident Log -->
+<div id="incidents-section" style="display: none;">
+  <div class="cems-card">
+    <div class="cems-card-header">
+      <div class="cems-card-title">Incident Log</div>
+    </div>
+    <div class="cems-card-body" style="padding:0;">
+      <div class="cems-overflow-x-auto">
+        <table class="cems-table">
+          <thead>
+            <tr><th>Type</th><th>Severity</th><th>Description</th><th>Response Team</th><th>Status</th><th>Reported</th><th>Actions</th></tr>
+          </thead>
+          <tbody id="incidents-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- New Incident Modal -->
+<div class="modal-backdrop" id="incident-modal" role="dialog" aria-modal="true" aria-hidden="true">
+  <div class="modal-card" style="max-width: 600px;">
+    <div class="modal-card-header">
+      <h3>Report Incident</h3>
+      <button type="button" class="modal-close" onclick="closeIncidentModal()">×</button>
+    </div>
+    <form id="incident-form" method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="modal-card-body">
+        <div class="form-group">
+          <label>Incident Type <span style="color: red;">*</span></label>
+          <select id="incident-type" name="alert_type" required>
+            <option value="medical">Medical</option>
+            <option value="security">Security</option>
+            <option value="crowd">Crowd</option>
+            <option value="weather">Weather</option>
+            <option value="equipment">Equipment</option>
+            <option value="venue">Venue Issue</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label>Severity <span style="color: red;">*</span></label>
+            <select id="incident-severity" name="severity" required>
+              <option value="critical">Critical</option>
+              <option value="high">High</option>
+              <option value="medium" selected>Medium</option>
+              <option value="low">Low</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Event</label>
+            <select id="incident-event" name="event_id" required>
+              {% for event in events %}
+              <option value="{{ event.id }}">{{ event.title }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Description <span style="color: red;">*</span></label>
+          <textarea id="incident-description" name="description" rows="4" required placeholder="Describe the incident in detail"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Response Team</label>
+          <input type="text" id="incident-response" name="response_team" placeholder="e.g. Security Team, Medical Staff, Event Organizers">
+        </div>
+      </div>
+      <div class="modal-card-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeIncidentModal()">Cancel</button>
+        <button type="submit" class="btn btn-danger">Report Incident</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function openIncidentModal() {
+  document.getElementById('incident-modal').classList.remove('hidden');
+  document.getElementById('incident-modal').setAttribute('aria-hidden', 'false');
+}
+function closeIncidentModal() {
+  document.getElementById('incident-modal').classList.add('hidden');
+  document.getElementById('incident-modal').setAttribute('aria-hidden', 'true');
+}
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('btn-load-incidents').addEventListener('click', loadIncidents);
+  document.getElementById('incident-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    createIncident();
+  });
+});
+
+function loadIncidents() {
+  var eventId = document.getElementById('incident-event-select').value;
+  fetch('/api/teacher/incidents?' + (eventId ? 'event_id=' + eventId : ''))
+    .then(r => r.json())
+    .then(data => { if (data.success) renderIncidents(data.incidents); })
+    .catch(err => console.error(err));
+}
+
+function renderIncidents(incidents) {
+  document.getElementById('incidents-section').style.display = '';
+  var critical = incidents.filter(i => i.severity === 'critical').length;
+  var high = incidents.filter(i => i.severity === 'high').length;
+  var medium = incidents.filter(i => i.severity === 'medium').length;
+  var resolved = incidents.filter(i => i.resolved).length;
+  document.getElementById('stat-critical').textContent = critical;
+  document.getElementById('stat-high').textContent = high;
+  document.getElementById('stat-medium').textContent = medium;
+  document.getElementById('stat-resolved').textContent = resolved;
+  document.getElementById('incident-stats').style.display = '';
+
+  var tbody = document.getElementById('incidents-tbody');
+  var sevColors = {critical: 'cems-badge-danger', high: 'cems-badge-warning', medium: 'cems-badge-info', low: 'cems-badge-success'};
+  var statusBadge = function(r) {
+    if (r.resolved) return '<span class="cems-badge cems-badge-success">Resolved</span>';
+    if (r.severity === 'critical') return '<span class="cems-badge cems-badge-danger">Open · Critical</span>';
+    return '<span class="cems-badge cems-badge-warning">Open</span>';
+  };
+  tbody.innerHTML = incidents.map(function(i) {
+    return '<tr>' +
+      '<td><strong>' + i.alert_type + '</strong></td>' +
+      '<td><span class="cems-badge ' + (sevColors[i.severity]||'cems-badge-neutral') + '">' + i.severity + '</span></td>' +
+      '<td>' + i.description + '</td>' +
+      '<td>' + (i.response_team || '—') + '</td>' +
+      '<td>' + statusBadge(i) + '</td>' +
+      '<td>' + i.created_at + '</td>' +
+      '<td><button onclick="resolveIncident(' + i.id + ')" class="cems-btn cems-btn-sm cems-btn-success" ' + (i.resolved ? 'disabled' : '') + '>' + (i.resolved ? 'Resolved' : 'Resolve') + '</button></td>' +
+    '</tr>';
+  }).join('');
+}
+
+function createIncident() {
+  var data = {
+    alert_type: document.getElementById('incident-type').value,
+    severity: document.getElementById('incident-severity').value,
+    event_id: document.getElementById('incident-event').value,
+    description: document.getElementById('incident-description').value,
+    response_team: document.getElementById('incident-response').value,
+  };
+  fetch('/api/teacher/incidents', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) })
+    .then(r => r.json()).then(data => { if (data.success) { closeIncidentModal(); loadIncidents(); } });
+}
+
+function resolveIncident(id) {
+  fetch('/api/teacher/incidents/' + id, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({action: 'resolve'}) })
+    .then(r => r.json()).then(data => { if (data.success) loadIncidents(); });
+}
+</script>
+{% endblock %}

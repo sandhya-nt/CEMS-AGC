@@ -2,184 +2,198 @@
 {% block title %}Digital Ticket — CEMS{% endblock %}
 {% block breadcrumb %}My Tickets{% endblock %}
 
+{% set ticket = reg.ticket_record %}
+{% set ticket_id = ticket.id if ticket else reg.id %}
+{% set ticket_code = reg.ticket_code or '—' %}
+{% set ticket_status = 'revoked' if (ticket and ticket.status == 'revoked') else reg.status %}
+{% set status_label = 'Attended' if reg.attended else ('Cancelled' if ticket_status == 'revoked' else ('Pending' if reg.status != 'confirmed' else 'Active')) %}
+
 {% block extra_css %}
 <style>
-.cems-ticket-page {
-  max-width: 800px;
-  margin: 0 auto;
-}
-.cems-ticket-print {
-  border: 3px solid var(--cems-primary);
-  border-radius: 24px;
-  overflow: hidden;
-  box-shadow: var(--cems-shadow-xl);
-  background: linear-gradient(135deg, var(--cems-bg-primary) 0%, #ecfdf5 100%);
-  position: relative;
-}
-.cems-ticket-print::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 60px;
-  background: linear-gradient(90deg, var(--cems-primary), var(--cems-primary-dark));
-}
-.cems-ticket-header {
-  padding: 24px 32px 16px;
-  background: linear-gradient(90deg, var(--cems-primary), var(--cems-primary-dark));
-  color: white;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.cems-ticket-header h1 {
-  font-size: 1.4rem;
-  font-weight: 700;
-  margin: 0;
-}
-.cems-ticket-badge {
-  background: var(--cems-success);
-  color: white;
-  padding: 6px 16px;
-  border-radius: 999px;
-  font-size: 0.85rem;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-}
-.cems-ticket-body {
-  padding: 32px;
-  display: grid;
-  grid-template-columns: 1fr 280px;
-  gap: 32px;
-}
-.cems-ticket-details h2 {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--cems-text-primary);
-  margin-bottom: 8px;
-}
-.cems-ticket-details .cems-text-muted {
-  color: var(--cems-text-secondary);
-  margin-bottom: 24px;
-  font-size: 0.95rem;
-}
-.cems-ticket-info-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin-bottom: 24px;
-}
-.cems-ticket-info-item {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 12px 14px;
-  background: var(--cems-bg-primary);
-  border-radius: var(--cems-radius-md);
-  border: 1px solid var(--cems-border-light);
-}
-.cems-ticket-info-label {
-  font-size: 0.75rem;
-  color: var(--cems-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-.cems-ticket-info-value {
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--cems-text-primary);
-}
-.cems-ticket-qr-section {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-}
-.cems-ticket-qr-code {
-  width: 180px;
-  height: 180px;
-  border: 2px solid var(--cems-border);
-  border-radius: 12px;
-  padding: 8px;
-  background: white;
-  box-shadow: var(--cems-shadow-sm);
-}
-.cems-ticket-qr-code img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-.cems-ticket-qr-label {
-  font-size: 0.85rem;
-  color: var(--cems-text-secondary);
-  text-align: center;
-}
-.cems-ticket-id {
-  font-family: monospace;
-  font-weight: 700;
-  font-size: 1.1rem;
-  color: var(--cems-primary);
-  letter-spacing: 1px;
-}
-.cems-ticket-actions {
-  padding: 24px 32px;
-  border-top: 1px solid var(--cems-border-light);
-  display: flex;
-  justify-content: center;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-@media (max-width: 640px) {
-  .cems-ticket-body {
-    grid-template-columns: 1fr;
-    padding: 24px;
+  .cems-ticket-dpage { max-width: 880px; margin: 0 auto; }
+  .cems-ticket-print {
+    border: 3px solid var(--cems-primary);
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: var(--cems-shadow-xl);
+    background: linear-gradient(135deg, var(--cems-bg-primary) 0%, #ecfdf5 100%);
+    position: relative;
   }
-  .cems-ticket-print::before { height: 50px; }
-}
-@media print {
-  .cems-ticket-actions { display: none; }
-  .cems-ticket-print { box-shadow: none; border: none; page-break-inside: avoid; }
-}
+  .cems-ticket-print::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 60px;
+    background: linear-gradient(90deg, var(--cems-primary), var(--cems-primary-dark));
+  }
+  .cems-ticket-header {
+    padding: 24px 32px 16px;
+    background: linear-gradient(90deg, var(--cems-primary), var(--cems-primary-dark));
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: gap: 12px;
+  }
+  .cems-ticket-header h1 { font-size: 1.4rem; font-weight: 700; margin: 0; }
+  .cems-ticket-badge {
+    background: var(--cems-success);
+    color: white;
+    padding: 6px 16px;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  .cems-ticket-badge.cancelled { background: var(--cems-danger); }
+  .cems-ticket-badge.attended { background: #059669; }
+  .cems-ticket-body {
+    padding: 32px 36px 24px;
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 32px;
+  }
+  .cems-ticket-details h2 {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--cems-text-primary);
+    margin-bottom: 8px;
+  }
+  .cems-ticket-details .cems-text-muted {
+    color: var(--cems-text-secondary);
+    margin-bottom: 24px;
+    font-size: 0.95rem;
+  }
+  .cems-ticket-info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+  .cems-ticket-info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 12px 14px;
+    background: var(--cems-bg-primary);
+    border-radius: var(--cems-radius-md);
+    border: 1px solid var(--cems-border-light);
+  }
+  .cems-ticket-info-label {
+    font-size: 0.72rem;
+    color: var(--cems-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .cems-ticket-info-value {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--cems-text-primary);
+  }
+  .cems-ticket-code {
+    font-family: "SFMono-Regular", ui-monospace, monospace;
+    letter-spacing: 1px;
+  }
+  .cems-ticket-qr-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+  }
+  .cems-ticket-qr-code {
+    width: 200px;
+    height: 200px;
+    border: 2px solid var(--cems-border);
+    border-radius: 16px;
+    padding: 10px;
+    background: white;
+    box-shadow: var(--cems-shadow-sm);
+  }
+  .cems-ticket-qr-code img { width: 100%; height: 100%; object-fit: contain; }
+  .cems-ticket-qr-label { font-size: 0.85rem; color: var(--cems-text-secondary); text-align: center; line-height: 1.4; }
+  .cems-ticket-secured {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    color: var(--cems-success-dark);
+    background: var(--cems-success-bg);
+    border-radius: 999px;
+    padding: 4px 10px;
+  }
+  .cems-ticket-actions {
+    padding: 24px 32px;
+    border-top: 1px solid var(--cems-border-light);
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  @media (max-width: 640px) {
+    .cems-ticket-body { grid-template-columns: 1fr; padding: 24px 22px; }
+    .cems-ticket-print::before { height: 50px; }
+    .cems-ticket-header { padding: 20px 24px 14px; }
+  }
+  @media print {
+    .cems-ticket-actions { display: none; }
+    .cems-ticket-print { box-shadow: none; border: 3px solid #6366f1; page-break-inside: avoid; }
+  }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="cems-ticket-page">
+<div class="cems-ticket-dpage">
   <div class="cems-ticket-print">
     <div class="cems-ticket-header">
       <h1>🎟️ Digital Entry Ticket</h1>
-      <span class="cems-ticket-badge">{{ 'VERIFIED ENTRY' if reg.attended else 'CONFIRMED' }}</span>
+      <span class="cems-ticket-badge {% if status_label == 'Cancelled' %}cancelled{% elif status_label == 'Attended' %}attended{% endif %}">{{ status_label }}</span>
     </div>
+
     <div class="cems-ticket-body">
       <div class="cems-ticket-details">
         <div>
           <span class="cems-badge cems-badge-primary" style="margin-bottom: 12px; font-size: 0.8rem; padding: 6px 14px;">{{ reg.event.category }}</span>
           <h2>{{ reg.event.title }}</h2>
           <p class="cems-text-muted">
-            📅 {{ reg.event.date.strftime('%A, %d %B %Y') }} · ⏰ {{ reg.event.start_time }} - {{ reg.event.end_time }}
+            📅 {{ reg.event.date.strftime('%A, %d %B %Y') if reg.event.date else '—' }} · ⏰ {{ reg.event.start_time }} - {{ reg.event.end_time }}
           </p>
           <p class="cems-text-muted">📍 {{ reg.event.venue }}</p>
         </div>
 
         <div class="cems-ticket-info-grid">
           <div class="cems-ticket-info-item">
-            <span class="cems-ticket-info-label">Participant</span>
+            <span class="cems-ticket-info-label">Student Name</span>
             <span class="cems-ticket-info-value">{{ reg.user.name }}</span>
           </div>
           <div class="cems-ticket-info-item">
+            <span class="cems-ticket-info-label">Student ID / Roll No</span>
+            <span class="cems-ticket-info-value">{{ reg.user.student_id or reg.user.roll_no or '—' }}</span>
+          </div>
+          <div class="cems-ticket-info-item">
+            <span class="cems-ticket-info-label">Event Name</span>
+            <span class="cems-ticket-info-value">{{ reg.event.title }}</span>
+          </div>
+          <div class="cems-ticket-info-item">
+            <span class="cems-ticket-info-label">Event Date</span>
+            <span class="cems-ticket-info-value">{{ reg.event.date.strftime('%d %b %Y') if reg.event.date else '—' }}</span>
+          </div>
+          <div class="cems-ticket-info-item">
+            <span class="cems-ticket-info-label">Venue</span>
+            <span class="cems-ticket-info-value">{{ reg.event.venue }}</span>
+          </div>
+          <div class="cems-ticket-info-item">
             <span class="cems-ticket-info-label">Ticket ID</span>
-            <span class="cems-ticket-id">{{ reg.ticket_code }}</span>
+            <span class="cems-ticket-info-value cems-ticket-code">#T-{{ ticket_id }}</span>
           </div>
           <div class="cems-ticket-info-item">
-            <span class="cems-ticket-info-label">Roll Number</span>
-            <span class="cems-ticket-info-value">{{ reg.user.roll_no or '—' }}</span>
+            <span class="cems-ticket-info-label">Unique Ticket Code</span>
+            <span class="cems-ticket-info-value cems-ticket-code">{{ ticket_code }}</span>
           </div>
           <div class="cems-ticket-info-item">
-            <span class="cems-ticket-info-label">Department</span>
-            <span class="cems-ticket-info-value">{{ reg.user.department or '—' }}</span>
-          </div>
-          <div class="cems-ticket-info-item">
-            <span class="cems-ticket-info-label">Email</span>
-            <span class="cems-ticket-info-value">{{ reg.user.email }}</span>
+            <span class="cems-ticket-info-label">Ticket Status</span>
+            <span class="cems-ticket-info-value">
+              <span class="cems-badge {% if status_label == 'Attended' %}cems-badge-success{% elif status_label == 'Cancelled' %}cems-badge-danger{% elif status_label == 'Pending' %}cems-badge-warning{% else %}cems-badge-info{% endif %}">{{ status_label }}</span>
+            </span>
           </div>
           <div class="cems-ticket-info-item">
             <span class="cems-ticket-info-label">Payment</span>
@@ -187,7 +201,7 @@
           </div>
           <div class="cems-ticket-info-item">
             <span class="cems-ticket-info-label">Registration Date</span>
-            <span class="cems-ticket-info-value">{{ reg.registered_at.strftime('%d %b %Y') }}</span>
+            <span class="cems-ticket-info-value">{{ reg.registered_at.strftime('%d %b %Y') if reg.registered_at else '—' }}</span>
           </div>
           <div class="cems-ticket-info-item">
             <span class="cems-ticket-info-label">Attendance</span>
@@ -201,7 +215,7 @@
           </div>
         </div>
 
-        {% if not reg.attended %}
+        {% if not reg.attended and status_label != 'Cancelled' %}
         <div style="background: var(--cems-info-bg); border-radius: var(--cems-radius-md); padding: 12px 16px; margin-top: 8px;">
           <small style="color: var(--cems-info-dark);">
             📋 Bring this ticket (or the QR code below) and a valid ID for entry at the venue.
@@ -217,6 +231,7 @@
         <div class="cems-ticket-qr-label">
           Scan at the venue entrance to check in
         </div>
+        <span class="cems-ticket-secured">🔒 Secure token — no PII in QR</span>
         {% if reg.attended %}
         <a href="{{ url_for('certificate', registration_id=reg.id) }}" class="cems-btn cems-btn-success cems-btn-sm">
           📜 Download Certificate

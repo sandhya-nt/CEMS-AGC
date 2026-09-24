@@ -1,0 +1,134 @@
+{# templates/macros/event_card.html #}
+{# Reusable, aesthetic, clickable event card.
+   Supports: image/banner, title, category, date, time, venue, organizer, registration status.
+   Usage:
+     {% from 'macros/event_card.html' import render_event_card %}
+     {{ render_event_card(event, registered=False, seats_left=12, show_organizer=True) }}
+#}
+{% macro render_event_card(
+  event,
+  registered=False,
+  seats_left=None,
+  registration_closed=None,
+  show_organizer=True,
+  show_registration=True,
+  show_action=True,
+  size='default'
+) %}
+{% set img_url = event_image_url(event) %}
+
+{# Compute seats left when not provided. #}
+{% if seats_left is none %}
+  {% set active_regs = event.registrations|selectattr('status', 'notequalto', 'cancelled')|list if event.registrations else [] %}
+  {% set seats_left = (event.capacity or 0) - (active_regs|length) %}
+{% endif %}
+
+{# Determine whether registration is closed. #}
+{% if registration_closed is none %}
+  {% set registration_closed = event.registration_deadline is not none and now().date() > event.registration_deadline %}
+{% endif %}
+
+{# Determine the action label and whether the card is actionable. #}
+{% if registered %}
+  {% set action_label = 'View Details' %}
+  {% set action_kind = 'registered' %}
+{% elif seats_left > 0 and not registration_closed %}
+  {% set action_label = 'Register Now' %}
+  {% set action_kind = 'register' %}
+{% elif registration_closed %}
+  {% set action_label = 'View Details' %}
+  {% set action_kind = 'closed' %}
+{% else %}
+  {% set action_label = 'View Details' %}
+  {% set action_kind = 'full' %}
+{% endif %}
+
+<a href="{{ url_for('event_details', event_id=event.id) }}" class="cems-event-card-link cems-event-card-link-{{ size }}">
+  <article class="cems-event-card cems-event-card-{{ size }}">
+    <div class="cems-event-card-image-wrap">
+      {% if img_url %}
+      <img src="{{ img_url }}"
+           alt="{{ event.title }}"
+           class="cems-event-card-image"
+           loading="lazy"
+           onerror="this.onerror=null;this.parentElement.innerHTML='<div class=&quot;cems-event-card-placeholder&quot;>{{ event.category[:2].upper() }}</div>';">
+      {% else %}
+      <div class="cems-event-card-placeholder">{{ event.category[:2].upper() }}</div>
+      {% endif %}
+      {% if event.category %}
+      <span class="cems-event-card-category-badge">{{ event.category }}</span>
+      {% endif %}
+    </div>
+
+    <div class="cems-event-card-body">
+      <h3 class="cems-event-card-title">{{ event.title }}</h3>
+
+      <div class="cems-event-card-meta">
+        {% if event.date %}
+        <div class="cems-event-card-meta-item">
+          <svg class="cems-event-meta-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 2v4m8-4v4M3 9h18M5 4h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z"></path>
+          </svg>
+          <span>{{ event.date.strftime('%d %b %Y') }}</span>
+        </div>
+        {% endif %}
+        {% if event.start_time %}
+        <div class="cems-event-card-meta-item">
+          <svg class="cems-event-meta-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          <span>{{ event.start_time }}{% if event.end_time %} - {{ event.end_time }}{% endif %}</span>
+        </div>
+        {% endif %}
+        {% if event.venue %}
+        <div class="cems-event-card-meta-item">
+          <svg class="cems-event-meta-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243A8 8 0 1117.657 16.657z"></path>
+            <circle cx="12" cy="11" r="1.5" fill="currentColor"></circle>
+          </svg>
+          <span>{{ event.venue }}</span>
+        </div>
+        {% endif %}
+        {% if show_organizer and event.organizer and event.organizer.name %}
+        <div class="cems-event-card-meta-item">
+          <svg class="cems-event-meta-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"></path>
+            <circle cx="12" cy="8" r="4"></circle>
+          </svg>
+          <span>Organized by {{ event.organizer.name }}</span>
+        </div>
+        {% endif %}
+      </div>
+
+      {% if show_registration %}
+      <div class="cems-event-card-reg-status">
+        {% if registered %}
+        <span class="cems-event-card-reg-badge reg-registered">✓ Registered</span>
+        {% elif registration_closed %}
+        <span class="cems-event-card-reg-badge reg-closed">Registration closed</span>
+        {% elif seats_left <= 0 %}
+        <span class="cems-event-card-reg-badge reg-full">Full</span>
+        {% else %}
+        <span class="cems-event-card-reg-badge reg-open">{{ seats_left }} seats left</span>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      {% if show_action %}
+      <div class="cems-event-card-footer">
+        {% if registered %}
+        <span class="cems-event-card-action-label">View event details</span>
+        {% elif seats_left > 0 and not registration_closed %}
+        <span class="cems-event-card-action-label">Register now</span>
+        {% else %}
+        <span class="cems-event-card-action-label">View details</span>
+        {% endif %}
+        <svg class="cems-event-card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M17 5l-6 6 6 6M6 12h13"></path>
+        </svg>
+      </div>
+      {% endif %}
+    </div>
+  </article>
+</a>
+{% endmacro %}

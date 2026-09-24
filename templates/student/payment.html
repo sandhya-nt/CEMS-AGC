@@ -1,15 +1,56 @@
 {% extends "base.html" %}
-{% block title %}Demo Payment — CEMS{% endblock %}
+{% block title %}Payment — {{ event.title }} — CEMS{% endblock %}
 {% block content %}
 <div class="narrow-card">
-  <span class="tag">SECURE DEMO CHECKOUT</span>
+  <span class="tag">SECURE CHECKOUT</span>
   <h1>Payment for {{ event.title }}</h1>
-  <div class="summary">
+
+  {% if provider and not provider.is_available() %}
+  <div class="alert alert-danger" style="margin-bottom:20px;">
+    <strong>Payment Unavailable</strong>
+    <p style="margin-top:6px;">{{ provider.display_name() }} is not currently configured. No payment will be processed. Contact the event organizer for alternative arrangements.</p>
+  </div>
+  {% endif %}
+
+  <div class="summary" style="margin-bottom:20px;">
     <span>Participant</span><b>{{ current_user.name }}</b>
     <span>Event</span><b>{{ event.title }}</b>
-    <span>Amount</span><b>₹{{ '%.2f'|format(event.fee) }}</b>
+    <span>Registration Fee</span><b>₹{{ '%.2f'|format(event.fee) }}</b>
+    {% if provider %}
+    <span>Payment Provider</span><b>{{ provider.display_name() }}</b>
+    {% endif %}
+    {% if registration.payment_status != 'pending' %}
+    <span>Payment Status</span><b>{{ payment_display_status(registration.payment_status) }}</b>
+    {% endif %}
+    {% if payment_ref %}
+    <span>Payment Reference</span><b>{{ payment_ref }}</b>
+    {% endif %}
   </div>
-  <div class="demo-box">This academic project uses a simulated payment. No card, UPI PIN, OTP or banking credentials are collected.</div>
+
+  {% if event.payment_qr and registration.payment_status == 'pending' %}
+  <div class="cems-card" style="margin-bottom: 24px; padding: 20px; background: var(--cems-bg-secondary); border-radius: var(--cems-radius-lg);">
+    <h3 style="margin-bottom: 16px; color: var(--cems-text-primary); display: flex; align-items: center; gap: 8px;">
+      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 3v18"/></svg>
+      Scan QR Code to Pay
+    </h3>
+    <p style="color: var(--cems-text-secondary); margin-bottom: 16px; font-size: 0.9rem;">
+      Scan the QR code below using your phone's payment app (Google Pay, PhonePe, Paytm, etc.) to make the payment.
+      <strong>After payment, you must return to this page and click "Verify Payment" to confirm.</strong>
+    </p>
+    <div style="text-align: center; margin-bottom: 16px;">
+      <img src="{{ image_url(event.payment_qr) }}" alt="Payment QR Code" style="max-width: 280px; max-height: 280px; border: 1px solid var(--cems-border); border-radius: var(--cems-radius-md); background: white; padding: 8px;">
+    </div>
+    <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+      <button type="button" class="cems-btn cems-btn-primary" id="verifyPaymentBtn" onclick="verifyPayment()">✅ I Have Paid - Verify Payment</button>
+      <a href="{{ url_for('events') }}" class="cems-btn cems-btn-secondary">Cancel</a>
+    </div>
+    <p style="margin-top: 12px; font-size: 0.8rem; color: var(--cems-text-muted);">
+      Payment verification is required. Your registration will remain pending until payment is confirmed.
+    </p>
+  </div>
+  {% endif %}
+
+  {% if registration.payment_status == 'pending' and provider and provider.is_available() %}
   <form method="post">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div class="cems-form-group" style="margin-bottom: 20px;">
@@ -22,8 +63,63 @@
         <option value="cash">Cash at Campus Counter</option>
       </select>
     </div>
-    <button type="submit" class="btn full">Pay ₹{{ '%.2f'|format(event.fee) }} (Demo)</button>
+    <button type="submit" class="btn full">Pay ₹{{ '%.2f'|format(event.fee) }}</button>
   </form>
-</div>
-{% endblock %}
+  {% endif %}
 
+  {% if registration.payment_status == 'pending' and (not provider or not provider.is_available()) and not event.payment_qr %}
+  <div class="demo-box" style="background:var(--cems-danger-bg); color:var(--cems-danger-dark); border-radius:var(--cems-radius-md); padding:16px; margin-top:16px;">
+    <p style="margin:0;"><strong>Unable to process payment.</strong> Payment infrastructure is not available at this time. Please contact the event organizer.</p>
+  </div>
+  {% endif %}
+
+  {% if registration.payment_status != 'pending' %}
+  <div class="demo-box" style="margin-top:16px;">
+    <p style="margin:0;">Your payment has been processed. Reference: <strong>{{ payment_ref or '—' }}</strong>. A confirmation has been sent to your email.</p>
+  </div>
+  {% endif %}
+
+  <p style="margin-top:24px; font-size:0.8rem; color:var(--cems-text-muted); text-align:center;">
+    Payment is handled by {{ provider.display_name() if provider else 'the configured provider' }}. No card/UPI PIN or banking credentials are collected by CEMS.
+  </p>
+</div>
+
+<script>
+function verifyPayment() {
+  const btn = document.getElementById('verifyPaymentBtn');
+  const originalText = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '⏳ Verifying...';
+  
+  // In a real implementation, this would call a verification endpoint
+  // For now, we'll simulate the verification process
+  fetch('{{ url_for("api_verify_qr_payment", event_id=event.id, registration_id=registration.id) }}', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': '{{ csrf_token() }}'
+    },
+    body: JSON.stringify({})
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      btn.innerHTML = '✅ Verified';
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    } else {
+      btn.innerHTML = originalText;
+      btn.disabled = false;
+      alert('Payment verification failed: ' + (data.message || 'Please try again or contact the organizer.'));
+    }
+  })
+  .catch(err => {
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+    console.error(err);
+    alert('Network error. Please try again.');
+  });
+}
+</script>
+{% endblock %}

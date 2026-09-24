@@ -1,154 +1,291 @@
 {% extends "base.html" %}
+{% import "macros/timeline.html" as timeline %}
 {% block title %}{{ event.title }} — Past Event{% endblock %}
-{% block breadcrumb %}Past Events{% endblock %}
+{% block breadcrumb %}<a href="{{ url_for('past_events') }}">Past Events</a> › {{ event.title }}{% endblock %}
 
 {% block extra_css %}
 <style>
-.cems-event-detail-banner {
+.cems-detail-banner-wrap {
+  position: relative;
   width: 100%;
-  max-height: 320px;
-  object-fit: cover;
+  height: 260px;
   border-radius: var(--cems-radius-xl);
+  overflow: hidden;
   margin-bottom: 24px;
-  box-shadow: var(--cems-shadow-md);
+  background: var(--cems-bg-tertiary);
 }
-.cems-event-detail-banner-placeholder {
-  width: 100%;
-  height: 320px;
-  border: 2px dashed var(--cems-border);
-  border-radius: var(--cems-radius-xl);
-  margin-bottom: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 4rem;
-  opacity: 0.2;
+.cems-detail-banner {
+  width: 100%; height: 100%; object-fit: cover;
+  transition: transform var(--cems-transition-slow);
 }
+.cems-archive-card:hover .cems-detail-banner { transform: scale(1.01); }
+.cems-detail-banner-placeholder {
+  width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+  font-size: 4rem; opacity: .25;
+}
+.cems-detail-banner-badge {
+  position: absolute; left: 16px; bottom: 16px;
+  background: rgba(0,0,0,.45); color: #fff; padding: 6px 12px; border-radius: 999px;
+  font-size: .8rem; backdrop-filter: blur(2px);
+}
+
+.cems-result-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; margin-bottom: 24px;
+}
+.cems-result-stat {
+  background: var(--cems-bg-primary); border: 1px solid var(--cems-border);
+  border-radius: var(--cems-radius-lg); padding: 16px; text-align: center;
+}
+.cems-result-stat .cems-result-value { font-size: 1.75rem; font-weight: 700; color: var(--cems-text-primary); }
+.cems-result-stat .cems-result-label { font-size: .8rem; color: var(--cems-text-secondary); margin-top: 4px; }
+.cems-result-stat.present .cems-result-value { color: var(--cems-success); }
+.cems-result-stat.absent .cems-result-value { color: var(--cems-danger); }
+
+.cems-summary-section {
+  background: var(--cems-bg-primary); border: 1px solid var(--cems-border);
+  border-radius: var(--cems-radius-lg); padding: 20px; margin-bottom: 24px;
+}
+.cems-summary-section h2 { margin: 0 0 12px; font-size: 1.15rem; font-weight: 600; color: var(--cems-text-primary); }
+.cems-summary-section p, .cems-summary-section li { color: var(--cems-text-secondary); line-height: 1.7; }
+.cems-summary-section ul { padding-left: 18px; margin: 0; }
+.cems-results-text { white-space: pre-wrap; }
+
+.cems-detail-gallery {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px;
+}
+.cems-detail-gallery-item {
+  aspect-ratio: 4 / 3; border-radius: var(--cems-radius-md); overflow: hidden;
+  border: 1px solid var(--cems-border); background: var(--cems-bg-tertiary); position: relative;
+}
+.cems-detail-gallery-item img { width: 100%; height: 100%; object-fit: cover; }
+.cems-detail-gallery-item .cems-gallery-caption {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,.55); color: #fff; font-size: .75rem; padding: 6px 8px;
+  text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+@media (min-width: 992px) {
+  .cems-detail-grid { display: grid; grid-template-columns: 1.4fr .9fr; gap: 24px; align-items: start; }
+}
+.cems-detail-sidebar { display: flex; flex-direction: column; gap: 16px; }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="cems-event-detail">
-  {% set img_url = event_image_url(event) %}
-  {% if img_url %}
-  <img src="{{ img_url }}"
-       alt="{{ event.title }}"
-       class="cems-event-detail-banner"
-       onerror="this.onerror=null;this.parentElement.innerHTML='<div class=\"cems-event-detail-banner-placeholder\">{{ event.category[:2].upper() }}</div>';">
-  {% else %}
-  <div class="cems-event-detail-banner-placeholder">
-    {{ event.category[:2].upper() }}
-  </div>
-  {% endif %}
-
-  <div class="cems-event-detail-header">
-    <div style="flex: 1;">
-      <span class="cems-badge cems-badge-primary" style="margin-bottom: 12px;">{{ event.category }} · {{ event.event_type|title }}</span>
-      <h1 class="cems-event-detail-title">{{ event.title }}</h1>
-      <div class="cems-event-detail-meta">
-        <div class="cems-event-detail-meta-item">
-          <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-          {{ event.date.strftime('%A, %d %B %Y') }}
-        </div>
-        <div class="cems-event-detail-meta-item">
-          <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-          {{ event.start_time }} - {{ event.end_time }}
-        </div>
-        <div class="cems-event-detail-meta-item">
-          <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.243-4.243A8 8 0 0117.657 16.657z"></path><circle cx="12" cy="11" r="1.5" fill="currentColor"></circle></svg>
-          {{ event.venue }}
-        </div>
-      </div>
-    </div>
-    {% if current_user.is_authenticated and current_user.role in ('admin', 'organizer') %}
-    <div>
-      <a href="{{ url_for('past_event_pdf', event_id=event.id) }}" class="cems-btn cems-btn-secondary">📄 Download PDF Report</a>
-      {% if event.organizer_id == current_user.id %}
-      <a href="{{ url_for('generate_certificates', event_id=event.id) }}" class="cems-btn cems-btn-success">🏆 Generate Certificates</a>
-      {% endif %}
-    </div>
+  {# ---- Event image / banner ---- #}
+  {% set img_url = event_banner_url(event) %}
+  <div class="cems-detail-banner-wrap">
+    {% if img_url %}
+    <img src="{{ img_url }}" alt="{{ event.title }}" class="cems-detail-banner"
+         onerror="this.onerror=null;this.parentElement.innerHTML='<div class=\"cems-detail-banner-placeholder\">{{ event.category[:2].upper() }}</div>';">
+    {% else %}
+    <div class="cems-detail-banner-placeholder">{{ event.category[:2].upper() }}</div>
     {% endif %}
+    <span class="cems-detail-banner-badge">{{ event.category }} · {{ event.event_type|title }}</span>
   </div>
 
   <div class="cems-event-detail-body">
+    <div class="cems-event-detail-header">
+      <div style="flex: 1;">
+        <h1 class="cems-event-detail-title">{{ event.title }}</h1>
+        <div class="cems-event-detail-meta">
+          <div class="cems-event-detail-meta-item">
+            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+            {{ event.date.strftime('%A, %d %B %Y') }}
+          </div>
+          <div class="cems-event-detail-meta-item">
+            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            {{ event.start_time }}{% if event.end_time %} - {{ event.end_time }}{% endif %}
+          </div>
+          <div class="cems-event-detail-meta-item">
+            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.243-4.243A8 8 0 1117.657 16.657z"></path><circle cx="12" cy="11" r="1.5" fill="currentColor"></circle></svg>
+            {{ event.venue }}
+          </div>
+          <div class="cems-event-detail-meta-item">
+            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2m7-10a4 4 0 100-8 4 4 0 000 8z"></path></svg>
+            {{ event.organizer.name if event.organizer else '—' }}
+          </div>
+        </div>
+        {# Read-only archive: no registration / ticket actions are rendered. #}
+        <span class="cems-badge cems-badge-neutral" style="margin-top:12px; align-self:flex-start;">Completed · read-only archive</span>
+      </div>
+
+      {% if current_user.is_authenticated and current_user.role in ('admin', 'organizer') %}
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <a href="{{ url_for('past_event_pdf', event_id=event.id) }}" class="cems-btn cems-btn-secondary">📄 Download PDF Report</a>
+        {% if event.organizer_id == current_user.id %}
+        <a href="{{ url_for('generate_certificates', event_id=event.id) }}" class="cems-btn cems-btn-success">🏆 Generate Certificates</a>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+
+    {{ timeline.render_event_timeline(event) }}
+
     <div class="cems-event-detail-grid">
       <section>
-        <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 16px; color: var(--cems-text-primary);">About Event</h2>
-        <p style="color: var(--cems-text-secondary); line-height: 1.8; margin-bottom: 24px;">{{ event.description }}</p>
+        <div class="cems-summary-section">
+          <h2>About Event</h2>
+          {% if event.description %}
+          <p>{{ event.description }}</p>
+          {% else %}
+          <p>No description available for this event.</p>
+          {% endif %}
 
-        {% if event.rules %}
-        <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 8px; color: var(--cems-text-primary);">Event Rules</h3>
-        <p style="color: var(--cems-text-secondary); line-height: 1.8; margin-bottom: 24px;">{{ event.rules }}</p>
-        {% endif %}
+          {% if event.rules %}
+          <h3 style="font-size:1rem;font-weight:600;margin:16px 0 8px;color:var(--cems-text-primary);">Event Rules</h3>
+          <p>{{ event.rules }}</p>
+          {% endif %}
 
-        {% if event.eligibility %}
-        <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 8px; color: var(--cems-text-primary);">Eligibility Criteria</h3>
-        <p style="color: var(--cems-text-secondary); line-height: 1.8; margin-bottom: 24px;">{{ event.eligibility }}</p>
-        {% endif %}
+          {% if event.eligibility %}
+          <h3 style="font-size:1rem;font-weight:600;margin:16px 0 8px;color:var(--cems-text-primary);">Eligibility Criteria</h3>
+          <p>{{ event.eligibility }}</p>
+          {% endif %}
 
-        {% if event.highlights %}
-        <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 8px; color: var(--cems-text-primary);">Event Highlights</h3>
-        <ul class="ticks" style="list-style: none; padding: 0; margin-bottom: 24px;">
-          {% for item in event.highlights.splitlines() %}
-          <li style="padding: 6px 0; color: var(--cems-text-secondary); display: flex; align-items: center; gap: 8px;">
-            <svg width="16" height="16" fill="none" stroke="var(--cems-success)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-            {{ item }}
-          </li>
-          {% endfor %}
-        </ul>
-        {% endif %}
+          {% if event.highlights %}
+          <h3 style="font-size:1rem;font-weight:600;margin:16px 0 8px;color:var(--cems-text-primary);">Event Highlights</h3>
+          <ul style="list-style:none;padding:0;margin:0;">
+            {% for item in event.highlights.splitlines() if item.strip() %}
+            <li style="padding:6px 0;color:var(--cems-text-secondary);display:flex;align-items:center;gap:8px;">
+              <svg width="16" height="16" fill="none" stroke="var(--cems-success)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+              {{ item }}
+            </li>
+            {% endfor %}
+          </ul>
+          {% endif %}
 
-        {% if event.contact_info %}
-        <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 8px; color: var(--cems-text-primary);">Contact Information</h3>
-        <p style="color: var(--cems-text-secondary); line-height: 1.8;">{{ event.contact_info }}</p>
+          {% if event.contact_info %}
+          <h3 style="font-size:1rem;font-weight:600;margin:16px 0 8px;color:var(--cems-text-primary);">Contact Information</h3>
+          <p>{{ event.contact_info }}</p>
+          {% endif %}
+        </div>
+
+        {# Results / Summary #}
+        <div class="cems-summary-section">
+          <h2>📊 Results &amp; Summary</h2>
+          {% if summary %}
+          <div class="cems-result-grid">
+            <div class="cems-result-stat">
+              <div class="cems-result-value">{{ summary.total }}</div>
+              <div class="cems-result-label">Registrations</div>
+            </div>
+            <div class="cems-result-stat present">
+              <div class="cems-result-value">{{ summary.present }}</div>
+              <div class="cems-result-label">Attendees</div>
+            </div>
+            <div class="cems-result-stat absent">
+              <div class="cems-result-value">{{ summary.absent }}</div>
+              <div class="cems-result-label">Did not attend</div>
+            </div>
+            <div class="cems-result-stat">
+              <div class="cems-result-value">{{ summary.attendance_percentage }}%</div>
+              <div class="cems-result-label">Attendance</div>
+            </div>
+          </div>
+          {% else %}
+          <p>No attendance summary is available for this event.</p>
+          {% endif %}
+
+          {% if results_text %}
+          <h3 style="font-size:1rem;font-weight:600;margin-top:16px;color:var(--cems-text-primary);">Outcome</h3>
+          <div class="cems-results-text">{{ results_text }}</div>
+          {% endif %}
+        </div>
+
+        {# Event photos #}
+        <div class="cems-summary-section">
+          <h2>📸 Event Photos</h2>
+          {% if gallery %}
+          <div class="cems-detail-gallery">
+            {% for item in gallery %}
+            <div class="cems-detail-gallery-item">
+              <img src="{{ image_url(item.image) }}"
+                   alt="{{ item.caption or event.title }}"
+                   loading="lazy"
+                   onerror="this.onerror=null;this.parentElement.innerHTML='<div class=\"cems-detail-banner-placeholder\" style=\"font-size:2rem\">{{ event.category[:2].upper() }}</div>';">
+              {% if item.caption %}<span class="cems-gallery-caption">{{ item.caption }}</span>{% endif %}
+            </div>
+            {% endfor %}
+          </div>
+          {% else %}
+          <div class="cems-detail-banner-placeholder" style="height:160px;">📷</div>
+          <p style="color:var(--cems-text-secondary);margin-top:12px;">No event photos have been published for this event.</p>
+          {% endif %}
+        </div>
+
+        {# Documents #}
+        {% if documents %}
+        <div class="cems-summary-section">
+          <h2>📎 Event Documents</h2>
+          <ul style="list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;">
+            {% for doc in documents if doc.url or doc.file %}
+            <li>
+              <a href="{{ doc.url if doc.url else image_url(doc.file) }}"
+                 class="cems-btn cems-btn-outline cems-btn-sm" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                📄 {{ doc.title or doc.file or 'Document' }}
+              </a>
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
         {% endif %}
       </section>
-      <aside class="cems-event-detail-sidebar">
+
+      <aside class="cems-detail-sidebar">
         <div class="cems-card">
-          <div class="cems-card-header">
-            <div class="cems-card-title">Event Information</div>
-          </div>
+          <div class="cems-card-header"><div class="cems-card-title">Event Information</div></div>
           <div class="cems-card-body">
-            <div style="display: flex; flex-direction: column; gap: 16px;">
-              <div style="display: flex; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px solid var(--cems-border-light);">
-                <span style="color: var(--cems-text-muted); font-size: 0.85rem;">Organized By</span>
-                <span style="font-weight: 600; font-size: 0.9rem;">{{ event.organizer.name }}</span>
+            <div style="display:flex;flex-direction:column;gap:16px;">
+              <div style="display:flex;justify-content:space-between;padding-bottom:12px;border-bottom:1px solid var(--cems-border-light);">
+                <span style="color:var(--cems-text-muted);font-size:.85rem;">Organized By</span>
+                <span style="font-weight:600;font-size:.9rem;">{{ event.organizer.name if event.organizer else '—' }}</span>
               </div>
-              <div style="display: flex; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px solid var(--cems-border-light);">
-                <span style="color: var(--cems-text-muted); font-size: 0.85rem;">Capacity</span>
-                <span style="font-weight: 600; font-size: 0.9rem;">{{ event.capacity }}</span>
+              <div style="display:flex;justify-content:space-between;padding-bottom:12px;border-bottom:1px solid var(--cems-border-light);">
+                <span style="color:var(--cems-text-muted);font-size:.85rem;">Capacity</span>
+                <span style="font-weight:600;font-size:.9rem;">{{ event.capacity }}</span>
               </div>
-              <div style="display: flex; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px solid var(--cems-border-light);">
-                <span style="color: var(--cems-text-muted); font-size: 0.85rem;">Total Registrations</span>
-                <span style="font-weight: 600; font-size: 0.9rem;">{{ event.registrations|length }}</span>
+              <div style="display:flex;justify-content:space-between;padding-bottom:12px;border-bottom:1px solid var(--cems-border-light);">
+                <span style="color:var(--cems-text-muted);font-size:.85rem;">Total Registrations</span>
+                <span style="font-weight:600;font-size:.9rem;">{{ event.registrations|length }}</span>
               </div>
-              <div style="display: flex; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px solid var(--cems-border-light);">
-                <span style="color: var(--cems-text-muted); font-size: 0.85rem;">Total Attendance</span>
-                <span style="font-weight: 600; font-size: 0.9rem; color: var(--cems-success);">{{ event.registrations|selectattr('attended')|list|length }}</span>
+              <div style="display:flex;justify-content:space-between;padding-bottom:12px;border-bottom:1px solid var(--cems-border-light);">
+                <span style="color:var(--cems-text-muted);font-size:.85rem;">Total Attendance</span>
+                <span style="font-weight:600;font-size:.9rem;color:var(--cems-success);">{{ event.registrations|selectattr('attended')|list|length }}</span>
               </div>
-              <div style="display: flex; justify-content: space-between;">
-                <span style="color: var(--cems-text-muted); font-size: 0.85rem;">Status</span>
+              {% if event.fee %}
+              <div style="display:flex;justify-content:space-between;padding-bottom:12px;border-bottom:1px solid var(--cems-border-light);">
+                <span style="color:var(--cems-text-muted);font-size:.85rem;">Registration Fee</span>
+                <span style="font-weight:600;font-size:.9rem;">₹{{ '%.2f'|format(event.fee) }}</span>
+              </div>
+              {% else %}
+              <div style="display:flex;justify-content:space-between;padding-bottom:12px;border-bottom:1px solid var(--cems-border-light);">
+                <span style="color:var(--cems-text-muted);font-size:.85rem;">Registration Fee</span>
+                <span style="font-weight:600;font-size:.9rem;">Free</span>
+              </div>
+              {% endif %}
+              <div style="display:flex;justify-content:space-between;">
+                <span style="color:var(--cems-text-muted);font-size:.85rem;">Event Status</span>
                 <span class="cems-badge
                   {% if event.status=='approved' %}cems-badge-success
-                  {% elif event.status in ('pending', 'waiting') %}cems-badge-warning
+                  {% elif event.status in ('pending','waiting') %}cems-badge-warning
                   {% elif event.status=='rejected' %}cems-badge-danger
                   {% else %}cems-badge-neutral{% endif %}">
-                  {{ event.status|replace('_', ' ')|title }}
+                  {{ event.status|replace('_',' ')|title }}
                 </span>
               </div>
             </div>
           </div>
         </div>
-        {% if event.image %}
-        <div class="cems-card" style="margin-top: 20px;">
-          <div class="cems-card-header">
-            <div class="cems-card-title">Event Gallery</div>
-          </div>
+
+        {% if past_record and past_record.archived_at %}
+        <div class="cems-card">
+          <div class="cems-card-header"><div class="cems-card-title">Archive Info</div></div>
           <div class="cems-card-body">
-            <img src="{{ image_url(event.image) }}"
-                 alt="{{ event.title }}"
-                 style="width: 100%; height: 200px; object-fit: cover; border-radius: var(--cems-radius-md);"
-                 onerror="this.onerror=null;this.src='{{ url_for('static', filename='images/placeholder.svg') }}';">
+            <div style="display:flex;flex-direction:column;gap:8px;color:var(--cems-text-secondary);font-size:.85rem;">
+              <div>Archived on {{ past_record.archived_at.strftime('%d %b %Y') }}</div>
+              {% if past_record.highlights %}<div>Archived highlights available</div>{% endif %}
+            </div>
           </div>
         </div>
         {% endif %}
@@ -156,4 +293,14 @@
     </div>
   </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Lightweight photo lightbox — delegates to opening the full image in a new tab.
+document.addEventListener('click', function (e) {
+  var img = e.target.closest('.cems-detail-gallery-item img');
+  if (img) { e.preventDefault(); window.open(img.src, '_blank'); }
+});
+</script>
 {% endblock %}

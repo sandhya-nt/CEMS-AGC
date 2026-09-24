@@ -1,0 +1,421 @@
+{% extends "base.html" %}
+{% block title %}Submit Feedback — {{ event.title }} — CEMS{% endblock %}
+{% block breadcrumb %}Submit Feedback{% endblock %}
+
+{% block content %}
+<div class="cems-page-header">
+  <div class="cems-page-header-top">
+    <div>
+      <h1 class="cems-page-title">
+        {% if has_custom_form and not existing_feedback %}
+        {{ feedback_template.title }}
+        {% else %}
+        Event Feedback
+        {% endif %}
+      </h1>
+      <p class="cems-page-description">
+        {% if has_custom_form and not existing_feedback %}
+        {{ feedback_template.description or event.title }}
+        {% else %}
+        {{ event.title }} — {{ event.category }} · {{ event.date.strftime('%d %B %Y') if event.date else '—' }}
+        {% endif %}
+      </p>
+    </div>
+    <div class="cems-page-actions">
+      <a href="{{ url_for('my_registrations') }}" class="cems-btn cems-btn-secondary">
+        Back to Registrations
+      </a>
+    </div>
+  </div>
+</div>
+
+{% if has_custom_form and not existing_feedback %}
+<!-- ============== CUSTOM FEEDBACK FORM ============== -->
+<div class="cems-card" id="customFeedbackFormCard">
+  <div class="cems-card-header" style="border-radius: 12px 12px 0 0;">
+    <div class="cems-card-title">
+      <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 8px; vertical-align: middle;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.25 11.25l.041-.020a.72.72 0 011.063.864l-.708 2.832a.72.72 0 001.065.862l.041-.021M21 12c0 9-9 21-9 21S3 21 3 12a9 9 0 1118 0z"></path></svg>
+      {{ feedback_template.title }}
+    </div>
+  </div>
+  <div class="cems-card-body">
+    {% if feedback_template.description %}
+    <div style="font-size: 0.9rem; color: var(--cems-text-secondary); margin-bottom: 20px; line-height: 1.5;">
+      {{ feedback_template.description }}
+    </div>
+    {% endif %}
+
+    <form method="post" id="fbCustomForm">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" id="fbTemplateId" value="{{ feedback_template.id }}">
+      <input type="hidden" id="fbRegistrationId" value="{{ registration.id }}">
+
+      <div id="fbQuestionsContainer">
+        {% for q in feedback_template.questions|sort(attribute='position') if q.is_active %}
+        <div class="cems-form-group" id="q-{{ q.id }}">
+          <label class="cems-form-label">
+            {{ q.label }}
+            {% if q.required %}<span style="color: var(--cems-danger);">*</span>{% endif %}
+          </label>
+
+          {% if q.question_type == 'rating_stars' or q.question_type == 'rating_number' %}
+          <div class="cems-rating-input-group" data-qid="{{ q.id }}" data-scale="{{ q.rating_scale }}">
+            {% for i in range(1, (q.rating_scale or 5) + 1) %}
+            <input type="radio" id="q{{ q.id }}_{{ i }}" name="q_{{ q.id }}" value="{{ i }}" style="display: none;"{% if q.required %} required{% endif %}>
+            <label for="q{{ q.id }}_{{ i }}" class="star-label" data-value="{{ i }}" data-qid="{{ q.id }}" style="font-size: 1.5rem; cursor: pointer; color: var(--cems-text-muted);">
+              ★
+            </label>
+            {% endfor %}
+          </div>
+          {% elif q.question_type == 'nps' %}
+          <div class="cems-rating-input-group nps-input" data-qid="{{ q.id }}" data-scale="10">
+            {% for i in range(0, 11) %}
+            <input type="radio" id="q{{ q.id }}_{{ i }}" name="q_{{ q.id }}" value="{{ i }}" style="display: none;"{% if q.required %} required{% endif %}>
+            <label for="q{{ q.id }}_{{ i }}" class="nps-label" data-value="{{ i }}" data-qid="{{ q.id }}" style="cursor: pointer; color: var(--cems-text-muted); font-size: 0.85rem;">{{ i }}</label>
+            {% endfor %}
+          </div>
+          {% elif q.question_type == 'text' %}
+          <input type="text" name="q_{{ q.id }}" class="cems-form-input" placeholder="Enter your answer..."{% if q.required %} required{% endif %}>
+          {% elif q.question_type == 'textarea' %}
+          <textarea name="q_{{ q.id }}" class="cems-form-textarea" rows="4" placeholder="Enter your answer..."{% if q.required %} required{% endif %}></textarea>
+          {% elif q.question_type == 'select' %}
+          <select name="q_{{ q.id }}" class="cems-form-input"{% if q.required %} required{% endif %}>
+            <option value="" disabled selected>Select an option</option>
+            {% for opt in q.get_options() %}
+            <option value="{{ opt.value }}">{{ opt.label }}</option>
+            {% endfor %}
+          </select>
+          {% elif q.question_type in ('radio', 'checkbox') %}
+          {% for opt in q.get_options() %}
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+            <input type="{% if q.question_type == 'checkbox' %}checkbox{% else %}radio{% endif %}"
+                   id="q{{ q.id }}_{{ loop.index }}" name="q_{{ q.id }}"
+                   value="{{ opt.value }}"{% if q.question_type == 'radio' and q.required %} required{% endif %}>
+            <label for="q{{ q.id }}_{{ loop.index }}" style="cursor: pointer;">{{ opt.label }}</label>
+          </div>
+          {% endfor %}
+          {% else %}
+          <input type="text" name="q_{{ q.id }}" class="cems-form-input" placeholder="Enter your answer..."{% if q.required %} required{% endif %}>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- Comment / Additional Feedback -->
+      <div class="cems-form-group">
+        <label class="cems-form-label">Additional Comments (optional)</label>
+        <textarea name="is_anonymous" class="cems-form-textarea" rows="3" placeholder="Any other feedback or suggestions..."></textarea>
+        <input type="hidden" name="is_anonymous_input" value="off">
+      </div>
+
+      <!-- Anonymous Mode -->
+      <div class="cems-form-group">
+        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+          <input type="checkbox" name="is_anonymous" id="isAnonymousCustom" style="width: auto;">
+          <span style="font-size: 0.9rem;">Submit this feedback anonymously</span>
+        </label>
+        <div style="font-size: 0.75rem; color: var(--cems-text-muted); margin-top: 4px;">Your name will not be visible to event organizers.</div>
+      </div>
+
+      <div class="cems-form-group">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div id="fbSubmitStatus" style="font-size: 0.85rem; color: var(--cems-text-muted);"></div>
+          <button type="submit" class="cems-btn cems-btn-primary" id="fbSubmitBtn">Submit Feedback</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% else %}
+
+<div class="cems-grid cems-grid-cols-2">
+  <div class="cems-card">
+    <div class="cems-card-header">
+      <div class="cems-card-title">Your Feedback</div>
+    </div>
+    <div class="cems-card-body">
+      {% if existing_feedback %}
+        <div style="text-align: center; padding: 32px 20px;">
+          <div class="cems-empty-icon">✅</div>
+          <div class="cems-empty-title">Feedback Already Submitted</div>
+          <div class="cems-empty-description">Thank you for your feedback. You rated this event {{ existing_feedback.rating }}/5.</div>
+          {% if existing_feedback.is_anonymous %}
+            <span class="cems-badge cems-badge-outline" style="margin-top: 8px; display: inline-block;">Submitted Anonymously</span>
+          {% endif %}
+          {% if existing_feedback.theme %}
+          <div style="margin-top: 16px; padding: 12px; background: var(--cems-bg-secondary); border-radius: var(--cems-radius-md);">
+            <div style="font-size: 0.8rem; color: var(--cems-text-muted); margin-bottom: 6px;">Key Theme</div>
+            <div style="font-weight: 600;">{{ existing_feedback.theme }}</div>
+          </div>
+          {% endif %}
+        </div>
+        <div style="margin-top: 16px; padding: 16px; background: var(--cems-bg-secondary); border-radius: var(--cems-radius-md);">
+          <div style="font-size: 0.85rem; color: var(--cems-text-muted); margin-bottom: 6px;">Your Comment</div>
+          <div>{{ existing_feedback.comment or 'No comment provided.' }}</div>
+        </div>
+        <div style="margin-top: 16px; font-size: 0.85rem; color: var(--cems-text-muted);">
+          Submitted on: {{ existing_feedback.created_at.strftime('%d %b %Y %I:%M %p') if existing_feedback.created_at else '—' }}
+        </div>
+      {% else %}
+        <form method="post" action="{{ url_for('feedback', registration_id=registration.id) }}" id="feedbackForm">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+          <!-- Theme / Key Takeaway -->
+          <div class="cems-form-group">
+            <label class="cems-form-label">Key Theme or Takeaway (optional)</label>
+            <input type="text" name="theme" class="cems-form-input" placeholder="e.g. 'Inspiring speaker', 'Great networking', 'Well organized'">
+            <div style="font-size: 0.75rem; color: var(--cems-text-muted); margin-top: 4px;">One short phrase summarising your experience.</div>
+          </div>
+
+          <!-- Overall Rating -->
+          <div class="cems-form-group">
+            <label class="cems-form-label">Overall Rating *</label>
+            <div id="star-rating" style="display: flex; gap: 4px; margin-bottom: 8px;">
+              {% for i in range(1, 6) %}
+              <input type="radio" id="star{{ i }}" name="rating" value="{{ i }}" style="display: none;" required>
+              <label for="star{{ i }}" class="star-label" data-value="{{ i }}" style="font-size: 2rem; cursor: pointer; color: var(--cems-text-muted);">
+                ★
+              </label>
+              {% endfor %}
+            </div>
+            <div id="rating-text" style="font-size: 0.85rem; color: var(--cems-text-muted);">Select a rating (1 = Poor, 5 = Excellent)</div>
+          </div>
+
+          <!-- Category Ratings -->
+          <div class="cems-category-ratings">
+            <div class="cems-form-group">
+              <label class="cems-form-label">Event Organization</label>
+              <div class="cems-rating-input-group" data-cat="organization_rating">
+                {% for i in range(1, 6) %}
+                <input type="radio" id="org{{ i }}" name="organization_rating" value="{{ i }}" style="display: none;">
+                <label for="org{{ i }}" class="cat-star-label" data-value="{{ i }}" data-cat="organization_rating" style="font-size: 1.5rem; cursor: pointer; color: var(--cems-text-muted);">★</label>
+                {% endfor %}
+              </div>
+            </div>
+
+            <div class="cems-form-group">
+              <label class="cems-form-label">Venue</label>
+              <div class="cems-rating-input-group" data-cat="venue_rating">
+                {% for i in range(1, 6) %}
+                <input type="radio" id="venue{{ i }}" name="venue_rating" value="{{ i }}" style="display: none;">
+                <label for="venue{{ i }}" class="cat-star-label" data-value="{{ i }}" data-cat="venue_rating" style="font-size: 1.5rem; cursor: pointer; color: var(--cems-text-muted);">★</label>
+                {% endfor %}
+              </div>
+            </div>
+
+            <div class="cems-form-group">
+              <label class="cems-form-label">Speaker / Content</label>
+              <div class="cems-rating-input-group" data-cat="speaker_rating">
+                {% for i in range(1, 6) %}
+                <input type="radio" id="speaker{{ i }}" name="speaker_rating" value="{{ i }}" style="display: none;">
+                <label for="speaker{{ i }}" class="cat-star-label" data-value="{{ i }}" data-cat="speaker_rating" style="font-size: 1.5rem; cursor: pointer; color: var(--cems-text-muted);">★</label>
+                {% endfor %}
+              </div>
+            </div>
+
+            <div class="cems-form-group">
+              <label class="cems-form-label">Registration Experience</label>
+              <div class="cems-rating-input-group" data-cat="registration_experience_rating">
+                {% for i in range(1, 6) %}
+                <input type="radio" id="reg{{ i }}" name="registration_experience_rating" value="{{ i }}" style="display: none;">
+                <label for="reg{{ i }}" class="cat-star-label" data-value="{{ i }}" data-cat="registration_experience_rating" style="font-size: 1.5rem; cursor: pointer; color: var(--cems-text-muted);">★</label>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+
+          <!-- Comment -->
+          <div class="cems-form-group">
+            <label class="cems-form-label">Your Feedback</label>
+            <textarea name="comment" class="cems-form-textarea" placeholder="Share your experience about this event..." rows="5"></textarea>
+          </div>
+
+          <!-- Anonymous Mode -->
+          <div class="cems-form-group">
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+              <input type="checkbox" name="is_anonymous" id="isAnonymous" style="width: auto;">
+              <span style="font-size: 0.9rem;">Submit this feedback anonymously</span>
+            </label>
+            <div style="font-size: 0.75rem; color: var(--cems-text-muted); margin-top: 4px;">Your name will not be visible to event organizers.</div>
+          </div>
+
+          <div class="cems-form-group">
+            <button type="submit" class="cems-btn cems-btn-primary" style="width: 100%;">Submit Feedback</button>
+          </div>
+        </form>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="cems-card">
+    <div class="cems-card-header">
+      <div class="cems-card-title">Event Information</div>
+    </div>
+    <div class="cems-card-body">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+        <div>
+          <div style="font-size: 0.75rem; color: var(--cems-text-muted);">Event Name</div>
+          <div style="font-weight: 600; margin-bottom: 12px;">{{ event.title }}</div>
+        </div>
+        <div>
+          <div style="font-size: 0.75rem; color: var(--cems-text-muted);">Category</div>
+          <div style="font-weight: 600; margin-bottom: 12px;">{{ event.category }}</div>
+        </div>
+        <div>
+          <div style="font-size: 0.75rem; color: var(--cems-text-muted);">Date</div>
+          <div style="font-weight: 600; margin-bottom: 12px;">{{ event.date.strftime('%d %B %Y') if event.date else '—' }}</div>
+        </div>
+        <div>
+          <div style="font-size: 0.75rem; color: var(--cems-text-muted);">Venue</div>
+          <div style="font-weight: 600; margin-bottom: 12px;">{{ event.venue }}</div>
+        </div>
+        <div>
+          <div style="font-size: 0.75rem; color: var(--cems-text-muted);">Time</div>
+          <div style="font-weight: 600; margin-bottom: 12px;">{{ event.start_time }} - {{ event.end_time }}</div>
+        </div>
+        <div>
+          <div style="font-size: 0.75rem; color: var(--cems-text-muted);">Registration ID</div>
+          <div style="font-weight: 600; margin-bottom: 12px;">{{ registration.ticket_code }}</div>
+        </div>
+      </div>
+      {% if existing_feedback %}
+        <div style="margin-top: 12px;">
+          <div style="font-size: 0.75rem; color: var(--cems-text-muted);">Your Overall Rating</div>
+          <div style="display: flex; align-items: center; gap: 4px; margin-top: 4px;">
+            {% for i in range(1, 6) %}
+              {% if i <= existing_feedback.rating %}
+                <span style="color: var(--cems-warning); font-size: 1.25rem;">★</span>
+              {% else %}
+                <span style="color: var(--cems-text-muted); font-size: 1.25rem;">☆</span>
+              {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+        {% if existing_feedback.organization_rating or existing_feedback.venue_rating or existing_feedback.speaker_rating or existing_feedback.registration_experience_rating %}
+        <div style="margin-top: 16px;">
+          <div style="font-size: 0.75rem; color: var(--cems-text-muted); margin-bottom: 8px;">Category Ratings</div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.85rem;">
+            {% if existing_feedback.organization_rating %}
+            <div><span style="color: var(--cems-text-muted);">Organization:</span> <strong>{{ existing_feedback.organization_rating }}/5</strong></div>
+            {% endif %}
+            {% if existing_feedback.venue_rating %}
+            <div><span style="color: var(--cems-text-muted);">Venue:</span> <strong>{{ existing_feedback.venue_rating }}/5</strong></div>
+            {% endif %}
+            {% if existing_feedback.speaker_rating %}
+            <div><span style="color: var(--cems-text-muted);">Speaker:</span> <strong>{{ existing_feedback.speaker_rating }}/5</strong></div>
+            {% endif %}
+            {% if existing_feedback.registration_experience_rating %}
+            <div><span style="color: var(--cems-text-muted);">Registration:</span> <strong>{{ existing_feedback.registration_experience_rating }}/5</strong></div>
+            {% endif %}
+          </div>
+        </div>
+        {% endif %}
+      {% else %}
+        <div style="margin-top: 16px; padding: 16px; background: var(--cems-info-bg); border-radius: var(--cems-radius-md);">
+          <div style="font-size: 0.85rem; color: var(--cems-info-dark);">
+            <strong>Rating Scale:</strong> 1 Star = Poor, 2 Stars = Fair, 3 Stars = Average, 4 Stars = Good, 5 Stars = Excellent
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{% if not existing_feedback %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Overall star rating
+  var stars = document.querySelectorAll('#star-rating .star-label');
+  var ratingInput = document.querySelector('input[name="rating"]');
+  stars.forEach(function(star) {
+    star.addEventListener('click', function() {
+      var value = parseInt(this.getAttribute('data-value'));
+      ratingInput.value = value;
+      stars.forEach(function(s, idx) {
+        if (idx < value) {
+          s.style.color = 'var(--cems-warning)';
+        } else {
+          s.style.color = 'var(--cems-text-muted)';
+        }
+      });
+      var texts = ['Poor', 'Fair', 'Average', 'Good', 'Excellent'];
+      var ratingText = document.getElementById('rating-text');
+      if (ratingText) {
+        ratingText.innerHTML = texts[value - 1] + ' (' + value + '/5 selected)';
+        ratingText.style.color = 'var(--cems-warning)';
+      }
+    });
+    star.addEventListener('mouseenter', function() {
+      var value = parseInt(this.getAttribute('data-value'));
+      stars.forEach(function(s, idx) {
+        if (idx < value) {
+          s.style.color = 'var(--cems-warning-dark)';
+        } else {
+          s.style.color = 'var(--cems-text-muted)';
+        }
+      });
+    });
+    star.addEventListener('mouseleave', function() {
+      var current = parseInt(ratingInput.value) || 0;
+      stars.forEach(function(s, idx) {
+        if (idx < current) {
+          s.style.color = 'var(--cems-warning)';
+        } else {
+          s.style.color = 'var(--cems-text-muted)';
+        }
+      });
+    });
+  });
+
+  // Category star ratings
+  var catLabels = document.querySelectorAll('.cat-star-label');
+  catLabels.forEach(function(label) {
+    label.addEventListener('click', function() {
+      var value = parseInt(this.getAttribute('data-value'));
+      var cat = this.getAttribute('data-cat');
+      var hidden = document.querySelector('input[name="' + cat + '"]');
+      if (hidden) hidden.value = value;
+      var group = this.closest('.cems-rating-input-group');
+      var allLabels = group.querySelectorAll('.cat-star-label');
+      allLabels.forEach(function(s, idx) {
+        if (idx < value) {
+          s.style.color = 'var(--cems-warning)';
+        } else {
+          s.style.color = 'var(--cems-text-muted)';
+        }
+      });
+    });
+    label.addEventListener('mouseenter', function() {
+      var value = parseInt(this.getAttribute('data-value'));
+      var group = this.closest('.cems-rating-input-group');
+      var allLabels = group.querySelectorAll('.cat-star-label');
+      allLabels.forEach(function(s, idx) {
+        if (idx < value) {
+          s.style.color = 'var(--cems-warning-dark)';
+        } else {
+          s.style.color = 'var(--cems-text-muted)';
+        }
+      });
+    });
+    label.addEventListener('mouseleave', function() {
+      var cat = this.getAttribute('data-cat');
+      var hidden = document.querySelector('input[name="' + cat + '"]');
+      var current = parseInt(hidden.value) || 0;
+      var group = this.closest('.cems-rating-input-group');
+      var allLabels = group.querySelectorAll('.cat-star-label');
+      allLabels.forEach(function(s, idx) {
+        if (idx < current) {
+          s.style.color = 'var(--cems-warning)';
+        } else {
+          s.style.color = 'var(--cems-text-muted)';
+        }
+      });
+    });
+  });
+});
+</script>
+{% endblock %}

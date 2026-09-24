@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block title %}Completed Events — CEMS{% endblock %}
+{% block breadcrumb %}Completed Events{% endblock %}
+
+{% block content %}
+<div class="cems-page-header">
+  <div class="cems-page-header-top">
+    <div>
+      <h1 class="cems-page-title">Completed Events</h1>
+      <p class="cems-page-description">Events you have completed and finalized. View summaries and download reports.</p>
+    </div>
+    <div class="cems-page-actions">
+      <a href="{{ url_for('teacher_dashboard') }}" class="cems-btn cems-btn-secondary">Back to Dashboard</a>
+    </div>
+  </div>
+</div>
+
+<div class="cems-card" style="margin-bottom: 24px;">
+  <div class="cems-card-body" style="padding: 16px 20px;">
+    <div style="display:flex; flex-wrap:wrap; gap:12px; align-items:center;">
+      <div style="flex:1; min-width:200px;">
+        <input type="text" id="event-search" placeholder="Search events..." style="width:100%;" oninput="filterEvents()">
+      </div>
+      <select id="category-filter" style="max-width:180px;" onchange="filterEvents()">
+        <option value="">All Categories</option>
+        {% for cat in categories %}
+        <option value="{{ cat }}" {% if category == cat %}selected{% endif %}>{{ cat }}</option>
+        {% endfor %}
+      </select>
+      <input type="date" id="date-filter" value="{{ date_filter }}" style="max-width:180px;" onchange="filterEvents()">
+      <select id="sort-filter" style="max-width:140px;" onchange="filterEvents()">
+        <option value="newest" {% if sort != 'oldest' %}selected{% endif %}>Newest First</option>
+        <option value="oldest" {% if sort == 'oldest' %}selected{% endif %}>Oldest First</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+{% if events %}
+<div class="cems-card">
+  <div class="cems-card-body" style="padding: 0;">
+    <div class="cems-overflow-x-auto">
+      <table class="cems-table">
+        <thead>
+          <tr>
+            <th>Event Name</th>
+            <th>Date</th>
+            <th>Venue</th>
+            <th>Participants</th>
+            <th>Attendance %</th>
+            <th>Feedback</th>
+            <th>Certificates</th>
+            <th>Completed</th>
+            <th>Completed By</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for event in events %}
+          {% set stats = {} %}
+          <tr>
+            <td><strong>{{ event.title }}</strong><br><span style="font-size:0.8rem; color:var(--cems-text-muted);">{{ event.category }} · {{ event.venue }}</span></td>
+            <td>{{ event.date.strftime('%d %b %Y') }}</td>
+            <td>{{ event.venue }}</td>
+            <td>{{ event.registrations|length }}</td>
+            <td>
+              {% if event.registrations|length > 0 %}
+              {% set approved = event.registrations|selectattr('status', 'in', ['confirmed', 'approved'])|list %}
+              {% set attended = event.registrations|selectattr('attended', 'equalto', true)|list %}
+              {{ ((attended|length / approved|length * 100)|round(0)) if approved|length > 0 else 0 }}%
+              {% else %}0%{% endif %}
+            </td>
+            <td>
+              {% set fbs = event.registrations|selectattr('feedback', 'defined')|list %}
+              {{ fbs|length }}
+            </td>
+            <td>{{ event.registrations|selectattr('attended', 'equalto', true)|list|length }}</td>
+            <td>{{ event.completed_at.strftime('%d %b %Y') if event.completed_at else '—' }}</td>
+            <td>{{ event._completed_by_name }}</td>
+            <td>
+              <a href="{{ url_for('faculty_event_summary', event_id=event.id) }}" class="cems-btn cems-btn-primary cems-btn-sm">View Summary</a>
+              <a href="{{ url_for('faculty_event_report', event_id=event.id, format='pdf') }}" class="cems-btn cems-btn-secondary cems-btn-sm" title="Download PDF Report">📄 PDF</a>
+              <a href="{{ url_for('faculty_event_report', event_id=event.id, format='csv') }}" class="cems-btn cems-btn-outline cems-btn-sm" title="Download CSV Report">📊 CSV</a>
+              <a href="{{ url_for('faculty_event_report', event_id=event.id, format='excel') }}" class="cems-btn cems-btn-outline cems-btn-sm" title="Download Excel Report">📋 XLS</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="cems-card">
+  <div class="cems-card-body" style="text-align:center; padding:48px;">
+    <div class="cems-empty-icon">🎉</div>
+    <div class="cems-empty-title">No completed events</div>
+    <div class="cems-empty-description">You haven't completed any events yet. Complete your assigned events after the event has taken place.</div>
+    <a href="{{ url_for('faculty_assigned_events') }}" class="cems-btn cems-btn-primary" style="margin-top:16px;">View Assigned Events</a>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function filterEvents() {
+  var search = document.getElementById('event-search').value.toLowerCase();
+  var categoryFilter = document.getElementById('category-filter').value;
+  var dateFilter = document.getElementById('date-filter').value;
+  var sortFilter = document.getElementById('sort-filter').value;
+  var params = new URLSearchParams();
+  if (search) params.set('q', search);
+  if (categoryFilter) params.set('category', categoryFilter);
+  if (dateFilter) params.set('date', dateFilter);
+  if (sortFilter) params.set('sort', sortFilter);
+  window.location.href = '{{ url_for("faculty_completed_events") }}?' + params.toString();
+}
+</script>
+{% endblock %}

@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}My Certificates — CEMS{% endblock %}
+{% block breadcrumb %}My Certificates{% endblock %}
+
+{% block content %}
+<div class="cems-page-header">
+  <div>
+    <h1 class="cems-page-title">My Certificates</h1>
+    <p class="cems-page-description">Certificates earned from completed campus events. Each certificate is digitally verifiable.</p>
+  </div>
+</div>
+
+{% if certificates %}
+<div class="cems-grid cems-grid-cols-2" style="gap: 20px;">
+  {% for cert_item in certificates %}
+  {% set reg = cert_item[1] %}
+  {% set cert = cert_item[0] %}
+  {% set evt = cert_item[2] %}
+  {% set issuer_user = cert.issuer if cert.issuer else None %}
+  <div class="cems-card">
+    <div class="cems-card-header">
+      <div class="cems-card-title">{{ reg.event.title }}</div>
+      <span class="cems-badge cems-badge-success">{{ reg.event.category }}</span>
+    </div>
+    <div class="cems-card-body">
+      <div style="display:grid; gap:10px; margin-bottom:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-size:0.75rem; color:var(--cems-text-muted);">Student Name</span>
+          <span style="font-weight:600;">{{ reg.user.name }}</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-size:0.75rem; color:var(--cems-text-muted);">Certificate Type</span>
+          <span style="font-weight:600;">{{ cert.achievement or 'Certificate of Participation' }}</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-size:0.75rem; color:var(--cems-text-muted);">Event</span>
+          <span style="font-weight:600;">{{ reg.event.title }}</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-size:0.75rem; color:var(--cems-text-muted);">Issue Date</span>
+          <span style="font-weight:600;">{{ cert.issued_date.strftime('%d %B %Y') if cert.issued_date else '—' }}</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-size:0.75rem; color:var(--cems-text-muted);">Certificate ID</span>
+          <span style="font-weight:600; font-family:monospace;">{{ cert.certificate_code }}</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-size:0.75rem; color:var(--cems-text-muted);">Issuer</span>
+          <span style="font-weight:600;">{{ issuer_user.name if issuer_user else COLLEGE }}</span>
+        </div>
+      </div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <a href="{{ url_for('certificate_preview', registration_id=reg.id) }}" class="cems-btn cems-btn-secondary cems-btn-sm" aria-label="Preview certificate for {{ reg.event.title }}">
+          Preview
+        </a>
+        <a href="{{ url_for('certificate', registration_id=reg.id) }}" class="cems-btn cems-btn-primary cems-btn-sm" aria-label="Download certificate for {{ reg.event.title }}">
+          Download PDF
+        </a>
+        <a href="{{ url_for('verify_certificate', code=cert.certificate_code) }}" class="cems-btn cems-btn-outline cems-btn-sm" target="_blank" rel="noopener" aria-label="Verify certificate {{ cert.certificate_code }} (opens in new tab)">
+          Verify
+        </a>
+        <button type="button" class="cems-btn cems-btn-outline cems-btn-sm copy-verify"
+                data-url="{{ url_for('verify_certificate', code=cert.certificate_code, _external=True) }}"
+                aria-label="Copy verification link">
+          Copy Link
+        </button>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="cems-card">
+  <div class="cems-card-body" style="text-align:center; padding:48px;">
+    <svg width="48" height="48" fill="none" stroke="var(--cems-text-muted)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0zM12 17v4m-3-3h6"></path></svg>
+    <h3 style="margin:16px 0 8px; color:var(--cems-text-primary);">No certificates yet</h3>
+    <p style="color:var(--cems-text-muted);">Complete an approved event and check in to earn a certificate.</p>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  document.querySelectorAll('.copy-verify').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var url = btn.getAttribute('data-url');
+      navigator.clipboard.writeText(url).then(function () {
+        var orig = btn.textContent;
+        btn.textContent = 'Copied!';
+        setTimeout(function () { btn.textContent = orig; }, 1200);
+      });
+    });
+  });
+});
+</script>
+{% endblock %}

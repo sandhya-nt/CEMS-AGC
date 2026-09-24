@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% block title %}Feedback — CEMS{% endblock %}
+{% block breadcrumb %}Feedback Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+  .cems-rating-stars { display: flex; gap: 2px; color: var(--cems-warning); font-size: 0.85rem; }
+  .cems-rating-bar { background: var(--cems-gray-200); border-radius: 4px; height: 8px; overflow: hidden; }
+  .cems-rating-fill { background: var(--cems-primary); height: 100%; border-radius: 4px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="cems-page-header">
+  <div class="cems-page-header-top">
+    <div>
+      <h1 class="cems-page-title">Feedback Dashboard</h1>
+      <p class="cems-page-description">Review feedback from students for your completed events.</p>
+    </div>
+  </div>
+</div>
+
+{% if overall_stats %}
+<div class="cems-stats-grid">
+  <div class="cems-stat-card">
+    <div class="cems-stat-icon primary">
+      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 000-2H5a2 2 000-2V7a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+    </div>
+    <div class="cems-stat-content">
+      <div class="cems-stat-value">{{ overall_stats.total_events }}</div>
+      <div class="cems-stat-label">Completed Events</div>
+    </div>
+  </div>
+  <div class="cems-stat-card">
+    <div class="cems-stat-icon info">
+      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 000-2H5a2 2 000-2v12a2 2 0 002 2z"></path></svg>
+    </div>
+    <div class="cems-stat-content">
+      <div class="cems-stat-value">{{ overall_stats.total_feedbacks }}</div>
+      <div class="cems-stat-label">Total Feedbacks</div>
+    </div>
+  </div>
+  <div class="cems-stat-card">
+    <div class="cems-stat-icon success">
+      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.25 11.25l.041-.020a.72.72 0 011.063.864l-.708 2.832a.72.72 0 001.065.862l.041-.021M21 12c0 9-9 21-9 21S3 21 3 12a9 9 0 0118 0z"></path></svg>
+    </div>
+    <div class="cems-stat-content">
+      <div class="cems-stat-value">{{ overall_stats.avg_rating }}</div>
+      <div class="cems-stat-label">Avg Rating</div>
+    </div>
+  </div>
+  <div class="cems-stat-card">
+    <div class="cems-stat-icon warning">
+      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+    </div>
+    <div class="cems-stat-content">
+      <div class="cems-stat-value">{{ overall_stats.avg_response_rate }}%</div>
+      <div class="cems-stat-label">Avg Response Rate</div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<div class="cems-card">
+  <div class="cems-card-header">
+    <div class="cems-card-title">Completed Events Feedback</div>
+    <div class="cems-page-actions">
+      <div class="cems-search-box">
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+        <input type="text" id="feedbackSearch" placeholder="Search events...">
+      </div>
+    </div>
+  </div>
+  <div class="cems-card-body" style="padding: 0;">
+    {% if event_summaries %}
+    <div class="cems-overflow-x-auto">
+      <table class="cems-table" id="feedbackEventsTable">
+        <thead>
+          <tr>
+            <th>Event</th>
+            <th>Date</th>
+            <th>Registrations</th>
+            <th>Feedbacks</th>
+            <th>Response Rate</th>
+            <th>Avg Rating</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in event_summaries %}
+          <tr>
+            <td><strong>{{ item.event.title }}</strong><br><small style="color:var(--cems-text-muted);">{{ item.event.category }}</small></td>
+            <td>{{ item.event.date.strftime('%d %b %Y') if item.event.date else '—' }}</td>
+            <td>{{ item.stats.total_registrations }}</td>
+            <td>{{ item.stats.total_feedbacks }}</td>
+            <td>{{ item.stats.response_rate }}%</td>
+            <td>
+              {% set avg = item.stats.average_rating %}
+              {% if avg > 0 %}
+              <div class="cems-rating-stars">
+                {% for i in range(1, 6) %}
+                {% if i <= (avg|round|int) %}
+                <span>&#9733;</span>
+                {% elif i <= avg %}
+                <span>&#9733;</span>
+                {% else %}
+                <span>&#9734;</span>
+                {% endif %}
+                {% endfor %}
+              </div>
+              <small>{{ avg }}/5</small>
+              {% else %}
+              <span style="color:var(--cems-text-muted);">—</span>
+              {% endif %}
+            </td>
+            <td>
+              <a href="{{ url_for('teacher_event_feedback', event_id=item.event.id) }}" class="cems-btn cems-btn-sm cems-btn-secondary">View Details</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div style="text-align:center; padding:48px;">
+      <div style="font-size:3rem; margin-bottom:12px;">💬</div>
+      <div class="cems-empty-title">No completed events with feedback</div>
+      <div class="cems-empty-description">Feedback will appear here once students submit evaluations for your completed events.</div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const searchBox = document.getElementById('feedbackSearch');
+  const table = document.getElementById('feedbackEventsTable');
+  if (searchBox && table) {
+    searchBox.addEventListener('input', function() {
+      const term = this.value.toLowerCase().trim();
+      const rows = table.querySelectorAll('tbody tr');
+      rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(term) ? '' : 'none';
+      });
+    });
+  }
+});
+</script>
+{% endblock %}

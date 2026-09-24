@@ -1,0 +1,184 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="680" height="520" viewBox="0 0 680 520" role="img" aria-labelledby="title desc">
+  <title id="title">Students enjoying a campus event</title>
+  <desc id="desc">A premium flat illustration of a college campus with students, a festival stage, a technology workshop, and event cards.</desc>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fff8f1"/>
+      <stop offset="55%" stop-color="#fff4f6"/>
+      <stop offset="100%" stop-color="#f1edff"/>
+    </linearGradient>
+    <linearGradient id="buildingA" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#34456f"/>
+      <stop offset="100%" stop-color="#202d4f"/>
+    </linearGradient>
+    <linearGradient id="buildingB" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f7b8c8"/>
+      <stop offset="100%" stop-color="#e98aa5"/>
+    </linearGradient>
+    <linearGradient id="stage" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ff8ca7"/>
+      <stop offset="100%" stop-color="#d95d86"/>
+    </linearGradient>
+    <linearGradient id="canopy" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#7c5cff"/>
+      <stop offset="50%" stop-color="#a78bfa"/>
+      <stop offset="100%" stop-color="#f472b6"/>
+    </linearGradient>
+    <linearGradient id="ground" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#d9f5e8"/>
+      <stop offset="100%" stop-color="#f8e9ff"/>
+    </linearGradient>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="12" stdDeviation="14" flood-color="#4b3670" flood-opacity="0.16"/>
+    </filter>
+    <filter id="smallShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="6" stdDeviation="7" flood-color="#4b3670" flood-opacity="0.14"/>
+    </filter>
+  </defs>
+
+  <rect width="680" height="520" rx="32" fill="url(#sky)"/>
+  <circle cx="595" cy="72" r="72" fill="#ffd9a8" opacity="0.42"/>
+  <circle cx="88" cy="96" r="42" fill="#c7f1e2" opacity="0.55"/>
+  <path d="M0 392 C112 342 182 370 284 338 C393 304 476 331 680 274 L680 520 L0 520 Z" fill="url(#ground)" opacity="0.92"/>
+  <path d="M0 410 C126 373 211 398 311 370 C430 337 529 363 680 319" fill="none" stroke="#ffffff" stroke-width="5" opacity="0.62" stroke-linecap="round"/>
+
+  <!-- Campus architecture -->
+  <g filter="url(#softShadow)">
+    <rect x="42" y="112" width="150" height="264" rx="12" fill="url(#buildingA)"/>
+    <path d="M42 126 Q117 70 192 126 Z" fill="#4b5e8c"/>
+    <rect x="61" y="142" width="24" height="34" rx="4" fill="#bde3ff" opacity="0.88"/>
+    <rect x="100" y="142" width="24" height="34" rx="4" fill="#bde3ff" opacity="0.62"/>
+    <rect x="139" y="142" width="24" height="34" rx="4" fill="#bde3ff" opacity="0.88"/>
+    <rect x="61" y="194" width="24" height="34" rx="4" fill="#bde3ff" opacity="0.58"/>
+    <rect x="100" y="194" width="24" height="34" rx="4" fill="#bde3ff" opacity="0.9"/>
+    <rect x="139" y="194" width="24" height="34" rx="4" fill="#bde3ff" opacity="0.6"/>
+    <rect x="61" y="246" width="24" height="34" rx="4" fill="#bde3ff" opacity="0.86"/>
+    <rect x="100" y="246" width="24" height="34" rx="4" fill="#bde3ff" opacity="0.58"/>
+    <rect x="139" y="246" width="24" height="34" rx="4" fill="#bde3ff" opacity="0.9"/>
+    <rect x="91" y="310" width="52" height="66" rx="5" fill="#7dd3c2"/>
+    <circle cx="128" cy="344" r="4" fill="#fff6dc"/>
+  </g>
+
+  <g filter="url(#smallShadow)">
+    <rect x="457" y="138" width="181" height="238" rx="14" fill="#fffdf8"/>
+    <rect x="457" y="138" width="181" height="34" rx="14" fill="url(#buildingB)"/>
+    <rect x="478" y="194" width="34" height="46" rx="5" fill="#bde3ff" opacity="0.86"/>
+    <rect x="529" y="194" width="34" height="46" rx="5" fill="#bde3ff" opacity="0.62"/>
+    <rect x="580" y="194" width="34" height="46" rx="5" fill="#bde3ff" opacity="0.86"/>
+    <rect x="478" y="260" width="34" height="46" rx="5" fill="#bde3ff" opacity="0.62"/>
+    <rect x="529" y="260" width="34" height="46" rx="5" fill="#bde3ff" opacity="0.9"/>
+    <rect x="580" y="260" width="34" height="46" rx="5" fill="#bde3ff" opacity="0.62"/>
+    <rect x="536" y="326" width="44" height="50" rx="5" fill="#7c5cff" opacity="0.92"/>
+  </g>
+
+  <!-- Trees and campus greenery -->
+  <g>
+    <rect x="213" y="318" width="14" height="70" rx="7" fill="#9a6b4a"/>
+    <circle cx="220" cy="296" r="42" fill="#63c99b"/>
+    <circle cx="196" cy="315" r="27" fill="#82dcb3"/>
+    <circle cx="245" cy="315" r="25" fill="#4caf87"/>
+    <rect x="632" y="318" width="13" height="70" rx="6.5" fill="#9a6b4a"/>
+    <circle cx="638" cy="296" r="39" fill="#7bcdb0"/>
+    <circle cx="616" cy="315" r="25" fill="#a2e0c1"/>
+  </g>
+
+  <!-- Festival stage and canopy -->
+  <g filter="url(#softShadow)">
+    <path d="M285 190 L395 190 L414 244 L266 244 Z" fill="url(#canopy)" opacity="0.98"/>
+    <path d="M266 244 Q286 263 306 244 Q326 263 346 244 Q366 263 386 244 Q399 258 414 244" fill="#ffffff" opacity="0.92"/>
+    <rect x="282" y="242" width="116" height="10" rx="5" fill="#7c5cff" opacity="0.28"/>
+    <rect x="286" y="251" width="108" height="52" rx="7" fill="url(#stage)"/>
+    <rect x="286" y="296" width="108" height="14" rx="6" fill="#a94770"/>
+    <rect x="310" y="211" width="10" height="36" rx="5" fill="#fff1cf"/>
+    <circle cx="315" cy="205" r="9" fill="#ffd166"/>
+    <rect x="362" y="211" width="10" height="36" rx="5" fill="#fff1cf"/>
+    <circle cx="367" cy="205" r="9" fill="#ffd166"/>
+    <path d="M326 270 h28 M340 256 v28" stroke="#fff4f7" stroke-width="5" stroke-linecap="round" opacity="0.85"/>
+  </g>
+
+  <!-- Festival bunting -->
+  <g fill="none" stroke="#7c5cff" stroke-width="2" opacity="0.62">
+    <path d="M225 126 Q285 166 345 126"/>
+    <path d="M345 126 Q405 166 465 126"/>
+  </g>
+  <g>
+    <path d="M239 136 l13 19 17-11z" fill="#ff8ca7"/>
+    <path d="M275 148 l14 18 16-12z" fill="#ffc86b"/>
+    <path d="M313 151 l14 18 16-12z" fill="#63c99b"/>
+    <path d="M353 148 l14 18 16-12z" fill="#7c5cff"/>
+    <path d="M393 136 l13 19 17-11z" fill="#63c99b"/>
+    <path d="M429 148 l14 18 16-12z" fill="#ff8ca7"/>
+  </g>
+
+  <!-- Students -->
+  <g filter="url(#smallShadow)">
+    <g transform="translate(238 315)">
+      <circle cx="0" cy="-43" r="16" fill="#8b5438"/>
+      <path d="M-18 -50 Q0 -72 18 -50 L18 -34 Q0 -25 -18 -34 Z" fill="#25233b"/>
+      <path d="M-24 32 Q-24 -15 0 -15 Q24 -15 24 32 Z" fill="#7c5cff"/>
+      <path d="M-15 32 L-21 69 L-4 69 L0 42 Z" fill="#34456f"/>
+      <path d="M15 32 L22 69 L5 69 L0 42 Z" fill="#34456f"/>
+      <rect x="-27" y="4" width="54" height="18" rx="9" fill="#ffd166"/>
+      <rect x="-18" y="9" width="36" height="4" rx="2" fill="#7c5cff" opacity="0.8"/>
+    </g>
+    <g transform="translate(323 318)">
+      <circle cx="0" cy="-42" r="16" fill="#c9835b"/>
+      <path d="M-17 -48 Q0 -68 18 -48 L16 -25 Q0 -17 -17 -27 Z" fill="#282238"/>
+      <path d="M-23 31 Q-23 -13 0 -13 Q23 -13 23 31 Z" fill="#22a985"/>
+      <path d="M-14 31 L-18 68 L-2 68 L0 41 Z" fill="#202d4f"/>
+      <path d="M14 31 L19 68 L3 68 L0 41 Z" fill="#202d4f"/>
+      <rect x="-20" y="-1" width="40" height="27" rx="4" fill="#fffdf8"/>
+      <rect x="-14" y="5" width="28" height="15" rx="2" fill="#7c5cff" opacity="0.2"/>
+      <path d="M-8 19 h16" stroke="#d95d86" stroke-width="3" stroke-linecap="round"/>
+    </g>
+    <g transform="translate(410 315)">
+      <circle cx="0" cy="-43" r="16" fill="#6d4030"/>
+      <path d="M-18 -49 Q0 -69 18 -49 L18 -31 Q0 -23 -18 -31 Z" fill="#171b2d"/>
+      <path d="M-24 32 Q-24 -15 0 -15 Q24 -15 24 32 Z" fill="#f472b6"/>
+      <path d="M-15 32 L-20 69 L-4 69 L0 42 Z" fill="#34456f"/>
+      <path d="M15 32 L21 69 L4 69 L0 42 Z" fill="#34456f"/>
+      <path d="M-25 4 Q-37 19 -27 34 Q-16 27 -14 13 Z" fill="#fffdf8"/>
+      <path d="M25 4 Q37 19 27 34 Q16 27 14 13 Z" fill="#fffdf8"/>
+    </g>
+  </g>
+
+  <!-- Workshop table and technology -->
+  <g filter="url(#smallShadow)">
+    <rect x="430" y="353" width="142" height="17" rx="8" fill="#4b3670"/>
+    <rect x="444" y="370" width="12" height="58" rx="6" fill="#7c5cff"/>
+    <rect x="546" y="370" width="12" height="58" rx="6" fill="#7c5cff"/>
+    <rect x="454" y="321" width="62" height="35" rx="5" fill="#202d4f"/>
+    <rect x="460" y="327" width="50" height="23" rx="2" fill="#8be3c4"/>
+    <path d="M459 356 h52 l-8 10 h-36 Z" fill="#4b3670"/>
+    <circle cx="539" cy="339" r="17" fill="#ffd166"/>
+    <path d="M539 322 v34 M522 339 h34" stroke="#fff6dc" stroke-width="3" stroke-linecap="round"/>
+  </g>
+
+  <!-- Floating event cards -->
+  <g filter="url(#smallShadow)">
+    <rect x="86" y="342" width="132" height="72" rx="15" fill="#ffffff" opacity="0.97"/>
+    <circle cx="111" cy="371" r="15" fill="#e7e0ff"/>
+    <path d="M104 371 l5 5 9-11" stroke="#7c5cff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="135" y="359" width="64" height="8" rx="4" fill="#d9d3ed"/>
+    <rect x="135" y="375" width="43" height="7" rx="3.5" fill="#f1edff"/>
+    <rect x="99" y="395" width="50" height="7" rx="3.5" fill="#ffd4de"/>
+    <rect x="465" y="74" width="134" height="74" rx="15" fill="#ffffff" opacity="0.98"/>
+    <rect x="483" y="92" width="38" height="38" rx="10" fill="#ffe1e9"/>
+    <path d="M493 118 v-14 h9 l3-6 3 6 h9 v14" stroke="#d95d86" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="532" y="95" width="48" height="8" rx="4" fill="#d9d3ed"/>
+    <rect x="532" y="111" width="34" height="7" rx="3.5" fill="#f1edff"/>
+    <rect x="483" y="137" width="69" height="7" rx="3.5" fill="#c9f2e4"/>
+  </g>
+
+  <!-- Decorative event markers -->
+  <g fill="#ffffff" opacity="0.85">
+    <circle cx="258" cy="84" r="5"/>
+    <circle cx="430" cy="70" r="4"/>
+    <circle cx="128" cy="230" r="4"/>
+    <circle cx="607" cy="222" r="5"/>
+  </g>
+  <g stroke="#d95d86" stroke-width="2" opacity="0.35" fill="none" stroke-linecap="round">
+    <path d="M100 274 h18 M109 265 v18"/>
+    <path d="M584 270 h18 M593 261 v18"/>
+  </g>
+</svg>

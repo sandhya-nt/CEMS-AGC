@@ -1,0 +1,348 @@
+{% extends "base.html" %}
+{% block title %}Final Event Summary — {{ event.title }}{% endblock %}
+{% block breadcrumb %}Event Summary{% endblock %}
+
+{% block content %}
+<div class="cems-page-header">
+  <div class="cems-page-header-top">
+    <div>
+      <h1 class="cems-page-title">Final Event Summary</h1>
+      <p class="cems-page-description">{{ event.title }} — Finalized {{ event.completed_at.strftime('%d %B %Y') if event.completed_at else '' }}</p>
+    </div>
+    <div class="cems-page-actions">
+      <a href="{{ url_for('faculty_event_report', event_id=event.id, format='pdf') }}" class="cems-btn cems-btn-primary">
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="vertical-align:middle;margin-right:4px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+        Generate Final Event Report
+      </a>
+      <a href="{{ url_for('faculty_completed_events') }}" class="cems-btn cems-btn-secondary">Completed Events</a>
+    </div>
+  </div>
+</div>
+
+<!-- Completion Information -->
+<div class="cems-card" style="margin-bottom: 24px;">
+  <div class="cems-card-header">
+    <div class="cems-card-title">Completion Information</div>
+  </div>
+  <div class="cems-card-body">
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+      <div>
+        <div style="font-size:0.75rem; color:var(--cems-text-muted);">Completed Date</div>
+        <div style="font-weight:600;">{{ event.completed_at.strftime('%d %B %Y') if event.completed_at else '—' }}</div>
+      </div>
+      <div>
+        <div style="font-size:0.75rem; color:var(--cems-text-muted);">Completed Time</div>
+        <div style="font-weight:600;">{{ event.completed_at.strftime('%H:%M') if event.completed_at else '—' }}</div>
+      </div>
+          <div>
+            <div style="font-size:0.75rem; color:var(--cems-text-muted);">Completed By</div>
+            <div style="font-weight:600;">{{ completed_by_name or '—' }}</div>
+          </div>
+          <div>
+            <div style="font-size:0.75rem; color:var(--cems-text-muted);">Faculty ID</div>
+            <div style="font-weight:600;">{{ event.completed_by or '—' }}</div>
+          </div>
+    </div>
+    {% if event.completion_notes %}
+    <div style="margin-top:12px;">
+      <div style="font-size:0.75rem; color:var(--cems-text-muted);">Completion Notes</div>
+      <div>{{ event.completion_notes }}</div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Event Information -->
+<div class="cems-card" style="margin-bottom: 24px;">
+  <div class="cems-card-header">
+    <div class="cems-card-title">Event Information</div>
+  </div>
+  <div class="cems-card-body">
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+      <div>
+        <div style="font-size:0.75rem; color:var(--cems-text-muted);">Event Name</div>
+        <div style="font-weight:600;">{{ event.title }}</div>
+      </div>
+      <div>
+        <div style="font-size:0.75rem; color:var(--cems-text-muted);">Event Type</div>
+        <div style="font-weight:600;">{{ event.category }} · {{ event.event_type }}</div>
+      </div>
+      <div>
+        <div style="font-size:0.75rem; color:var(--cems-text-muted);">Date</div>
+        <div style="font-weight:600;">{{ event.date.strftime('%d %B %Y') if event.date else '—' }}</div>
+      </div>
+      <div>
+        <div style="font-size:0.75rem; color:var(--cems-text-muted);">Time</div>
+        <div style="font-weight:600;">{{ event.start_time }} - {{ event.end_time }}</div>
+      </div>
+      <div>
+        <div style="font-size:0.75rem; color:var(--cems-text-muted);">Venue</div>
+        <div style="font-weight:600;">{{ event.venue }}</div>
+      </div>
+      <div>
+        <div style="font-size:0.75rem; color:var(--cems-text-muted);">Organizer</div>
+        <div style="font-weight:600;">{{ event.organizer.name if event.organizer else '—' }}</div>
+      </div>
+      <div>
+        <div style="font-size:0.75rem; color:var(--cems-text-muted);">Assigned Faculty</div>
+        <div style="font-weight:600;">
+          {% for fe in faculty_list %}
+            {{ fe.faculty.name }}<br>
+          {% else %}
+            —
+          {% endfor %}
+        </div>
+      </div>
+      <div>
+        <div style="font-size:0.75rem; color:var(--cems-text-muted);">Total Capacity</div>
+        <div style="font-weight:600;">{{ event.capacity }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Registration Statistics -->
+<div class="cems-card" style="margin-bottom: 24px;">
+  <div class="cems-card-header">
+    <div class="cems-card-title">Registration Statistics</div>
+  </div>
+  <div class="cems-card-body">
+    <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:16px; margin-bottom:20px;">
+      <div style="text-align:center; padding:16px; background:var(--cems-bg-secondary); border-radius:var(--cems-radius-md);">
+        <div style="font-size:1.5rem; font-weight:700; color:var(--cems-primary);">{{ stats.total_registrations }}</div>
+        <div style="font-size:0.8rem; color:var(--cems-text-muted); margin-top:4px;">Total Registrations</div>
+      </div>
+      <div style="text-align:center; padding:16px; background:var(--cems-bg-secondary); border-radius:var(--cems-radius-md);">
+        <div style="font-size:1.5rem; font-weight:700; color:var(--cems-success);">{{ stats.approved_students }}</div>
+        <div style="font-size:0.8rem; color:var(--cems-text-muted); margin-top:4px;">Approved</div>
+      </div>
+      <div style="text-align:center; padding:16px; background:var(--cems-bg-secondary); border-radius:var(--cems-radius-md);">
+        <div style="font-size:1.5rem; font-weight:700; color:var(--cems-danger);">{{ stats.rejected_students }}</div>
+        <div style="font-size:0.8rem; color:var(--cems-text-muted); margin-top:4px;">Rejected</div>
+      </div>
+      <div style="text-align:center; padding:16px; background:var(--cems-bg-secondary); border-radius:var(--cems-radius-md);">
+        <div style="font-size:1.5rem; font-weight:700; color:var(--cems-warning);">{{ stats.waitlisted }}</div>
+        <div style="font-size:0.8rem; color:var(--cems-text-muted); margin-top:4px;">Waitlisted</div>
+      </div>
+    </div>
+    <div class="cems-overflow-x-auto">
+      <table class="cems-table">
+        <thead>
+          <tr>
+            <th>Participant</th>
+            <th>Email</th>
+            <th>Department</th>
+            <th>Registration Date</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for reg in registrations %}
+          <tr>
+            <td><strong>{{ reg.user.name }}</strong></td>
+            <td>{{ reg.user.email }}</td>
+            <td>{{ reg.user.department or '—' }}</td>
+            <td>{{ reg.registered_at.strftime('%d %b %Y') if reg.registered_at else '—' }}</td>
+            <td>
+              <span class="cems-badge
+                {% if reg.status=='confirmed' or reg.status=='approved' %}cems-badge-success
+                {% elif reg.status=='pending' %}cems-badge-warning
+                {% elif reg.status=='cancelled' %}cems-badge-danger
+                {% else %}cems-badge-neutral{% endif %}">
+                {{ reg.status|title }}
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Attendance Statistics -->
+<div class="cems-card" style="margin-bottom: 24px;">
+  <div class="cems-card-header">
+    <div class="cems-card-title">Attendance Statistics</div>
+  </div>
+  <div class="cems-card-body">
+    <div style="display:grid; grid-template-columns:repeat(6, 1fr); gap:16px; margin-bottom:20px;">
+      <div style="text-align:center; padding:16px; background:var(--cems-bg-secondary); border-radius:var(--cems-radius-md);">
+        <div style="font-size:1.5rem; font-weight:700; color:var(--cems-success);">{{ stats.present }}</div>
+        <div style="font-size:0.8rem; color:var(--cems-text-muted); margin-top:4px;">Present</div>
+      </div>
+      <div style="text-align:center; padding:16px; background:var(--cems-bg-secondary); border-radius:var(--cems-radius-md);">
+        <div style="font-size:1.5rem; font-weight:700; color:var(--cems-danger);">{{ stats.absent }}</div>
+        <div style="font-size:0.8rem; color:var(--cems-text-muted); margin-top:4px;">Absent</div>
+      </div>
+      <div style="text-align:center; padding:16px; background:var(--cems-bg-secondary); border-radius:var(--cems-radius-md);">
+        <div style="font-size:1.5rem; font-weight:700; color:var(--cems-warning);">{{ stats.late }}</div>
+        <div style="font-size:0.8rem; color:var(--cems-text-muted); margin-top:4px;">Late</div>
+      </div>
+      <div style="text-align:center; padding:16px; background:var(--cems-bg-secondary); border-radius:var(--cems-radius-md);">
+        <div style="font-size:1.5rem; font-weight:700; color:var(--cems-info);">{{ stats.attendance_percentage }}%</div>
+        <div style="font-size:0.8rem; color:var(--cems-text-muted); margin-top:4px;">Attendance %</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Feedback Statistics -->
+<div class="cems-card" style="margin-bottom: 24px;">
+  <div class="cems-card-header">
+    <div class="cems-card-title">Feedback Statistics</div>
+  </div>
+  <div class="cems-card-body">
+    <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:16px; margin-bottom:20px;">
+      <div style="text-align:center; padding:16px; background:var(--cems-bg-secondary); border-radius:var(--cems-radius-md);">
+        <div style="font-size:1.5rem; font-weight:700; color:var(--cems-info);">{{ stats.feedback_responses }}</div>
+        <div style="font-size:0.8rem; color:var(--cems-text-muted); margin-top:4px;">Feedback Responses</div>
+      </div>
+      <div style="text-align:center; padding:16px; background:var(--cems-bg-secondary); border-radius:var(--cems-radius-md);">
+        <div style="font-size:1.5rem; font-weight:700; color:var(--cems-success);">{{ stats.average_feedback_rating or 'N/A' }}/5</div>
+        <div style="font-size:0.8rem; color:var(--cems-text-muted); margin-top:4px;">Average Rating</div>
+      </div>
+      <div style="text-align:center; padding:16px; background:var(--cems-bg-secondary); border-radius:var(--cems-radius-md);">
+        <div style="font-size:1.5rem; font-weight:700; color:var(--cems-primary);">
+          {% if stats.feedback_responses > 0 %}
+            {{ ((stats.feedback_responses / stats.approved_students * 100)|round(0)) if stats.approved_students > 0 else 0 }}%
+          {% else %}0%{% endif %}
+        </div>
+        <div style="font-size:0.8rem; color:var(--cems-text-muted); margin-top:4px;">Response Rate</div>
+      </div>
+    </div>
+    {% if feedbacks %}
+    <div class="cems-overflow-x-auto">
+      <table class="cems-table">
+        <thead>
+          <tr>
+            <th>Student</th>
+            <th>Rating</th>
+            <th>Comment</th>
+            <th>Submitted</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for fb in feedbacks %}
+          <tr>
+            <td><strong>{{ fb.registration.user.name }}</strong></td>
+            <td>
+              <span style="color:var(--cems-warning);">
+                {% for i in range(fb.rating) %}★{% endfor %}
+                {% for i in range(5 - fb.rating) %}☆{% endfor %}
+              </span>
+              ({{ fb.rating }}/5)
+            </td>
+            <td>{{ fb.comment[:100] if fb.comment else '—' }}</td>
+            <td>{{ fb.created_at.strftime('%d %b %Y') if fb.created_at else '—' }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div style="text-align:center; padding:24px; color:var(--cems-text-muted);">No feedback submitted yet.</div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Certificate Statistics -->
+<div class="cems-card" style="margin-bottom: 24px;">
+  <div class="cems-card-header">
+    <div class="cems-card-title">Certificate Statistics</div>
+  </div>
+  <div class="cems-card-body">
+    <div style="text-align:center; padding:24px; background:var(--cems-bg-secondary); border-radius:var(--cems-radius-md); margin-bottom:20px;">
+      <div style="font-size:2rem; font-weight:700; color:var(--cems-success);">{{ stats.certificates_generated }}</div>
+      <div style="font-size:0.9rem; color:var(--cems-text-muted); margin-top:4px;">Certificates Generated</div>
+    </div>
+    {% if certs %}
+    <div class="cems-overflow-x-auto">
+      <table class="cems-table">
+        <thead>
+          <tr>
+            <th>Student</th>
+            <th>Certificate Code</th>
+            <th>Issued Date</th>
+            <th>Verified</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for cert in certs %}
+          <tr>
+            <td><strong>{{ cert.registration.user.name }}</strong></td>
+            <td style="font-family:monospace; font-size:0.85rem;">{{ cert.certificate_code }}</td>
+            <td>{{ cert.issued_date.strftime('%d %b %Y') if cert.issued_date else '—' }}</td>
+            <td>
+              <span class="cems-badge {{ 'cems-badge-success' if cert.verified else 'cems-badge-neutral' }}">
+                {{ 'Verified' if cert.verified else 'Pending' }}
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div style="text-align:center; padding:24px; color:var(--cems-text-muted);">No certificates generated yet.</div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Volunteer Information -->
+<div class="cems-card" style="margin-bottom: 24px;">
+  <div class="cems-card-header">
+    <div class="cems-card-title">Volunteer Information</div>
+  </div>
+  <div class="cems-card-body">
+    <div style="text-align:center; padding:16px; background:var(--cems-bg-secondary); border-radius:var(--cems-radius-md); margin-bottom:20px;">
+      <div style="font-size:1.5rem; font-weight:700; color:var(--cems-primary);">{{ stats.volunteer_assignments }}</div>
+      <div style="font-size:0.8rem; color:var(--cems-text-muted); margin-top:4px;">Volunteers Assigned</div>
+    </div>
+    {% if volunteers %}
+    <div class="cems-overflow-x-auto">
+      <table class="cems-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Task</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for v in volunteers %}
+          <tr>
+            <td><strong>{{ v.name }}</strong></td>
+            <td>{{ v.email or '—' }}</td>
+            <td>{{ v.task or '—' }}</td>
+            <td>
+              <span class="cems-badge {{ 'cems-badge-success' if v.status == 'Completed' else 'cems-badge-neutral' }}">
+                {{ v.status or 'Assigned' }}
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div style="text-align:center; padding:24px; color:var(--cems-text-muted);">No volunteers assigned yet.</div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Action Buttons -->
+<div class="cems-card">
+  <div class="cems-card-body">
+    <div style="display:flex; flex-wrap:wrap; gap:10px; justify-content:flex-end;">
+      <a href="{{ url_for('faculty_event_report', event_id=event.id, format='pdf') }}" class="cems-btn cems-btn-primary">
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="vertical-align:middle;margin-right:4px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+        Generate Final Event Report
+      </a>
+      <a href="{{ url_for('faculty_event_summary', event_id=event.id) }}" class="cems-btn cems-btn-secondary">Refresh</a>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

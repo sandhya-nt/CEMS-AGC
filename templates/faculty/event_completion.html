@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+{% block title %}{{ event.title }} — Complete Event{% endblock %}
+{% block breadcrumb %}Complete Event{% endblock %}
+
+{% block content %}
+<div class="cems-page-header">
+  <div class="cems-page-header-top">
+    <div>
+      <h1 class="cems-page-title">Complete Event</h1>
+      <p class="cems-page-description">{{ event.title }} — {{ event.category }} · {{ event.date.strftime('%d %B %Y') }} at {{ event.venue }}</p>
+    </div>
+    <div class="cems-page-actions">
+      <a href="{{ url_for('teacher_event_details', event_id=event.id) }}" class="cems-btn cems-btn-secondary">Back to Details</a>
+    </div>
+  </div>
+</div>
+
+{% if readonly_msg %}
+<div class="cems-alert cems-alert-info" style="margin-bottom: 24px;">
+  <span>{{ readonly_msg }}</span>
+</div>
+{% endif %}
+
+{% if not completion_allowed %}
+<div class="cems-alert cems-alert-danger" style="margin-bottom: 24px;">
+  <span>{{ completion_reason }}</span>
+</div>
+{% endif %}
+
+<!-- Event Stats Overview -->
+<div class="cems-stats-grid" style="margin-bottom: 24px;">
+  <div class="cems-stat-card">
+    <div class="cems-stat-icon primary">
+      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3.5a2 2 0 001.16 1.77l1.33 1A2 2 0 007 16.5V19a2 2 0 002 2h10a2 2 0 002-2v-2.5a2 2 0 011.16-1.77l1.33-1A2 2 0 0017 10.5V7a2 2 0 00-2-2H5z"></path></svg>
+    </div>
+    <div class="cems-stat-content">
+      <div class="cems-stat-value">{{ stats.total_registrations }}</div>
+      <div class="cems-stat-label">Total Registrations</div>
+    </div>
+  </div>
+  <div class="cems-stat-card">
+    <div class="cems-stat-icon success">
+      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+    </div>
+    <div class="cems-stat-content">
+      <div class="cems-stat-value">{{ stats.approved_students }}</div>
+      <div class="cems-stat-label">Approved Students</div>
+    </div>
+  </div>
+  <div class="cems-stat-card">
+    <div class="cems-stat-icon info">
+      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+    </div>
+    <div class="cems-stat-content">
+      <div class="cems-stat-value">{{ stats.attended }}</div>
+      <div class="cems-stat-label">Attendance Count</div>
+    </div>
+  </div>
+  <div class="cems-stat-card">
+    <div class="cems-stat-icon success">
+      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0M12 17v4m-3-3h6"></path></svg>
+    </div>
+    <div class="cems-stat-content">
+      <div class="cems-stat-value">{{ stats.certificates_generated }}</div>
+      <div class="cems-stat-label">Feedback Responses</div>
+    </div>
+  </div>
+</div>
+
+<!-- Completion Checklist -->
+<div class="cems-card" style="margin-bottom: 24px;">
+  <div class="cems-card-header">
+    <div class="cems-card-title">Completion Checklist</div>
+    <div style="font-size:0.85rem; color:var(--cems-text-muted); margin-top:4px;">Review each item before confirming completion</div>
+  </div>
+  <div class="cems-card-body">
+    <div style="display:grid; gap:12px;">
+      {% for item in checklist %}
+      <div style="display:flex; align-items:center; gap:14px; padding:14px 16px; border:1px solid var(--cems-border); border-radius:var(--cems-radius-md); background:{{ 'var(--cems-success-bg)' if item.checked else 'var(--cems-bg-secondary)' }};">
+        <div style="width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; background:{{ 'var(--cems-success)' if item.checked else 'var(--cems-border)' }}; color:{{ 'white' if item.checked else 'var(--cems-text-muted)' }}; font-weight:700; font-size:0.85rem;">
+          {% if item.checked %}✓{% else %}○{% endif %}
+        </div>
+        <div style="flex:1;">
+          <div style="font-weight:600; font-size:0.95rem; color:{{ 'var(--cems-text-primary)' if item.checked else 'var(--cems-text-secondary)' }};">
+            {{ item.label }}
+          </div>
+          <div style="font-size:0.82rem; color:var(--cems-text-muted); margin-top:2px;">{{ item.detail }}</div>
+        </div>
+        <span class="cems-badge {{ 'cems-badge-success' if item.checked else 'cems-badge-neutral' }}">
+          {{ 'Complete' if item.checked else 'Pending' }}
+        </span>
+      </div>
+      {% endfor %}
+    </div>
+    {% if not all_checklist_complete %}
+    <div style="margin-top:16px; padding:12px 16px; border-radius:var(--cems-radius-md); background:var(--cems-warning-bg); border:1px solid var(--cems-warning);">
+      <span style="font-size:0.88rem; color:var(--cems-warning-dark); font-weight:600;">⚠ Some checklist items are not complete. You may still proceed, but ensure all important requirements are met before finalizing.</span>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Completion Confirmation -->
+<div class="cems-card" style="margin-bottom: 24px;">
+  <div class="cems-card-header">
+    <div class="cems-card-title">Complete This Event?</div>
+  </div>
+  <div class="cems-card-body">
+    <div style="background:var(--cems-bg-secondary); padding:20px; border-radius:var(--cems-radius-md); margin-bottom:20px;">
+      <div style="font-size:1.1rem; font-weight:600; margin-bottom:8px;">Event Summary</div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:0.9rem;">
+        <div><strong>Event Name:</strong> {{ event.title }}</div>
+        <div><strong>Event Date:</strong> {{ event.date.strftime('%d %B %Y') }}</div>
+        <div><strong>Total Registrations:</strong> {{ stats.total_registrations }}</div>
+        <div><strong>Approved Students:</strong> {{ stats.approved_students }}</div>
+        <div><strong>Attendance Count:</strong> {{ stats.attended }}</div>
+        <div><strong>Feedback Responses:</strong> {{ stats.feedback_responses }}</div>
+        <div><strong>Certificates Generated:</strong> {{ stats.certificates_generated }}</div>
+        <div><strong>Attendance %:</strong> {{ stats.attendance_percentage }}%</div>
+      </div>
+    </div>
+
+    {% if completion_allowed %}
+    <form method="post" id="complete-event-form" onsubmit="return confirmCompletion()">
+      <div style="margin-bottom:12px;">
+        <label style="display:block; font-size:0.85rem; font-weight:600; margin-bottom:4px;">Completion Notes (optional)</label>
+        <textarea name="completion_notes" rows="3" style="width:100%; padding:10px; border:1px solid var(--cems-border); border-radius:var(--cems-radius-md); font-size:0.9rem;" placeholder="Add any notes about this event completion..."></textarea>
+      </div>
+      <div style="display:flex; gap:10px; justify-content:flex-end;">
+        <a href="{{ url_for('teacher_event_details', event_id=event.id) }}" class="cems-btn cems-btn-secondary" onclick="closeModal()">Cancel</a>
+        <button type="submit" class="cems-btn cems-btn-success" id="confirm-completion-btn">
+          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="vertical-align:middle;margin-right:4px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+          Confirm Completion
+        </button>
+      </div>
+    </form>
+    {% else %}
+    <div class="cems-alert cems-alert-danger">
+      <span>{{ completion_reason }}</span>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Event already completed warning -->
+{% if is_event_completed(event) %}
+<div class="cems-card">
+  <div class="cems-card-body" style="text-align:center; padding:40px;">
+    <div class="cems-empty-icon">✅</div>
+    <div class="cems-empty-title">Event Already Completed</div>
+    <div class="cems-empty-description">This event has already been completed and finalized. Records are now read-only.</div>
+    <div style="display:flex; gap:10px; justify-content:center; margin-top:20px;">
+      <a href="{{ url_for('faculty_event_summary', event_id=event.id) }}" class="cems-btn cems-btn-primary">View Summary</a>
+      <a href="{{ url_for('faculty_completed_events') }}" class="cems-btn cems-btn-secondary">Completed Events</a>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function closeModal() {
+  if (window.history.length > 1) {
+    window.history.back();
+  } else {
+    window.location.href = '{{ url_for("teacher_event_details", event_id=event.id) }}';
+  }
+}
+
+function confirmCompletion() {
+  return confirm('Complete This Event?\n\nOnce the event is completed, important event records may become read-only. Please verify the information before continuing.');
+}
+</script>
+{% endblock %}

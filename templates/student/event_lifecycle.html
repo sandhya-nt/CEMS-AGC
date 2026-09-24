@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+{% block title %}Event Lifecycle — {{ event.title }}{% endblock %}
+{% block breadcrumb %}{{ event.title }} · Lifecycle{% endblock %}
+
+{% block content %}
+<div class="cems-page-header">
+  <div class="cems-page-header-top">
+    <div>
+      <h1 class="cems-page-title">{{ event.title }}</h1>
+      <p class="cems-page-description">Event Lifecycle & Status History</p>
+    </div>
+    <div class="cems-btn-group">
+      <a href="{{ url_for('student_event_gallery', event_id=event.id) }}" class="cems-btn cems-btn-outline cems-btn-sm">Gallery</a>
+      <a href="{{ url_for('events') }}" class="cems-btn cems-btn-secondary cems-btn-sm">← Back to Events</a>
+    </div>
+  </div>
+</div>
+
+<div class="cems-card" style="margin-top: 24px;">
+  <div class="cems-card-header">
+    <h3 class="cems-card-title">Current Status</h3>
+  </div>
+  <div class="cems-card-body">
+    <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 12px;">
+      <span class="cems-badge cems-badge-primary" style="font-size: 1rem; padding: 6px 16px;">{{ display_status }}</span>
+      {% if is_registered %}
+        <span class="cems-badge cems-badge-success">Registered ({{ reg_status }})</span>
+      {% endif %}
+    </div>
+    <div class="cems-grid cems-grid-3" style="margin-top: 16px;">
+      <div>
+        <label class="cems-form-label">Event ID</label>
+        <div>#{{ event.id }}</div>
+      </div>
+      <div>
+        <label class="cems-form-label">Category</label>
+        <div>{{ event.category }}</div>
+      </div>
+      <div>
+        <label class="cems-form-label">Capacity</label>
+        <div>{{ event.capacity }} seats</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="cems-grid cems-grid-2" style="margin-top: 24px;">
+  <div class="cems-card">
+    <div class="cems-card-header">
+      <h3 class="cems-card-title">Status Transition History</h3>
+    </div>
+    <div class="cems-card-body">
+      {% if history %}
+      <div class="cems-timeline">
+        {% for entry in history %}
+        <div class="cems-timeline-item" style="margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid var(--cems-border-light);">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div>
+              <span class="cems-badge cems-badge-outline">{{ entry.status }}</span>
+              {% if entry.previous_status %}
+                <span style="color: var(--cems-text-muted); font-size: 0.8rem;">← from {{ entry.previous_status }}</span>
+              {% endif %}
+              {% if entry.change_reason %}
+                <div style="margin-top: 4px; font-size: 0.85rem; color: var(--cems-text-secondary);">
+                  {{ entry.change_reason }}
+                </div>
+              {% endif %}
+            </div>
+            <div style="text-align: right; font-size: 0.8rem; color: var(--cems-text-muted);">
+              {{ entry.created_at.strftime('%d %b %Y %H:%M') }}
+              {% if entry.actor %}
+                <div>by {{ entry.actor.name }}</div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="cems-text-center" style="padding: 32px 20px; color: var(--cems-text-muted);">
+        No status history available for this event.
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="cems-card">
+    <div class="cems-card-header">
+      <h3 class="cems-card-title">Recent Activity</h3>
+    </div>
+    <div class="cems-card-body">
+      {% if activities %}
+      <div class="cems-timeline">
+        {% for activity in activities %}
+        <div class="cems-timeline-item" style="margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid var(--cems-border-light);">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div>
+              <div style="font-weight: 600; color: var(--cems-text-primary);">{{ activity.action }}</div>
+              <div style="font-size: 0.85rem; color: var(--cems-text-secondary); margin-top: 4px;">
+                {{ activity.description }}
+              </div>
+            </div>
+            <div style="text-align: right; font-size: 0.8rem; color: var(--cems-text-muted);">
+              {{ activity.created_at.strftime('%d %b %Y %H:%M') }}
+              {% if activity.actor %}
+                <div>by {{ activity.actor.name }}</div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="cems-text-center" style="padding: 32px 20px; color: var(--cems-text-muted);">
+        No recent activity for this event.
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{% if not is_registered %}
+<div class="cems-card" style="margin-top: 24px;">
+  <div class="cems-card-header">
+    <h3 class="cems-card-title">Registration Options</h3>
+  </div>
+  <div class="cems-card-body">
+    {% set seats = event.capacity %}
+    {% set registered_count = Registration.query.filter(
+      Registration.event_id == event.id,
+      Registration.status.in_(["confirmed", "pending", "approved"]),
+    ).count() %}
+    {% set available = seats - registered_count %}
+    
+    {% if event.status in ("approved", "published") and event.date >= now().date() %}
+      {% set deadline_passed = event.registration_deadline and event.registration_deadline < now().date() %}
+      {% if not deadline_passed and available > 0 %}
+        <a href="{{ url_for('register_event', event_id=event.id) }}" class="cems-btn cems-btn-primary">Register for Event</a>
+      {% elif available <= 0 %}
+        <p style="margin-bottom: 12px; color: var(--cems-text-secondary);">This event is at full capacity. You can join the waitlist.</p>
+        <button type="button" class="cems-btn cems-btn-outline cems-btn-sm cems-join-waitlist-btn" data-event-id="{{ event.id }}" data-event-title="{{ event.title }}">Join Waitlist</button>
+      {% else %}
+        <p style="color: var(--cems-text-muted);">Registration is not currently available.</p>
+      {% endif %}
+    {% else %}
+      <p style="color: var(--cems-text-muted);">This event is not open for registration.</p>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+{% if is_registered and can_cancel %}
+<div class="cems-card" style="margin-top: 24px;">
+  <div class="cems-card-header">
+    <h3 class="cems-card-title" style="color: var(--cems-danger);">Cancel Registration</h3>
+  </div>
+  <div class="cems-card-body">
+    <p style="margin-bottom: 12px; color: var(--cems-text-secondary);">You can cancel your registration for this event.</p>
+    <form method="post" action="{{ url_for('student_cancel_registration', event_id=event.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="cems-btn cems-btn-outline cems-btn-sm" style="color: var(--cems-danger); border-color: var(--cems-danger);">
+        Cancel My Registration
+      </button>
+    </form>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const CSRF_TOKEN = '{{ csrf_token() }}';
+  const waitlistBtn = document.querySelector('.cems-join-waitlist-btn');
+  if (waitlistBtn) {
+    waitlistBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      const eventId = this.dataset.eventId;
+      const originalText = this.textContent;
+      this.disabled = true;
+      this.textContent = 'Joining...';
+
+      fetch(`/api/events/${eventId}/join-waitlist`, {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': CSRF_TOKEN,
+          'X-Requested-With': 'XMLHttpRequest',
+          'Content-Type': 'application/json',
+        },
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          this.textContent = data.position ? `On Waitlist: #${data.position}` : 'On Waitlist';
+          this.classList.remove('cems-btn-outline');
+          this.classList.add('cems-btn-success');
+          this.onclick = null;
+        } else {
+          this.textContent = originalText;
+          this.disabled = false;
+          alert(data.errors?.general || 'Could not join waitlist.');
+        }
+      })
+      .catch(err => {
+        this.textContent = originalText;
+        this.disabled = false;
+        console.error(err);
+        alert('Network error. Please try again.');
+      });
+    });
+  }
+});
+</script>
+{% endblock %}

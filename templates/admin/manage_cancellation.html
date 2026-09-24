@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block title %}Review Cancellation — CEMS{% endblock %}
+{% block breadcrumb %}Review Cancellation{% endblock %}
+
+{% block content %}
+<div class="cems-page-header">
+  <div class="cems-page-header-top">
+    <div>
+      <h1 class="cems-page-title">Cancellation Request Review</h1>
+      <p class="cems-page-description">Review and decide on the cancellation request for <strong>{{ event.title }}</strong>.</p>
+    </div>
+    <div class="cems-page-actions">
+      <a href="{{ url_for('admin_cancellations') }}" class="cems-btn cems-btn-secondary">Back to Requests</a>
+    </div>
+  </div>
+</div>
+
+<div class="cems-card" style="max-width: 900px;">
+  <div class="cems-card-header">
+    <div class="cems-card-title">Event Details</div>
+  </div>
+  <div class="cems-card-body">
+    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
+      <div>
+        <div style="font-size: 12px; color: var(--cems-text-secondary); font-weight: 700; text-transform: uppercase;">Event</div>
+        <div style="font-size: 15px; font-weight: 600; margin-top: 4px;">{{ event.title }}</div>
+      </div>
+      <div>
+        <div style="font-size: 12px; color: var(--cems-text-secondary); font-weight: 700; text-transform: uppercase;">Organizer</div>
+        <div style="font-size: 15px; margin-top: 4px;">{{ event.organizer.name if event.organizer else '—' }} ({{ event.organizer.email if event.organizer else '' }})</div>
+      </div>
+      <div>
+        <div style="font-size: 12px; color: var(--cems-text-secondary); font-weight: 700; text-transform: uppercase;">Date & Time</div>
+        <div style="margin-top: 4px;">
+          {{ event.date.strftime('%d %B %Y') if event.date else '—' }}<br>
+          {{ event.start_time }} – {{ event.end_time }}
+        </div>
+      </div>
+      <div>
+        <div style="font-size: 12px; color: var(--cems-text-secondary); font-weight: 700; text-transform: uppercase;">Venue</div>
+        <div style="margin-top: 4px;">{{ event.venue }}</div>
+      </div>
+      <div>
+        <div style="font-size: 12px; color: var(--cems-text-secondary); font-weight: 700; text-transform: uppercase;">Capacity</div>
+        <div style="margin-top: 4px;">{{ event.capacity }}</div>
+      </div>
+      <div>
+        <div style="font-size: 12px; color: var(--cems-text-secondary); font-weight: 700; text-transform: uppercase;">Registrations</div>
+        <div style="margin-top: 4px;">
+          {{ event.registrations|selectattr('status', 'notequalto', 'cancelled')|list|length }} active
+          ({{ event.registrations|length }} total)
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top: 24px; padding: 16px; background: var(--cems-bg-tertiary); border-radius: 10px;">
+      <div style="font-size: 12px; color: var(--cems-text-secondary); font-weight: 700; text-transform: uppercase; margin-bottom: 8px;">CANCELLATION REASON</div>
+      <div style="font-size: 14px;">{{ event.cancellation_reason or 'No reason provided.' }}</div>
+    </div>
+  </div>
+</div>
+
+<!-- Registration Impact -->
+<div class="cems-card" style="max-width: 900px; margin-top: 24px;">
+  <div class="cems-card-header">
+    <div class="cems-card-title">Registration Impact</div>
+    <div class="cems-card-subtitle">
+      Approving cancellation will cancel {{ event.registrations|selectattr('status', 'notequalto', 'cancelled')|list|length }} active registration(s)
+      and notify all affected students.
+    </div>
+  </div>
+  <div class="cems-card-body">
+    <div class="cems-alert cems-alert-warning">
+      <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.983 0a10 10 0 100 20 10 10 0 000-20zM9 8h6a1 1 0 110 2H9a1 1 0 010-2zm0 4h6a1 1 0 110 2H9a1 1 0 110-2z"></path></svg>
+      <span style="margin-left: 12px;">Cancelling this event will:</span>
+      <ul style="margin-left: 28px; margin-top: 8px; font-size: 13px;">
+        <li>Cancel all active registrations and revoke tickets</li>
+        <li>Prevent any new registrations</li>
+        <li>Preserve the event record for historical reference</li>
+        <li>Send notifications (in-app + email) to all registered students</li>
+        <li>Record the full audit trail in the event history</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- Decision Form -->
+<div class="cems-card" style="max-width: 900px; margin-top: 24px;">
+  <div class="cems-card-header">
+    <div class="cems-card-title">Admin Decision</div>
+  </div>
+  <div class="cems-card-body">
+    <form method="post" action="{{ url_for('admin_manage_cancellation', event_id=event.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <div class="cems-form-group">
+        <label class="cems-form-label" for="decision">Decision</label>
+        <select name="decision" id="decision" class="cems-form-select" required>
+          <option value="">-- Select a decision --</option>
+          <option value="approve">Approve Cancellation</option>
+          <option value="reject">Reject Cancellation (Restore Event)</option>
+        </select>
+      </div>
+
+      <div class="cems-form-group">
+        <label class="cems-form-label" for="admin_notes">Admin Notes / Reason for Rejection</label>
+        <textarea name="admin_notes" id="admin_notes" class="cems-form-textarea" rows="4"
+                  placeholder="Internal notes (required if rejecting)..."></textarea>
+      </div>
+
+      <div style="display: flex; gap: 12px; padding-top: 16px; border-top: 1px solid var(--cems-border);">
+        <button type="submit" name="decision" value="approve" class="cems-btn cems-btn-danger">
+          <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+          Approve Cancellation
+        </button>
+        <button type="submit" name="decision" value="reject" class="cems-btn cems-btn-secondary"
+                onclick="return confirm('Are you sure you want to reject this cancellation request? The event will be restored to approved status.');">
+          <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+          Reject Cancellation
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

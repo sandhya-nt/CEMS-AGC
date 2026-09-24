@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+{% block title %}Cancellation & Reschedule Management — CEMS{% endblock %}
+{% block breadcrumb %}Cancellation & Reschedule{% endblock %}
+
+{% block content %}
+<div class="cems-page-header">
+  <div class="cems-page-header-top">
+    <div>
+      <h1 class="cems-page-title">Cancellation & Reschedule Management</h1>
+      <p class="cems-page-description">Review and process cancellation and reschedule requests from organizers.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Pending Cancellation Requests -->
+<div class="cems-card" style="margin-bottom: 24px;">
+  <div class="cems-card-header">
+    <div class="cems-card-title">
+      <span class="cems-badge cems-badge-warning" style="font-size: 0.9rem; padding: 6px 16px;">{{ cancellation_requests|length }}</span>
+      Cancellation Requests Pending
+    </div>
+  </div>
+  <div class="cems-card-body" style="padding: 0;">
+    {% if cancellation_requests %}
+    <div class="cems-overflow-x-auto">
+      <table class="cems-table">
+        <thead>
+          <tr>
+            <th>Event</th>
+            <th>Organizer</th>
+            <th>Category</th>
+            <th>Date</th>
+            <th>Venue</th>
+            <th>Registrations</th>
+            <th>Reason</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for e in cancellation_requests %}
+          <tr>
+            <td><strong>{{ e.title }}</strong></td>
+            <td>{{ e.organizer.name if e.organizer else '—' }}</td>
+            <td><span class="cems-badge cems-badge-primary">{{ e.category }}</span></td>
+            <td>{{ e.date.strftime('%d %b %Y') if e.date else '—' }}</td>
+            <td>{{ e.venue }}</td>
+            <td>{{ e.registrations|selectattr('status', 'notequalto', 'cancelled')|list|length }}</td>
+            <td>{{ (e.cancellation_reason or '')[:80] }}{% if e.cancellation_reason and e.cancellation_reason|length > 80 %}...{% endif %}</td>
+            <td>
+              <div class="cems-table-actions">
+                <a href="{{ url_for('admin_manage_cancellation', event_id=e.id) }}" class="cems-btn cems-btn-sm cems-btn-primary">Review</a>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div style="text-align: center; padding: 40px; color: var(--cems-text-secondary);">
+      No cancellation requests pending.
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Pending Reschedule Requests -->
+<div class="cems-card" style="margin-bottom: 24px;">
+  <div class="cems-card-header">
+    <div class="cems-card-title">
+      <span class="cems-badge cems-badge-info" style="font-size: 0.9rem; padding: 6px 16px;">{{ reschedule_requests|length }}</span>
+      Reschedule Requests Pending
+    </div>
+  </div>
+  <div class="cems-card-body" style="padding: 0;">
+    {% if reschedule_requests %}
+    <div class="cems-overflow-x-auto">
+      <table class="cems-table">
+        <thead>
+          <tr>
+            <th>Event</th>
+            <th>Organizer</th>
+            <th>Category</th>
+            <th>Current Date</th>
+            <th>Proposed Date</th>
+            <th>Proposed Venue</th>
+            <th>Reason</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for e in reschedule_requests %}
+          <tr>
+            <td><strong>{{ e.title }}</strong></td>
+            <td>{{ e.organizer.name if e.organizer else '—' }}</td>
+            <td><span class="cems-badge cems-badge-primary">{{ e.category }}</span></td>
+            <td>{{ e.date.strftime('%d %b %Y') if e.date else '—' }}</td>
+            <td>{{ e.proposed_date.strftime('%d %b %Y') if e.proposed_date else '—' }}</td>
+            <td>{{ e.proposed_venue or '—' }}</td>
+            <td>{{ (e.reschedule_reason or '')[:80] }}{% if e.reschedule_reason and e.reschedule_reason|length > 80 %}...{% endif %}</td>
+            <td>
+              <div class="cems-table-actions">
+                <a href="{{ url_for('admin_manage_reschedule', event_id=e.id) }}" class="cems-btn cems-btn-sm cems-btn-primary">Review</a>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div style="text-align: center; padding: 40px; color: var(--cems-text-secondary);">
+      No reschedule requests pending.
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Recently Cancelled Events -->
+<div class="cems-card">
+  <div class="cems-card-header">
+    <div class="cems-card-title">
+      Recently Cancelled Events
+      <span class="cems-badge cems-badge-danger" style="font-size: 0.85rem; padding: 4px 12px; margin-left: 10px;">{{ cancelled_events|length }}</span>
+    </div>
+  </div>
+  <div class="cems-card-body" style="padding: 0;">
+    {% if cancelled_events %}
+    <div class="cems-overflow-x-auto">
+      <table class="cems-table">
+        <thead>
+          <tr>
+            <th>Event</th>
+            <th>Organizer</th>
+            <th>Date</th>
+            <th>Cancelled At</th>
+            <th>Cancelled By</th>
+            <th>Registrations Cancelled</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for e in cancelled_events %}
+          <tr>
+            <td><strong>{{ e.title }}</strong></td>
+            <td>{{ e.organizer.name if e.organizer else '—' }}</td>
+            <td>{{ e.date.strftime('%d %b %Y') if e.date else '—' }}</td>
+            <td>{{ e.cancelled_at.strftime('%d %b %Y %H:%M') if e.cancelled_at else '—' }}</td>
+            <td>{{ User.query.get(e.cancelled_by).name if e.cancelled_by else 'System' }}</td>
+            <td>{{ e.registrations|selectattr('status', 'equalto', 'cancelled')|list|length }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div style="text-align: center; padding: 40px; color: var(--cems-text-secondary);">
+      No cancelled events.
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

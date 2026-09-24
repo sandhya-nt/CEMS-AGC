@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}Registration {{ status_label }} — CEMS{% endblock %}
+{% block breadcrumb %}My Registrations{% endblock %}
+
+{% block content %}
+<div class="cems-page-header">
+  <div class="cems-page-header-top">
+    <div>
+      {% if success %}
+      <span class="cems-badge cems-badge-success" style="margin-bottom: 8px;">✓ Registration {{ status_label }}</span>
+      {% else %}
+      <span class="cems-badge cems-badge-danger" style="margin-bottom: 8px;">✗ Registration {{ status_label }}</span>
+      {% endif %}
+      <h1 class="cems-page-title">{{ event_title }}</h1>
+      <p class="cems-page-description">{{ event_date }} · {{ event_venue }}</p>
+    </div>
+  </div>
+</div>
+
+<div class="cems-card" style="max-width: 640px;">
+  <div class="cems-card-body">
+    {% if success %}
+    <!-- SUCCESS STATE -->
+    <div style="text-align: center; margin-bottom: 24px;">
+      <div style="font-size: 3rem; margin-bottom: 8px;">🎉</div>
+      <h2 style="color: var(--cems-success);">You're Registered!</h2>
+      <p style="color: var(--cems-text-secondary);">Your registration has been confirmed. Check your ticket for event details.</p>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; padding: 16px; background: var(--cems-success-bg); border-radius: var(--cems-radius-md); border: 1px solid var(--cems-success);">
+      <div style="display: flex; justify-content: space-between;">
+        <span style="color: var(--cems-success-dark);">Ticket Code</span>
+        <strong style="color: var(--cems-success-dark);">{{ ticket_code }}</strong>
+      </div>
+      <div style="display: flex; justify-content: space-between;">
+        <span style="color: var(--cems-success-dark);">Registration ID</span>
+        <strong style="color: var(--cems-success-dark);">{{ registration_id }}</strong>
+      </div>
+      <div style="display: flex; justify-content: space-between;">
+        <span style="color: var(--cems-success-dark);">Status</span>
+        <strong style="color: var(--cems-success-dark);">{{ reg_status|title }}</strong>
+      </div>
+      <div style="display: flex; justify-content: space-between;">
+        <span style="color: var(--cems-success-dark);">Registered On</span>
+        <strong style="color: var(--cems-success-dark);">{{ registered_at }}</strong>
+      </div>
+    </div>
+
+    <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+      <a href="{{ url_for('ticket', registration_id=registration_id) }}" class="cems-btn cems-btn-primary">
+        🎟️ View Ticket
+      </a>
+      <a href="{{ url_for('my_registrations') }}" class="cems-btn cems-btn-outline">
+        My Registrations
+      </a>
+      <a href="{{ url_for('events') }}" class="cems-btn cems-btn-secondary">
+        Browse Events
+      </a>
+    </div>
+
+    {% else %}
+    <!-- ERROR STATE -->
+    <div style="text-align: center; margin-bottom: 24px;">
+      <div style="font-size: 3rem; margin-bottom: 8px;">{{ error_icon }}</div>
+      <h2 style="color: var(--cems-danger);">{{ error_title }}</h2>
+      <p style="color: var(--cems-text-secondary);">{{ error_description }}</p>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; padding: 16px; background: var(--cems-danger-bg); border-radius: var(--cems-radius-md); border: 1px solid var(--cems-danger);">
+      <div style="display: flex; justify-content: space-between; gap: 16px;">
+        <span style="color: var(--cems-danger-dark); font-weight: 600;">Reason</span>
+        <span style="color: var(--cems-danger-dark);">{{ error_reason }}</span>
+      </div>
+      {% if event_status %}
+      <div style="display: flex; justify-content: space-between;">
+        <span style="color: var(--cems-danger-dark);">Event Status</span>
+        <span style="color: var(--cems-danger-dark);">{{ event_status }}</span>
+      </div>
+      {% endif %}
+    </div>
+
+    <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+      <a href="{{ url_for('event_details', event_id=event_id) }}" class="cems-btn cems-btn-primary">
+        ← Back to Event
+      </a>
+      <a href="{{ url_for('my_registrations') }}" class="cems-btn cems-btn-outline">
+        My Registrations
+      </a>
+      <a href="{{ url_for('events') }}" class="cems-btn cems-btn-secondary">
+        Browse Events
+      </a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

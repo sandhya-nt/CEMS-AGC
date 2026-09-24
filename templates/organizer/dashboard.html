@@ -87,20 +87,32 @@
         <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
         Create Event
       </a>
+      <a href="{{ url_for('organizer_volunteer_management') }}" class="cems-btn cems-btn-secondary">
+        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h-5a2 2 0 01-2-2v-3m2-13h5a2 2 0 012 2v13a2 2 0 01-2 2h-5m-4 0h8m-8-16h8m-8 4h8m-8 4h8m-8 4h5"></path></svg>
+        Volunteer Management
+      </a>
       <a href="{{ url_for('organizer_reports') }}" class="cems-btn cems-btn-secondary">
-        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-        View Reports
+        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 20V10m6 10V4m6 16v-7m4 7H2"/></svg>
+        Reports
       </a>
       <a href="{{ url_for('checkin') }}" class="cems-btn cems-btn-secondary">
-        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-        Attendance Check-in
+        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V6a2 2 0 012-2h2m8 0h2a2 2 0 012 2v2m0 8v2a2 2 0 01-2 2h-2m-8 0H6a2 2 0 01-2-2v-2m12-8h.01M12 8v4l3 3"/></svg>
+        Attendance
+      </a>
+      <a href="{{ url_for('kiosk') }}" class="cems-btn cems-btn-warning" style="background: var(--cems-warning); color: var(--cems-slate-900); border-color: var(--cems-warning-dark);">
+        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l14-6V8a6 6 0 01-6-6H8a6 6 0 000 12h8v8a6 6 0 01-6 6H4a6 6 0 000-12V8a6 6 0 016-6z"></path></svg>
+        Kiosk Mode
+      </a>
+      <a href="{{ url_for('organizer_participants', event_id=events[0].id) if events else '#' }}" class="cems-btn cems-btn-info">
+        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h-5a2 2 0 01-2-2v-3m2-13h5a2 2 0 012 2v13a2 2 0 01-2 2h-5m-4 0h8m-8-16h8m-8 4h8m-8 4h5"/></svg>
+        Participants
       </a>
       <a href="{{ url_for('notices') }}" class="cems-btn cems-btn-secondary">
         <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-1.106 1.67l-5.5 2.5a1.76 1.76 0 01-2.3-1.67V5.882a1.76 1.76 0 011.106-1.67l5.5-2.5a1.76 1.76 0 012.3 1.67z"></path></svg>
         Notice Board
       </a>
       <a href="{{ url_for('festival_calendar') }}" class="cems-btn cems-btn-secondary">
-        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 002 2v12a2 2 0 002 2z"></path></svg>
+        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
         Festival Calendar
       </a>
     </div>
@@ -139,16 +151,36 @@
           <td>{{ e.registrations|selectattr('attended', 'equalto', True)|list|length }}</td>
           <td>
             <span class="cems-badge
-              {% if e.status=='approved' %}cems-badge-success
+              {% if e.status=='cancelled' %}cems-badge-danger
+              {% elif e.status=='cancellation_requested' %}cems-badge-warning
+              {% elif e.status=='reschedule_requested' %}cems-badge-info
+              {% elif e.status=='approved' and e.change_status=='rescheduled' %}cems-badge-info
+              {% elif e.status=='approved' %}cems-badge-success
               {% elif e.status in ('pending', 'waiting') %}cems-badge-warning
               {% elif e.status=='rejected' %}cems-badge-danger
               {% else %}cems-badge-neutral{% endif %}">
-              {{ e.status|replace('_', ' ')|title }}
+              {% if e.status=='cancelled' %}Cancelled
+              {% elif e.status=='cancellation_requested' %}Cancellation Requested
+              {% elif e.status=='reschedule_requested' %}Reschedule Requested
+              {% elif e.status=='approved' and e.change_status=='rescheduled' %}Rescheduled
+              {% else %}{{ e.status|replace('_', ' ')|title }}{% endif %}
             </span>
           </td>
           <td>
             <div class="cems-table-actions">
+              {% if e.status in ('approved', 'published') or (e.status=='approved' and e.change_status=='rescheduled') %}
               <a href="{{ url_for('manage_event', event_id=e.id) }}" class="cems-btn cems-btn-secondary cems-btn-sm">Edit</a>
+              <a href="{{ url_for('organizer_cancel_event', event_id=e.id) }}" class="cems-btn cems-btn-danger cems-btn-sm"
+                 onclick="return confirm('Are you sure you want to request cancellation for this event?');">Cancel</a>
+              <a href="{{ url_for('organizer_reschedule_event', event_id=e.id) }}" class="cems-btn cems-btn-secondary cems-btn-sm">Reschedule</a>
+              {% elif e.status in ('cancellation_requested', 'reschedule_requested') %}
+              <a href="{{ url_for('organizer_workflow_status', event_id=e.id) }}" class="cems-btn cems-btn-warning cems-btn-sm">View Request</a>
+              <a href="{{ url_for('manage_event', event_id=e.id) }}" class="cems-btn cems-btn-secondary cems-btn-sm">Edit</a>
+              {% elif e.status=='cancelled' %}
+              <a href="{{ url_for('organizer_workflow_status', event_id=e.id) }}" class="cems-btn cems-btn-secondary cems-btn-sm">View Status</a>
+              {% else %}
+              <a href="{{ url_for('manage_event', event_id=e.id) }}" class="cems-btn cems-btn-secondary cems-btn-sm">Edit</a>
+              {% endif %}
               <a href="{{ url_for('organizer_registrations', event_id=e.id) }}" class="cems-btn cems-btn-secondary cems-btn-sm">Registrations</a>
             </div>
           </td>

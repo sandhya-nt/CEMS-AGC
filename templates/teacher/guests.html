@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+{% block title %}Guests — CEMS{% endblock %}
+{% block breadcrumb %}Guests{% endblock %}
+{% block content %}
+<div class="cems-page-header">
+  <div class="cems-page-header-top">
+    <div>
+      <h1 class="cems-page-title">Guest Management</h1>
+      <p class="cems-page-description">Manage VIP guests and keynote speakers for your events.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Event Selector -->
+<div class="cems-card" style="margin-bottom: 24px;">
+  <div class="cems-card-body">
+    <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
+      <div style="flex: 1; min-width: 240px;">
+        <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--cems-text-secondary);">Select Event</label>
+        <select id="guest-event-select" style="width:100%; padding: 10px 12px; border: 1px solid var(--cems-border); border-radius: 8px; font-size: 0.95rem;">
+          <option value="">All Assigned Events</option>
+          {% for event in events %}
+          <option value="{{ event.id }}">{{ event.title }} ({{ event.date.strftime('%d %b %Y') if event.date else '—' }})</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div style="align-self: flex-end;">
+        <button id="btn-load-guests" class="cems-btn cems-btn-primary">Load Guests</button>
+      </div>
+      <div style="align-self: flex-end;">
+        <a href="#" id="btn-add-guest" class="cems-btn cems-btn-secondary" onclick="openGuestModal(); return false;">+ Add Guest</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Guest List -->
+<div id="guests-section" style="display: none;">
+  <div class="cems-card">
+    <div class="cems-card-header">
+      <div class="cems-card-title">Guest List</div>
+    </div>
+    <div class="cems-card-body" style="padding:0;">
+      <div class="cems-overflow-x-auto">
+        <table class="cems-table">
+          <thead>
+            <tr><th>Name</th><th>Type</th><th>Special Requirements</th><th>Arrival</th><th>Handler</th><th>Actions</th></tr>
+          </thead>
+          <tbody id="guests-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Guest Modal -->
+<div class="modal-backdrop" id="guest-modal" role="dialog" aria-modal="true" aria-hidden="true">
+  <div class="modal-card" style="max-width: 560px;">
+    <div class="modal-card-header">
+      <h3>Add Guest</h3>
+      <button type="button" class="modal-close" onclick="closeGuestModal()">×</button>
+    </div>
+    <form id="guest-form" method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="modal-card-body">
+        <div class="form-group">
+          <label>Event</label>
+          <select id="guest-event" name="event_id" required>
+            {% for event in events %}
+            <option value="{{ event.id }}">{{ event.title }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Guest Name <span style="color: red;">*</span></label>
+          <input type="text" id="guest-name" name="guest_name" required placeholder="Full name">
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label>Guest Type</label>
+            <select id="guest-type" name="guest_type">
+              <option value="keynote">Keynote Speaker</option>
+              <option value="judge">Judge</option>
+              <option value="sponsor">Sponsor</option>
+              <option value="vip">VIP</option>
+              <option value="faculty">Faculty</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Dedicated Handler</label>
+            <input type="text" id="guest-handler" name="dedicated_handler" placeholder="Name">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Special Requirements</label>
+          <textarea id="guest-requirements" name="special_requirements" rows="3" placeholder="Dietary, accessibility, etc."></textarea>
+        </div>
+        <div class="form-group">
+          <label>Arrival Time</label>
+          <input type="datetime-local" id="guest-arrival" name="arrival_time">
+        </div>
+      </div>
+      <div class="modal-card-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeGuestModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Add Guest</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function openGuestModal() { document.getElementById('guest-modal').classList.remove('hidden'); }
+function closeGuestModal() { document.getElementById('guest-modal').classList.add('hidden'); }
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('btn-load-guests').addEventListener('click', loadGuests);
+  document.getElementById('guest-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    createGuest();
+  });
+});
+function loadGuests() {
+  var eventId = document.getElementById('guest-event-select').value;
+  fetch('/api/teacher/guests?' + (eventId ? 'event_id=' + eventId : ''))
+    .then(r => r.json()).then(data => { if (data.success) renderGuests(data.guests); })
+    .catch(err => console.error(err));
+}
+function renderGuests(guests) {
+  document.getElementById('guests-section').style.display = '';
+  var typeColors = {keynote: 'cems-badge-danger', judge: 'cems-badge-warning', sponsor: 'cems-badge-info', vip: 'cems-badge-success', faculty: 'cems-badge-neutral', other: 'cems-badge-neutral'};
+  var tbody = document.getElementById('guests-tbody');
+  tbody.innerHTML = guests.map(function(g) {
+    return '<tr>' +
+      '<td><strong>' + g.guest_name + '</strong></td>' +
+      '<td><span class="cems-badge ' + (typeColors[g.guest_type]||'cems-badge-neutral') + '">' + g.guest_type + '</span></td>' +
+      '<td>' + (g.special_requirements || '—') + '</td>' +
+      '<td>' + (g.arrival_time || '—') + '</td>' +
+      '<td>' + (g.dedicated_handler || '—') + '</td>' +
+      '<td><button onclick="deleteGuest(' + g.id + ')" class="cems-btn cems-btn-sm cems-btn-danger">Remove</button></td>' +
+    '</tr>';
+  }).join('');
+}
+function createGuest() {
+  var data = {
+    event_id: document.getElementById('guest-event').value,
+    guest_name: document.getElementById('guest-name').value,
+    guest_type: document.getElementById('guest-type').value,
+    dedicated_handler: document.getElementById('guest-handler').value,
+    special_requirements: document.getElementById('guest-requirements').value,
+    arrival_time: document.getElementById('guest-arrival').value,
+  };
+  fetch('/api/teacher/guests', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) })
+    .then(r => r.json()).then(data => { if (data.success) { closeGuestModal(); loadGuests(); } });
+}
+function deleteGuest(id) {
+  fetch('/api/teacher/guests/' + id, { method: 'DELETE' })
+    .then(r => r.json()).then(data => { if (data.success) loadGuests(); });
+}
+</script>
+{% endblock %}

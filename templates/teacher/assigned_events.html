@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Assigned Events — CEMS{% endblock %}
+{% block breadcrumb %}Assigned Events{% endblock %}
+{% block content %}
+<div class="cems-page-header">
+  <div class="cems-page-header-top">
+    <div>
+      <h1 class="cems-page-title">Assigned Events</h1>
+      <p class="cems-page-description">Events you are assigned to as faculty.</p>
+    </div>
+    <div class="cems-page-actions">
+      <div class="cems-search-input" style="position:relative; min-width:260px;">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); width:18px; height:18px; color:var(--cems-text-muted);"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        <input type="search" id="event-search" placeholder="Search events..." style="width:100%; padding:10px 12px 10px 38px; border:1px solid var(--cems-border); border-radius:8px; font-size:0.9rem;" aria-label="Search events">
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="cems-card">
+  <div class="cems-card-body" style="padding:0;">
+    {% if events %}
+    <div class="cems-overflow-x-auto">
+      <table class="cems-table">
+        <thead>
+          <tr>
+            <th>Event Name</th>
+            <th>Event Type</th>
+            <th>Description</th>
+            <th>Date</th>
+            <th>Start Time</th>
+            <th>End Time</th>
+            <th>Venue</th>
+            <th>Capacity</th>
+            <th>Registration Status</th>
+            <th>Organizer</th>
+            <th>Total Registrations</th>
+            <th>Approved Students</th>
+            <th>Attendance Count</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for event in events %}
+          <tr>
+            <td><strong>{{ event.title }}</strong><br><small style="color:var(--cems-text-muted);">{{ event.category }}</small></td>
+            <td>{{ event.event_type|title if event.event_type else 'Free' }}</td>
+            <td>{{ event.description[:80] ~ '...' if event.description and event.description|length > 80 else (event.description or '—') }}</td>
+            <td>{{ event.date.strftime('%d %b %Y') if event.date else '—' }}</td>
+            <td>{{ event.start_time or '—' }}</td>
+            <td>{{ event.end_time or '—' }}</td>
+            <td>{{ event.venue }}</td>
+            <td>{{ event.capacity }}</td>
+            <td><span class="cems-badge {% if event.status=='approved' %}cems-badge-success{% elif event.status in ('pending','waiting') %}cems-badge-warning{% elif event.status=='completed' %}cems-badge-info{% else %}cems-badge-neutral{% endif %}">{{ event.status|replace('_',' ')|title }}</span></td>
+            <td>{{ event.organizer.name if event.organizer else '—' }}</td>
+            <td>{{ event.registrations|length }}</td>
+            <td>{{ event.registrations|selectattr('status', 'in', ['confirmed', 'approved'])|list|length }}</td>
+            <td>{{ event.registrations|selectattr('attended', 'equalto', true)|list|length }}</td>
+            <td>
+              <a href="{{ url_for('teacher_event_details', event_id=event.id) }}" class="cems-btn cems-btn-sm cems-btn-secondary">View Details</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div style="text-align:center; padding:48px;"><div style="font-size:3rem; margin-bottom:12px;">📅</div><div class="cems-empty-title">No assigned events</div><div class="cems-empty-description">Events assigned to you by Admin will appear here.</div></div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

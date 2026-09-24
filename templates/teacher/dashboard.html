@@ -1,24 +1,44 @@
 {% extends "base.html" %}
-{% block title %}Teacher Dashboard — CEMS{% endblock %}
+{% block title %}Faculty Dashboard — CEMS{% endblock %}
 {% block breadcrumb %}Dashboard{% endblock %}
 
 {% block content %}
 <div class="cems-page-header">
   <div class="cems-page-header-top">
     <div>
-      <h1 class="cems-page-title">Welcome, {{ current_user.name }}!</h1>
-      <p class="cems-page-description">Teacher dashboard. More features coming soon.</p>
+      <h1 class="cems-page-title">Faculty Dashboard</h1>
+      <p class="cems-page-description">Welcome, {{ current_user.name }}! Overview of your assigned events and activities.</p>
     </div>
   </div>
 </div>
 
-<div class="cems-card">
-  <div class="cems-card-body">
-    <div class="cems-empty">
-      <div class="cems-empty-icon">🎓</div>
-      <div class="cems-empty-title">Teacher Portal</div>
-      <div class="cems-empty-description">Your class events, student activity, and campus coordination tools will be available here.</div>
-    </div>
+<div class="stats">
+  <div class="stat-card">
+    <div class="stat-number">{{ total_assigned }}</div>
+    <div class="stat-label">Total Assigned Events</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-number">{{ total_registrations }}</div>
+    <div class="stat-label">Total Registrations</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-number">{{ pending_registrations }}</div>
+    <div class="stat-label">Pending Registrations</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-number">{{ approved_students }}</div>
+    <div class="stat-label">Approved Students</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-number">{{ total_attendance }}</div>
+    <div class="stat-label">Total Attendance</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-number">{{ certificates_generated }}</div>
+    <div class="stat-label">Certificates Generated</div>
   </div>
 </div>
+
+<div class="section-head"><h2>Assigned Events</h2><a href="{{ url_for('faculty_assigned_events') }}">View All</a></div>
+<div class="table-card"><table><thead><tr><th>Event</th><th>Date</th><th>Registrations</th><th>Status</th><th>Action</th></tr></thead><tbody>{% for event in assigned_events %}<tr><td>{{ event.title }}</td><td>{{ event.date.strftime('%d %b %Y') if event.date else '—' }}</td><td>{{ event.registrations|length }}</td><td><span class="status">{{ event.status|title }}</span></td><td><a href="{{ url_for('teacher_event_details', event_id=event.id) }}">View Details</a></td></tr>{% else %}<tr><td colspan="5" class="empty">No assigned events.</td></tr>{% endfor %}</tbody></table></div>
 {% endblock %}

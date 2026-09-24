@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block title %}All Feedback — {{ event.title }} — CEMS{% endblock %}
+{% block breadcrumb %}{{ event.title }} Feedback{% endblock %}
+
+{% block extra_css %}
+<style>
+  .cems-feedback-card { border: 1px solid var(--cems-border); border-radius: var(--cems-radius); padding: 16px; margin-bottom: 12px; background: var(--cems-bg); }
+  .cems-feedback-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .cems-feedback-rating { color: var(--cems-warning); font-weight: 600; }
+  .cems-feedback-comment { color: var(--cems-text-secondary); line-height: 1.6; }
+  .cems-feedback-time { font-size: 0.8rem; color: var(--cems-text-muted); }
+  .cems-feedback-meta { display: flex; gap: 12px; flex-wrap: wrap; font-size: 0.8rem; color: var(--cems-text-muted); margin-top: 6px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="cems-page-header">
+  <div class="cems-page-header-top">
+    <div>
+      <h1 class="cems-page-title">{{ event.title }} — All Feedback</h1>
+      <p class="cems-page-description">Complete list of feedback entries submitted by students.</p>
+    </div>
+    <div class="cems-page-actions">
+      <a href="{{ url_for('teacher_event_feedback', event_id=event.id) }}" class="cems-btn cems-btn-secondary cems-btn-sm">Back to Analytics</a>
+      <a href="{{ url_for('teacher_feedback_export', event_id=event.id) }}?format=csv" class="cems-btn cems-btn-outline cems-btn-sm">Export CSV</a>
+      <a href="{{ url_for('teacher_feedback_export', event_id=event.id) }}?format=pdf" class="cems-btn cems-btn-outline cems-btn-sm">Export PDF</a>
+    </div>
+  </div>
+</div>
+
+<div class="cems-card">
+  <div class="cems-card-header">
+    <div class="cems-card-title">Feedback Entries ({{ feedbacks|length }})</div>
+  </div>
+  <div class="cems-card-body" style="padding:16px;">
+    {% if feedbacks %}
+    {% for fb in feedbacks %}
+    <div class="cems-feedback-card">
+      <div class="cems-feedback-header">
+        <div>
+          {% if fb.is_anonymous %}
+            <strong>Anonymous Student</strong>
+            <span class="cems-badge-anonymous">Anon</span>
+          {% else %}
+            <strong>{{ fb.registration.user.name }}</strong>
+            <small style="color:var(--cems-text-muted);">({{ fb.registration.user.email }{% if fb.registration.user.roll_no %} | {{ fb.registration.user.roll_no }}{% endif %})</small>
+          {% endif %}
+        </div>
+        <div class="cems-feedback-rating">
+          {% for i in range(1, 6) %}
+          {% if i <= fb.rating %}<span>&#9733;</span>{% else %}<span>&#9734;</span>{% endif %}
+          {% endfor %}
+        </div>
+      </div>
+      {% if fb.theme %}
+      <div style="margin-bottom:4px;">
+        <span class="cems-theme-tag" style="font-size:0.75rem;">{{ fb.theme }}</span>
+      </div>
+      {% endif %}
+      {% if fb.comment %}
+      <div class="cems-feedback-comment">{{ fb.comment }}</div>
+      {% else %}
+      <div class="cems-feedback-comment" style="color:var(--cems-text-muted);">No comment provided.</div>
+      {% endif %}
+      {% if fb.organization_rating or fb.venue_rating or fb.speaker_rating or fb.registration_experience_rating %}
+      <div class="cems-feedback-meta">
+        {% if fb.organization_rating %}Organization: <strong>{{ fb.organization_rating }}/5</strong>{% endif %}
+        {% if fb.venue_rating %}Venue: <strong>{{ fb.venue_rating }}/5</strong>{% endif %}
+        {% if fb.speaker_rating %}Speaker: <strong>{{ fb.speaker_rating }}/5</strong>{% endif %}
+        {% if fb.registration_experience_rating %}Registration: <strong>{{ fb.registration_experience_rating }}/5</strong>{% endif %}
+      </div>
+      {% endif %}
+      <div class="cems-feedback-time">Submitted on {{ fb.created_at.strftime('%d %b %Y at %H:%M') if fb.created_at else '—' }}</div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <div style="text-align:center; padding:48px; color:var(--cems-text-muted);">
+      <div style="font-size:3rem; margin-bottom:12px;">💬</div>
+      <div class="cems-empty-title">No feedback submitted yet</div>
+      <div class="cems-empty-description">Students have not yet submitted feedback for this event. Feedback appears here once students submit evaluations.</div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% if feedbacks %}
+<div class="cems-card" style="margin-top: 24px;">
+  <div class="cems-card-header">
+    <div class="cems-card-title">Summary by Rating</div>
+  </div>
+  <div class="cems-card-body">
+    {% set dist = {} %}
+    {% for fb in feedbacks %}
+    {% set _ = dist.update({fb.rating: (dist[fb.rating] or 0) + 1}) %}
+    {% endfor %}
+    <div class="cems-grid cems-grid-cols-5">
+      {% for r in [5,4,3,2,1] %}
+      <div style="text-align:center; padding:16px;">
+        <div style="font-size:1.5rem; color:var(--cems-warning);">{% for i in range(1, r+1) %}★{% endfor %}</div>
+        <div style="font-size:1.5rem; font-weight:700;">{{ dist.get(r, 0) }}</div>
+        <div style="color:var(--cems-text-muted); font-size:0.8rem;">{{ r }} Star{{ 's' if r > 1 else '' }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    <div style="margin-top: 16px; text-align: center; padding-top: 16px; border-top: 1px solid var(--cems-border);">
+      <strong>Overall Average:</strong> {{ '{:.2f}'.format(feedbacks|sum(attribute='rating')|float / feedbacks|length) }}/5
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

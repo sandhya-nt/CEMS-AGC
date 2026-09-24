@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Cancel Event — CEMS{% endblock %}
+{% block breadcrumb %}Cancel Event{% endblock %}
+
+{% block content %}
+<div class="cems-page-header">
+  <div class="cems-page-header-top">
+    <div>
+      <h1 class="cems-page-title">Cancel Event</h1>
+      <p class="cems-page-description">Request cancellation for <strong>{{ event.title }}</strong>.</p>
+    </div>
+    <div class="cems-page-actions">
+      <a href="{{ url_for('manage_event', event_id=event.id) }}" class="cems-btn cems-btn-secondary">Back to Event</a>
+    </div>
+  </div>
+</div>
+
+<div class="cems-card" style="max-width: 700px;">
+  <div class="cems-card-header">
+    <div class="cems-card-title">Cancellation Reason</div>
+  </div>
+  <div class="cems-card-body">
+    <div class="cems-alert cems-alert-warning" style="margin-bottom: 20px;">
+      <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.983 0a10 10 0 100 20 10 10 0 000-20zM9 8h6a1 1 0 110 2H9a1 1 0 010-2zm0 4h6a1 1 0 110 2H9a1 1 0 110-2z"></path></svg>
+      <div style="margin-left: 12px;">
+        <strong>Important:</strong> This action sends a cancellation request to an administrator for approval.
+        The event and all historical records will be preserved. Registered students
+        will be notified once the cancellation is approved. New registrations will be blocked.
+      </div>
+    </div>
+
+    <div style="background: var(--cems-bg-tertiary); padding: 16px; border-radius: 10px; margin-bottom: 20px;">
+      <div style="font-size: 13px; color: var(--cems-text-secondary); margin-bottom: 6px;">
+        <strong>Event:</strong> {{ event.title }}
+      </div>
+      <div style="font-size: 13px; color: var(--cems-text-secondary); margin-bottom: 6px;">
+        <strong>Date:</strong> {{ event.date.strftime('%d %B %Y') if event.date else '—' }}
+      </div>
+      <div style="font-size: 13px; color: var(--cems-text-secondary); margin-bottom: 6px;">
+        <strong>Time:</strong> {{ event.start_time }} – {{ event.end_time }}
+      </div>
+      <div style="font-size: 13px; color: var(--cems-text-secondary);">
+        <strong>Venue:</strong> {{ event.venue }}
+      </div>
+    </div>
+
+    <form method="post" action="{{ url_for('organizer_cancel_event', event_id=event.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="cems-form-group">
+        <label class="cems-form-label" for="reason">Cancellation Reason <span style="color: var(--cems-danger);">*</span></label>
+        <textarea name="reason" id="reason" class="cems-form-textarea" rows="5"
+                  placeholder="Please provide a clear reason for the cancellation..." required></textarea>
+        <div style="font-size: 12px; color: var(--cems-text-secondary); margin-top: 6px;">
+          This reason will be visible to students and administrators. Be specific and professional.
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 12px; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--cems-border);">
+        <button type="submit" class="cems-btn cems-btn-danger">
+          <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.118A2.2 2.2 0 0116 21H8.867a2.2 2.2 0 01-2.133-1.882L6 7m5 5V3h4v6m-4 0h4m-4 0l1.5-4h1M9 18a1 1 0 100 2h6a1 1 0 100-2"></path></svg>
+          Submit Cancellation Request
+        </button>
+        <a href="{{ url_for('manage_event', event_id=event.id) }}" class="cems-btn cems-btn-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

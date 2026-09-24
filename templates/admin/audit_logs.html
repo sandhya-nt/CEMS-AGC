@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}Audit Logs — CEMS{% endblock %}
+{% block breadcrumb %}Audit Logs{% endblock %}
+
+{% block content %}
+<div class="cems-page-header">
+  <div class="cems-page-header-top">
+    <div>
+      <h1 class="cems-page-title">Audit Logs</h1>
+      <p class="cems-page-description">View system activity and administrative actions.</p>
+    </div>
+  </div>
+</div>
+
+<div class="cems-card" style="margin-bottom: 24px;">
+  <form method="get" class="cems-form-grid" style="gap: 16px;">
+    <div class="cems-form-group">
+      <label class="cems-form-label">Action</label>
+      <select name="action" class="cems-form-select">
+        <option value="">All Actions</option>
+        {% for act in actions %}
+        <option value="{{ act }}" {% if action_filter == act %}selected{% endif %}>{{ act }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="cems-form-group">
+      <label class="cems-form-label">Entity Type</label>
+      <select name="entity" class="cems-form-select">
+        <option value="">All Entities</option>
+        {% for ent in entities %}
+        <option value="{{ ent }}" {% if entity_filter == ent %}selected{% endif %}>{{ ent }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="cems-form-group">
+      <label class="cems-form-label">Actor Name</label>
+      <input type="text" name="actor" class="cems-form-input" placeholder="Search by actor name" value="{{ actor_filter }}">
+    </div>
+    <div class="cems-form-group" style="align-self: end;">
+      <button type="submit" class="cems-btn cems-btn-primary">Filter</button>
+    </div>
+    <div class="cems-form-group" style="align-self: end;">
+      <a href="{{ url_for('admin_audit_logs') }}" class="cems-btn cems-btn-secondary">Clear</a>
+    </div>
+  </form>
+</div>
+
+<div class="cems-table-container">
+  <div class="cems-overflow-x-auto">
+    <table class="cems-table">
+      <thead>
+        <tr>
+          <th>Timestamp</th>
+          <th>Actor</th>
+          <th>Role</th>
+          <th>Action</th>
+          <th>Entity</th>
+          <th>Entity ID</th>
+          <th>Description</th>
+          <th>IP Address</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for log in logs %}
+        <tr>
+          <td>{{ log.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+          <td>
+            {% if log.actor %}
+            <strong>{{ log.actor.name }}</strong><br>
+            <small style="color: var(--cems-text-muted);">{{ log.actor.email }}</small>
+            {% else %}
+            <span style="color: var(--cems-text-muted);">System</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if log.actor_role %}
+            <span class="cems-role-badge {{ log.actor_role }}">{{ log.actor_role|title }}</span>
+            {% else %}
+            <span style="color: var(--cems-text-muted);">—</span>
+            {% endif %}
+          </td>
+          <td><code style="font-size: 0.8rem;">{{ log.action }}</code></td>
+          <td>{{ log.entity_type }}</td>
+          <td>{{ log.entity_id or '—' }}</td>
+          <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ log.description }}</td>
+          <td style="font-family: monospace; font-size: 0.8rem;">{{ log.ip_address or '—' }}</td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="8" style="text-align: center; padding: 40px; color: var(--cems-text-muted);">No audit logs found.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if pagination and pagination.pages > 1 %}
+  <div class="cems-pagination">
+    {% if pagination.has_prev %}
+    <a href="{{ url_for('admin_audit_logs', page=pagination.prev_num, action=action_filter, entity=entity_filter, actor=actor_filter) }}" class="cems-pagination-btn">← Previous</a>
+    {% endif %}
+    <span class="cems-pagination-info">Page {{ pagination.page }} of {{ pagination.pages }}</span>
+    {% if pagination.has_next %}
+    <a href="{{ url_for('admin_audit_logs', page=pagination.next_num, action=action_filter, entity=entity_filter, actor=actor_filter) }}" class="cems-pagination-btn">Next →</a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -56,6 +56,11 @@
         <div class="stat-label">Paid Registrations</div>
       </div>
       <div class="stat-card">
+        <div class="stat-icon">⏳</div>
+        <div class="stat-value">{{ registrations|selectattr('payment_status', 'equalto', 'awaiting_verification')|list|length }}</div>
+        <div class="stat-label">Awaiting Verification</div>
+      </div>
+      <div class="stat-card">
         <div class="stat-icon">📊</div>
         <div class="stat-value">{{ '%.0f'|format((registrations|selectattr('attended', 'equalto', True)|list|length / registrations|length * 100) if registrations else 0) }}%</div>
         <div class="stat-label">Attendance Rate</div>
@@ -80,6 +85,7 @@
               <th>Payment Status</th>
               <th>Check-in Status</th>
               <th>Registration Date</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -88,7 +94,17 @@
               <td><strong>{{ r.user.name }}</strong></td>
               <td>{{ r.user.email }}</td>
               <td><code style="background: #f0f2f7; padding: 4px 8px; border-radius: 4px;">{{ r.ticket_code }}</code></td>
-              <td><span class="status-badge {% if r.payment_status=='paid' %}approved{% else %}pending{% endif %}">{{ r.payment_status|title }}</span></td>
+              <td>
+                {% if r.payment_status == 'paid' %}
+                <span class="status-badge approved">✅ Paid</span>
+                {% elif r.payment_status == 'awaiting_verification' %}
+                <span class="status-badge warning">⏳ Awaiting Verification</span>
+                {% elif r.payment_status == 'pending' %}
+                <span class="status-badge pending">⏳ Pending</span>
+                {% else %}
+                <span class="status-badge">{{ r.payment_status|title }}</span>
+                {% endif %}
+              </td>
               <td>
                 {% if r.attended %}
                 <span class="status-badge approved">✅ Checked In</span>
@@ -97,10 +113,20 @@
                 {% endif %}
               </td>
               <td>{{ r.registered_at.strftime('%d %b %Y • %I:%M %p') }}</td>
+              <td>
+                {% if r.payment_status == 'awaiting_verification' %}
+                <form method="post" action="{{ url_for('api_verify_payment_organizer', registration_id=r.id) }}" style="display: inline;">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button type="submit" class="cems-btn cems-btn-success cems-btn-sm" onclick="return confirm('Confirm this payment has been received?');">✅ Verify Payment</button>
+                </form>
+                {% elif r.payment_status == 'pending' and r.payment_record %}
+                <span style="font-size: 0.8rem; color: var(--cems-text-muted);">Waiting for payment</span>
+                {% endif %}
+              </td>
             </tr>
             {% else %}
             <tr>
-              <td colspan="6" style="text-align: center; padding: 30px;">No registrations yet.</td>
+              <td colspan="7" style="text-align: center; padding: 30px;">No registrations yet.</td>
             </tr>
             {% endfor %}
           </tbody>

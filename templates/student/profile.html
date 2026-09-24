@@ -7,92 +7,366 @@
   <div class="cems-page-header-top">
     <div>
       <h1 class="cems-page-title">My Profile</h1>
-      <p class="cems-page-description">View and update your personal information.</p>
+      <p class="cems-page-description">View and update your personal and academic information.</p>
     </div>
   </div>
 </div>
 
-<div class="cems-card" style="max-width: 700px;">
-  <div class="cems-card-body">
-    <div id="profile-error-container"></div>
-    <div id="profile-success-container"></div>
-    <form method="post" class="cems-form-grid" id="profile-form">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      <div class="cems-form-group">
-        <label class="cems-form-label">Full Name</label>
-        <input type="text" name="name" class="cems-form-input" value="{{ current_user.name }}" required>
+<div id="profile-message"></div>
+
+<form method="post" class="cems-form-grid" id="profile-form" enctype="multipart/form-data">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+  <!-- Profile Photo Section -->
+  <div class="cems-profile-section">
+    <div class="cems-profile-section-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 00-4-4H9a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      Profile Photo
+    </div>
+    <div class="cems-profile-card">
+      <div class="cems-profile-card-body">
+        <div style="display: flex; align-items: center; gap: 24px; flex-wrap: wrap;">
+          <div class="cems-avatar-upload">
+            <span class="cems-avatar cems-avatar-xl cems-avatar-initials">
+              {% if current_user.profile_image %}
+                <img src="{{ url_for('static', filename=current_user.profile_image) }}" alt="Profile photo" id="profile-photo-preview">
+              {% else %}
+                {{ current_user.name[0]|upper if current_user.name else 'U' }}
+              {% endif %}
+            </span>
+            <input type="file" name="profile_photo" id="profile-photo-input" accept="image/jpeg,image/png,image/webp" aria-label="Upload profile photo">
+            <input type="hidden" name="remove_photo" id="remove-photo-flag" value="">
+            <div class="cems-avatar-upload-overlay">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            </div>
+          </div>
+          <div>
+            <p style="font-weight: 600; color: var(--cems-text-primary); margin-bottom: 4px;">Click to change photo</p>
+            <p style="font-size: 0.85rem; color: var(--cems-text-muted);">JPG, PNG or WEBP. Max 2MB.</p>
+            <button type="button" class="cems-btn cems-btn-ghost cems-btn-sm" id="remove-photo-btn" style="margin-top: 8px; display: none;" aria-label="Remove profile photo">Remove photo</button>
+          </div>
+        </div>
       </div>
-      <div class="cems-form-group">
-        <label class="cems-form-label">Email Address</label>
-        <input type="email" value="{{ current_user.email }}" disabled style="background: var(--cems-bg-tertiary); color: var(--cems-text-muted);">
+    </div>
+  </div>
+
+  <!-- Student Identification Section -->
+  <div class="cems-profile-section">
+    <div class="cems-profile-section-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 10h8M8 14h5"/><circle cx="16" cy="10" r="1.5"/></svg>
+      Student Identification
+    </div>
+    <div class="cems-profile-card">
+      <div class="cems-profile-card-body">
+        <div class="cems-profile-grid">
+          <div class="cems-form-group">
+            <label class="cems-form-label">Student ID</label>
+            <input type="text" value="{{ current_user.student_id or '' }}" disabled style="background: var(--cems-bg-tertiary); color: var(--cems-text-muted);" readonly>
+            <small class="cems-form-hint">Assigned by the college — not editable</small>
+          </div>
+          <div class="cems-form-group">
+            <label class="cems-form-label">Roll Number</label>
+            <input type="text" name="roll_no" class="cems-form-input" value="{{ current_user.roll_no or '' }}" placeholder="Your roll number">
+          </div>
+        </div>
       </div>
-      <div class="cems-form-group">
-        <label class="cems-form-label">Mobile Number</label>
-        <input type="tel" name="mobile" class="cems-form-input" value="{{ current_user.mobile or '' }}" placeholder="+91 XXXXX XXXXX">
+    </div>
+  </div>
+
+  <!-- Personal Information Section -->
+  <div class="cems-profile-section">
+    <div class="cems-profile-section-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      Personal Information
+    </div>
+    <div class="cems-profile-card">
+      <div class="cems-profile-card-body">
+        <div class="cems-profile-grid">
+          <div class="cems-form-group full-width">
+            <label class="cems-form-label">Full Name</label>
+            <input type="text" name="name" class="cems-form-input" value="{{ current_user.name }}" required>
+          </div>
+          <div class="cems-form-group">
+            <label class="cems-form-label">Email Address</label>
+            <input type="email" value="{{ current_user.email }}" disabled style="background: var(--cems-bg-tertiary); color: var(--cems-text-muted);">
+            <small class="cems-form-hint">Email is used for authentication — not editable</small>
+          </div>
+          <div class="cems-form-group">
+            <label class="cems-form-label">Mobile Number</label>
+            <input type="tel" name="mobile" class="cems-form-input" value="{{ current_user.mobile or '' }}" placeholder="+91 XXXXX XXXXX">
+          </div>
+          <div class="cems-form-group">
+            <label class="cems-form-label">Date of Birth</label>
+            <input type="date" name="date_of_birth" class="cems-form-input" value="{% if current_user.student_profile %}{{ current_user.student_profile.date_of_birth.strftime('%Y-%m-%d') if current_user.student_profile.date_of_birth else '' }}{% endif %}">
+          </div>
+          <div class="cems-form-group">
+            <label class="cems-form-label">Gender</label>
+            <select name="gender" class="cems-form-select">
+              <option value="">Prefer not to say</option>
+              <option value="Male" {% if current_user.student_profile and current_user.student_profile.gender == 'Male' %}selected{% endif %}>Male</option>
+              <option value="Female" {% if current_user.student_profile and current_user.student_profile.gender == 'Female' %}selected{% endif %}>Female</option>
+              <option value="Other" {% if current_user.student_profile and current_user.student_profile.gender == 'Other' %}selected{% endif %}>Other</option>
+              <option value="Non-binary" {% if current_user.student_profile and current_user.student_profile.gender == 'Non-binary' %}selected{% endif %}>Non-binary</option>
+            </select>
+          </div>
+        </div>
       </div>
-      <div class="cems-form-group">
-        <label class="cems-form-label">Department</label>
-        <input type="text" name="department" class="cems-form-input" value="{{ current_user.department or '' }}" placeholder="Your department">
+    </div>
+  </div>
+
+  <!-- Account Information Section (read-only security info) -->
+  <div class="cems-profile-section">
+    <div class="cems-profile-section-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      Account Information
+    </div>
+    <div class="cems-profile-card">
+      <div class="cems-profile-card-body">
+        <div class="cems-profile-grid">
+          <div class="cems-form-group">
+            <label class="cems-form-label">Account Role</label>
+            <input type="text" value="{{ current_user.role|title }}" disabled style="background: var(--cems-bg-tertiary); color: var(--cems-text-muted);">
+            <small class="cems-form-hint">Role is managed by the system</small>
+          </div>
+          <div class="cems-form-group">
+            <label class="cems-form-label">Account Status</label>
+            <input type="text" value="{{ 'Active' if current_user.account_status.value == 'active' else current_user.account_status.value|title }}" disabled style="background: var(--cems-bg-tertiary); color: var(--cems-text-muted);">
+          </div>
+          <div class="cems-form-group">
+            <label class="cems-form-label">Account Created</label>
+            <input type="text" value="{{ current_user.created_at.strftime('%d %b, %Y') if current_user.created_at else '—' }}" disabled style="background: var(--cems-bg-tertiary); color: var(--cems-text-muted);">
+          </div>
+          <div class="cems-form-group">
+            <label class="cems-form-label">Last Login</label>
+            <input type="text" value="{{ current_user.last_login_at.strftime('%d %b, %Y %I:%M %p') if current_user.last_login_at else '—' }}" disabled style="background: var(--cems-bg-tertiary); color: var(--cems-text-muted);">
+          </div>
+        </div>
       </div>
-      <div class="cems-form-group">
-        <label class="cems-form-label">College Roll No.</label>
-        <input type="text" name="roll_no" class="cems-form-input" value="{{ current_user.roll_no or '' }}" placeholder="Your roll number">
+    </div>
+  </div>
+
+  <!-- Academic Information Section -->
+  <div class="cems-profile-section">
+    <div class="cems-profile-section-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+      Academic Information
+    </div>
+    <div class="cems-profile-card">
+      <div class="cems-profile-card-body">
+        <div class="cems-profile-grid">
+          <div class="cems-form-group">
+            <label class="cems-form-label">Department</label>
+            <input type="text" name="department" class="cems-form-input" value="{{ current_user.department or '' }}" placeholder="Your department">
+          </div>
+          <div class="cems-form-group">
+            <label class="cems-form-label">College Roll No.</label>
+            <input type="text" name="roll_no" class="cems-form-input" value="{{ current_user.roll_no or '' }}" placeholder="Your roll number">
+          </div>
+          <div class="cems-form-group">
+            <label class="cems-form-label">Course / Program</label>
+            <input type="text" name="course" class="cems-form-input" value="{{ current_user.course or '' }}" placeholder="e.g. B.Tech Computer Science">
+          </div>
+          <div class="cems-form-group">
+            <label class="cems-form-label">Semester</label>
+            <select name="semester" class="cems-form-select">
+              <option value="">Select Semester</option>
+              <option value="1" {% if current_user.semester == '1' %}selected{% endif %}>1st Semester</option>
+              <option value="2" {% if current_user.semester == '2' %}selected{% endif %}>2nd Semester</option>
+              <option value="3" {% if current_user.semester == '3' %}selected{% endif %}>3rd Semester</option>
+              <option value="4" {% if current_user.semester == '4' %}selected{% endif %}>4th Semester</option>
+              <option value="5" {% if current_user.semester == '5' %}selected{% endif %}>5th Semester</option>
+              <option value="6" {% if current_user.semester == '6' %}selected{% endif %}>6th Semester</option>
+              <option value="7" {% if current_user.semester == '7' %}selected{% endif %}>7th Semester</option>
+              <option value="8" {% if current_user.semester == '8' %}selected{% endif %}>8th Semester</option>
+            </select>
+          </div>
+          <div class="cems-form-group">
+            <label class="cems-form-label">Section</label>
+            <input type="text" name="section" class="cems-form-input" value="{% if current_user.student_profile %}{{ current_user.student_profile.section }}{% endif %}" placeholder="e.g. A, B, C">
+          </div>
+          <div class="cems-form-group">
+            <label class="cems-form-label">Academic Session</label>
+            <select name="academic_session" class="cems-form-select">
+              <option value="">Select Session</option>
+              <option value="2021–2022" {% if current_user.student_profile and current_user.student_profile.academic_session == '2021–2022' %}selected{% endif %}>2021–2022</option>
+              <option value="2022–2023" {% if current_user.student_profile and current_user.student_profile.academic_session == '2022–2023' %}selected{% endif %}>2022–2023</option>
+              <option value="2023–2024" {% if current_user.student_profile and current_user.student_profile.academic_session == '2023–2024' %}selected{% endif %}>2023–2024</option>
+              <option value="2024–2025" {% if current_user.student_profile and current_user.student_profile.academic_session == '2024–2025' %}selected{% endif %}>2024–2025</option>
+              <option value="2025–2026" {% if current_user.student_profile and current_user.student_profile.academic_session == '2025–2026' %}selected{% endif %}>2025–2026</option>
+              <option value="2026–2027" {% if current_user.student_profile and current_user.student_profile.academic_session == '2026–2027' %}selected{% endif %}>2026–2027</option>
+            </select>
+          </div>
+        </div>
       </div>
-      <div class="cems-form-group">
-        <label class="cems-form-label">Course / Program</label>
-        <input type="text" name="course" class="cems-form-input" value="{{ current_user.course or '' }}" placeholder="e.g. B.Tech Computer Science">
+    </div>
+  </div>
+
+  <!-- Bio Section -->
+  <div class="cems-profile-section">
+    <div class="cems-profile-section-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      Biography
+    </div>
+    <div class="cems-profile-card">
+      <div class="cems-profile-card-body">
+        <div class="cems-form-group">
+          <label class="cems-form-label">About Me</label>
+          <textarea name="bio" class="cems-form-textarea" rows="4" placeholder="Tell us about yourself, your interests, career goals...">{{ current_user.student_profile.bio if current_user.student_profile and current_user.student_profile.bio else '' }}</textarea>
+        </div>
       </div>
-      <div class="cems-form-group">
-        <label class="cems-form-label">Semester</label>
-        <select name="semester" class="cems-form-select">
-          <option value="">Select Semester</option>
-          <option value="1" {% if current_user.semester == '1' %}selected{% endif %}>1st Semester</option>
-          <option value="2" {% if current_user.semester == '2' %}selected{% endif %}>2nd Semester</option>
-          <option value="3" {% if current_user.semester == '3' %}selected{% endif %}>3rd Semester</option>
-          <option value="4" {% if current_user.semester == '4' %}selected{% endif %}>4th Semester</option>
-          <option value="5" {% if current_user.semester == '5' %}selected{% endif %}>5th Semester</option>
-          <option value="6" {% if current_user.semester == '6' %}selected{% endif %}>6th Semester</option>
-          <option value="7" {% if current_user.semester == '7' %}selected{% endif %}>7th Semester</option>
-          <option value="8" {% if current_user.semester == '8' %}selected{% endif %}>8th Semester</option>
-        </select>
-      </div>
-      <button type="submit" class="cems-btn cems-btn-primary">
-        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-        Update Profile
-      </button>
-    </form>
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div class="cems-profile-actions">
+    <button type="submit" class="cems-btn cems-btn-primary" id="profile-submit-btn">
+      <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+      Save Changes
+    </button>
+    <a href="{{ url_for('student_dashboard') }}" class="cems-btn cems-btn-secondary">Cancel</a>
+  </div>
+</form>
+
+<!-- Profile Stats --><div class="cems-stats-grid" style="margin-top: 40px;">
+  <div class="cems-stat-card">
+    <div class="cems-stat-icon info">
+      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+    </div>
+    <div class="cems-stat-content">
+      <div class="cems-stat-value">{{ current_user.registrations|length if current_user.registrations else 0 }}</div>
+      <div class="cems-stat-label">Events Registered</div>
+    </div>
+  </div>
+  <div class="cems-stat-card">
+    <div class="cems-stat-icon success">
+      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    </div>
+    <div class="cems-stat-content">
+      <div class="cems-stat-value">Active</div>
+      <div class="cems-stat-label">Account Status</div>
+    </div>
+  </div>
+  <div class="cems-stat-card">
+    <div class="cems-stat-icon primary">
+      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    </div>
+    <div class="cems-stat-content">
+      <div class="cems-stat-value">20+</div>
+      <div class="cems-stat-label">Years of Excellence</div>
+    </div>
+  </div>
+  <div class="cems-stat-card">
+    <div class="cems-stat-icon warning">
+      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+    </div>
+    <div class="cems-stat-content">
+      <div class="cems-stat-value">1</div>
+      <div class="cems-stat-label">Member Since</div>
+    </div>
   </div>
 </div>
+
 {% endblock %}
 
 {% block extra_js %}
 <script>
 (function() {
   const form = document.getElementById('profile-form');
-  const errorContainer = document.getElementById('profile-error-container');
-  const successContainer = document.getElementById('profile-success-container');
-  const submitBtn = form.querySelector('button[type="submit"]');
+  const messageContainer = document.getElementById('profile-message');
+  const submitBtn = document.getElementById('profile-submit-btn');
+  const photoInput = document.getElementById('profile-photo-input');
+  const removePhotoBtn = document.getElementById('remove-photo-btn');
+
+  // Handle photo preview on file select
+  if (photoInput) {
+    photoInput.addEventListener('change', function() {
+      const file = this.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const previewArea = document.querySelector('.cems-avatar-upload');
+          if (previewArea) {
+            const existingImg = previewArea.querySelector('img');
+            if (existingImg) {
+              existingImg.src = e.target.result;
+            } else {
+              const img = document.createElement('img');
+              img.src = e.target.result;
+              img.alt = 'Profile photo preview';
+              img.id = 'profile-photo-preview';
+              const initials = previewArea.querySelector('.cems-avatar-initials');
+              if (initials) initials.replaceWith(img);
+            }
+          }
+          removePhotoBtn.style.display = 'inline-flex';
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  }
+
+  // Handle photo removal — server-side: delete file + clear DB field
+  if (removePhotoBtn) {
+    removePhotoBtn.addEventListener('click', function() {
+      fetch('{{ url_for("api_remove_profile_photo") }}', {
+        method: 'POST',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          const previewArea = document.querySelector('.cems-avatar-upload');
+          if (previewArea) {
+            const img = previewArea.querySelector('img#profile-photo-preview');
+            if (img) {
+              const initials = document.createElement('span');
+              initials.className = 'cems-avatar cems-avatar-xl cems-avatar-initials';
+              initials.textContent = '{{ current_user.name[0]|upper }}';
+              img.replaceWith(initials);
+            }
+          }
+          photoInput.value = '';
+          removePhotoBtn.style.display = 'none';
+          const div = document.createElement('div');
+          div.className = 'cems-profile-message success';
+          div.textContent = data.message;
+          messageContainer.appendChild(div);
+        } else {
+          const div = document.createElement('div');
+          div.className = 'cems-profile-message error';
+          div.textContent = (data.errors && data.errors.profile_photo) || data.message || 'Failed to remove photo.';
+          messageContainer.appendChild(div);
+        }
+      })
+      .catch(err => {
+        const div = document.createElement('div');
+        div.className = 'cems-profile-message error';
+        div.textContent = 'Network error. Please try again.';
+        messageContainer.appendChild(div);
+        console.error(err);
+      });
+    });
+  }
 
   form.addEventListener('submit', function(e) {
     e.preventDefault();
-    errorContainer.innerHTML = '';
-    successContainer.innerHTML = '';
+    messageContainer.innerHTML = '';
 
     const formData = new FormData(form);
     const localErrors = {};
 
     if (!formData.get('name')) {
       localErrors['name'] = 'Name is required.';
-      form.name.closest('.cems-form-group').classList.add('has-error');
+      const nameGroup = form.querySelector('[name="name"]')?.closest('.cems-form-group');
+      if (nameGroup) nameGroup.classList.add('has-error');
     }
 
     if (Object.keys(localErrors).length > 0) {
       for (const [field, msg] of Object.entries(localErrors)) {
         const div = document.createElement('div');
-        div.className = 'cems-auth-error';
-        div.dataset.field = field;
+        div.className = 'cems-profile-message error';
         div.textContent = msg;
-        errorContainer.appendChild(div);
+        messageContainer.appendChild(div);
       }
       return;
     }
@@ -108,28 +382,31 @@
     .then(response => response.json())
     .then(data => {
       submitBtn.disabled = false;
-      submitBtn.innerHTML = '<svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Update Profile';
+      submitBtn.innerHTML = '<svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Save Changes';
       if (data.success) {
         const div = document.createElement('div');
-        div.className = 'cems-auth-error';
-        div.style.borderColor = 'var(--cems-success)';
-        div.style.background = 'var(--cems-success-bg)';
-        div.style.color = 'var(--cems-success-dark)';
+        div.className = 'cems-profile-message success';
         div.textContent = data.message;
-        successContainer.appendChild(div);
-        // Update the name in the welcome message on dashboard if present
-        const welcomeEl = document.querySelector('.cems-page-title');
-        if (welcomeEl && welcomeEl.textContent.includes('{{ current_user.name }}')) {
-          welcomeEl.textContent = welcomeEl.textContent.replace('{{ current_user.name }}', formData.get('name'));
+        messageContainer.appendChild(div);
+        // Update header avatar if photo was uploaded
+        if (formData.get('profile_photo')) {
+          setTimeout(() => location.reload(), 800);
         }
+        // Update name in sidebar if changed
+        const nameEl = formData.get('name');
+        const sidebarName = document.querySelector('.cems-sidebar-user-name');
+        if (sidebarName && nameEl) sidebarName.textContent = nameEl;
+        const headerName = document.querySelector('.cems-header-user-name');
+        if (headerName && nameEl) headerName.textContent = nameEl;
+        // Scroll to message
+        messageContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
       } else {
         if (data.errors) {
           for (const [field, msg] of Object.entries(data.errors)) {
             const div = document.createElement('div');
-            div.className = 'cems-auth-error';
-            div.dataset.field = field;
+            div.className = 'cems-profile-message error';
             div.textContent = msg;
-            errorContainer.appendChild(div);
+            messageContainer.appendChild(div);
             const input = form.querySelector(`[name="${field}"]`);
             if (input) input.closest('.cems-form-group').classList.add('has-error');
           }
@@ -138,26 +415,24 @@
     })
     .catch(err => {
       submitBtn.disabled = false;
-      submitBtn.innerHTML = '<svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Update Profile';
+      submitBtn.innerHTML = '<svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Save Changes';
       const div = document.createElement('div');
-      div.className = 'cems-auth-error';
-      div.dataset.field = 'general';
+      div.className = 'cems-profile-message error';
       div.textContent = 'Network error. Please try again.';
-      errorContainer.appendChild(div);
+      messageContainer.appendChild(div);
       console.error(err);
     });
   });
 
   // Clear field errors on input
-  form.querySelectorAll('input').forEach(input => {
+  form.querySelectorAll('input, select, textarea').forEach(input => {
     input.addEventListener('input', () => {
       const group = input.closest('.cems-form-group');
       if (group) group.classList.remove('has-error');
-      const fieldErrors = errorContainer.querySelectorAll(`[data-field="${input.name}"]`);
+      const fieldErrors = messageContainer.querySelectorAll(`[data-field="${input.name}"]`);
       fieldErrors.forEach(el => el.remove());
     });
   });
 })();
 </script>
 {% endblock %}
-

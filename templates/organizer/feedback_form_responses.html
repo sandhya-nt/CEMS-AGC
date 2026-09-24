@@ -1,0 +1,248 @@
+{% extends "base.html" %}
+{% block title %}Responses — {{ template.title }} — CEMS{% endblock %}
+{% block breadcrumb %}<a href="{{ url_for('organizer_dashboard') }}">Dashboard</a> / <a href="{{ url_for('organizer_feedback_forms') }}">Feedback Forms</a> / {{ template.title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .cems-form-status-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 600;
+  }
+  .cems-form-active { background: var(--cems-success-bg); color: var(--cems-success-dark); }
+  .cems-form-inactive { background: var(--cems-danger-bg); color: var(--cems-danger-dark); }
+  .cems-rating-bar-track { background: var(--cems-gray-200); border-radius: 4px; height: 8px; overflow: hidden; display: flex; }
+  .cems-rating-bar-fill { background: var(--cems-primary); height: 100%; border-radius: 4px; }
+  .cems-response-row td { vertical-align: top; }
+  .cems-answer-cell { padding: 4px 8px; font-size: 0.85rem; color: var(--cems-text-secondary); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="cems-page-header">
+  <div class="cems-page-header-top">
+    <div>
+      <h1 class="cems-page-title">{{ template.title }}</h1>
+      <p class="cems-page-description">{{ event.title }} · {{ stats.total_responses }} responses from {{ stats.total_registrations }} registrations</p>
+    </div>
+    <div class="cems-page-actions">
+      <a href="{{ url_for('organizer_feedback_forms') }}" class="cems-btn cems-btn-secondary">Back to Forms</a>
+      <a href="{{ url_for('organizer_feedback_form_toggle', form_id=template.id) }}" class="cems-btn cems-btn-secondary"
+         onclick="return confirm('{{ 'Deactivate' if template.is_active else 'Activate' }} this form?');">
+        {{ 'Deactivate' if template.is_active else 'Activate' }}
+      </a>
+      {% if stats.total_responses > 0 %}
+      <a href="{{ url_for('organizer_feedback_form_export', form_id=template.id) }}" class="cems-btn cems-btn-success">
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+        Export CSV
+      </a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Overall Stats -->
+<div class="cems-stats-grid">
+  <div class="cems-stat-card">
+    <div class="cems-stat-icon primary">
+      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+    </div>
+    <div class="cems-stat-content">
+      <div class="cems-stat-value">{{ stats.total_responses }}</div>
+      <div class="cems-stat-label">Total Responses</div>
+    </div>
+  </div>
+  <div class="cems-stat-card">
+    <div class="cems-stat-icon info">
+      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+    </div>
+    <div class="cems-stat-content">
+      <div class="cems-stat-value">{{ stats.total_registrations }}</div>
+      <div class="cems-stat-label">Total Registrations</div>
+    </div>
+  </div>
+  <div class="cems-stat-card">
+    <div class="cems-stat-icon success">
+      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+    </div>
+    <div class="cems-stat-content">
+      <div class="cems-stat-value">{{ stats.response_rate }}%</div>
+      <div class="cems-stat-label">Response Rate</div>
+    </div>
+  </div>
+  <div class="cems-stat-card">
+    <div class="cems-stat-icon warning">
+      <span style="font-size: 1.5rem;">{{ 'Active' if template.is_active else 'Inactive' }}</span>
+    </div>
+    <div class="cems-stat-content">
+      <div class="cems-stat-value">{{ template.questions|length }}</div>
+      <div class="cems-stat-label">Questions</div>
+    </div>
+  </div>
+</div>
+
+<!-- Form Description -->
+{% if template.description %}
+<div class="cems-alert cems-alert-info" style="margin: 24px 0;">
+  <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11.25 11.25l.041-.020a.72.72 0 011.063.864l-.708 2.832a.72.72 0 001.065.862l.041-.020M21 12c0 9-9 21-9 21S3 21 3 12a9 9 0 1118 0z"/></svg>
+  <div style="margin-left: 8px;">{{ template.description }}</div>
+</div>
+{% endif %}
+
+<!-- Per-Question Analytics -->
+{% if stats.questions %}
+<div style="margin-bottom: 24px;">
+  {% for q in stats.questions %}
+  <div class="cems-card" style="margin-bottom: 16px;">
+    <div class="cems-card-header">
+      <div class="cems-card-title">{{ q.label }}</div>
+      <span class="cems-form-status-badge cems-form-active">
+        Avg: {{ q.average }}/{% if q.question_type == 'nps' %}10{% elif q.question_type in ('rating_stars', 'rating_number') %}{{ q.rating_scale if q.rating_scale else 5 }}{% else %}—{% endif %}
+      </span>
+    </div>
+    <div class="cems-card-body">
+      <div style="font-size: 0.8rem; color: var(--cems-text-muted); margin-bottom: 12px;">
+        Responses: {{ q.response_count }} · Type: {{ q.question_type }}{% if q.required %} · Required{% endif %}
+      </div>
+
+      {% if q.question_type in ('rating_stars', 'rating_number', 'nps') %}
+      <div id="chart-{{ q.id }}" style="height: 200px;"></div>
+      {% else %}
+      <div style="max-height: 240px; overflow-y: auto;">
+        <table class="cems-table" style="font-size: 0.85rem;">
+          <thead>
+            <tr><th>Response(s)</th><th>Count</th></tr>
+          </thead>
+          <tbody>
+            {% if q.distribution and q.distribution|length > 0 %}
+            {% for answer, count in q.distribution|dictsort(by='value', reverse=true) %}
+            <tr>
+              <td>{{ answer[:100] }}{% if answer|length > 100 %}…{% endif %}</td>
+              <td>{{ count }}</td>
+            </tr>
+            {% endfor %}
+            {% else %}
+            <tr><td colspan="2" style="text-align:center; color: var(--cems-text-muted);">No responses for this question yet.</td></tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="cems-empty">
+  <div class="cems-empty-icon">📊</div>
+  <div class="cems-empty-title">No questions configured</div>
+  <div class="cems-empty-description">Edit this form to add questions and start collecting custom feedback.</div>
+  <a href="{{ url_for('organizer_feedback_form_edit', form_id=template.id) }}" class="cems-btn cems-btn-primary" style="margin-top: 20px;">Edit Form</a>
+</div>
+{% endif %}
+
+<!-- Individual Responses Table -->
+{% if stats.total_responses > 0 %}
+<div class="cems-card" style="margin-top: 24px;">
+  <div class="cems-card-header">
+    <div class="cems-card-title">Individual Responses</div>
+  </div>
+  <div class="cems-card-body" style="padding: 0;">
+    <div class="cems-overflow-x-auto">
+      <table class="cems-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Submitted</th>
+            <th>Anonymous</th>
+            {% for q in stats.questions %}
+            <th>{{ q.label }}<br><small style="font-weight: normal; color: var(--cems-text-muted);">{{ q.question_type }}</small></th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% set responses = namespace(items=[]) %}
+          {% for resp in template.responses %}
+          <tr class="cems-response-row">
+            <td>{{ loop.index }}</td>
+            <td>{{ resp.submitted_at.strftime('%d %b %Y %I:%M %p') if resp.submitted_at else '—' }}</td>
+            <td>{{ 'Yes' if resp.is_anonymous else 'No' }}</td>
+            {% for q in stats.questions %}
+            <td class="cems-answer-cell">
+              {% set ans = resp.get_answer_for_question(q.id) %}
+              {% if ans %}
+                {% if q.question_type in ('rating_stars', 'rating_number', 'nps') %}
+                  {% set avg_val = ans|float %}
+                  {% for i in range(1, (q.question_type == 'nps' and 11 or (q.rating_scale or 5)) + 1) %}
+                  {% if i <= avg_val %}★{% else %}☆{% endif %}
+                  {% endfor %}
+                  <span style="display: block; font-size: 0.8rem; color: var(--cems-text-muted);">{{ ans }}</span>
+                {% else %}
+                  {{ ans[:100] }}{% if ans|length > 100 %}…{% endif %}
+                {% endif %}
+              {% else %}
+                <span style="color: var(--cems-text-muted);">—</span>
+              {% endif %}
+            </td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+{% for q in stats.questions if q.question_type in ('rating_stars', 'rating_number', 'nps') %}
+{% if q.distribution and q.distribution|length > 0 %}
+(function() {
+  const ctx = document.getElementById('chart-{{ q.id }}').getContext('2d');
+  const dist = {{ q.distribution|tojson }};
+  const labels = Object.keys(dist).sort(function(a, b) { return parseInt(a) - parseInt(b); });
+  const data = labels.map(function(k) { return dist[k]; });
+  const maxVal = {% if q.question_type == 'nps' %}10{% else %}{{ q.rating_scale if q.rating_scale else 5 }}{% endif %};
+  const fullLabels = [];
+  for (let i = 1; i <= maxVal; i++) fullLabels.push(i);
+  const fullData = fullLabels.map(function(i) { return dist[String(i)] || 0; });
+  const colors = fullLabels.map(function(v) {
+    const num = v;
+    if (num <= 2) return '#ef4444';
+    if (num <= 3) return '#f59e0b';
+    if (num <= 4) return '#3b82f6';
+    return '#10b981';
+  });
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: fullLabels.map(function(v){ return '★'.repeat(v) + ' ' + v; }),
+      datasets: [{
+        label: 'Responses',
+        data: fullData,
+        backgroundColor: colors,
+        borderColor: colors,
+        borderWidth: 1,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      indexAxis: 'y',
+      scales: { x: { beginAtZero: true, ticks: { precision: 0 } } },
+      plugins: { legend: { display: false } }
+    }
+  });
+})();
+{% else %}
+  document.getElementById('chart-{{ q.id }}').innerHTML = '<div style="text-align:center; padding:40px; color:var(--cems-text-muted);">No rating data yet.</div>';
+{% endif %}
+{% endfor %}
+</script>
+{% endblock %}

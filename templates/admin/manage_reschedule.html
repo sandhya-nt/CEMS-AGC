@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+{% block title %}Review Reschedule — CEMS{% endblock %}
+{% block breadcrumb %}Review Reschedule{% endblock %}
+
+{% block extra_head %}
+<style>
+.conflict-item {
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+.conflict-venue { background: #fee2e2; border: 1px solid #fca5a5; color: #7f1d1d; }
+.conflict-organizer { background: #fef3c7; border: 1px solid #fcd34d; color: #78350f; }
+.check-passed { color: #059669; }
+.check-failed { color: #dc2626; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="cems-page-header">
+  <div class="cems-page-header-top">
+    <div>
+      <h1 class="cems-page-title">Reschedule Request Review</h1>
+      <p class="cems-page-description">Review and decide on the reschedule request for <strong>{{ event.title }}</strong>.</p>
+    </div>
+    <div class="cems-page-actions">
+      <a href="{{ url_for('admin_cancellations') }}" class="cems-btn cems-btn-secondary">Back to Requests</a>
+    </div>
+  </div>
+</div>
+
+<!-- Current vs Proposed Comparison -->
+<div class="cems-card" style="max-width: 900px;">
+  <div class="cems-card-header">
+    <div class="cems-card-title">Current vs Proposed Details</div>
+  </div>
+  <div class="cems-card-body">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+      <!-- Current -->
+      <div style="background: var(--cems-bg-tertiary); padding: 20px; border-radius: 10px;">
+        <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--cems-text-secondary); margin-bottom: 12px;">CURRENT DETAILS</div>
+        <table style="width: 100%; font-size: 13px;">
+          <tr><td style="padding: 4px 0; color: var(--cems-text-secondary);"><strong>Date:</strong></td><td style="padding: 4px 0;">{{ event.date.strftime('%d %B %Y') if event.date else '—' }}</td></tr>
+          <tr><td style="padding: 4px 0; color: var(--cems-text-secondary);"><strong>Time:</strong></td><td style="padding: 4px 0;">{{ event.start_time }} – {{ event.end_time }}</td></tr>
+          <tr><td style="padding: 4px 0; color: var(--cems-text-secondary);"><strong>Venue:</strong></td><td style="padding: 4px 0;">{{ event.venue }}</td></tr>
+          <tr><td style="padding: 4px 0; color: var(--cems-text-secondary);"><strong>Capacity:</strong></td><td style="padding: 4px 0;">{{ event.capacity }}</td></tr>
+        </table>
+      </div>
+
+      <!-- Proposed -->
+      <div style="background: #eff6ff; padding: 20px; border: 2px dashed #60a5fa; border-radius: 10px;">
+        <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #2563eb; margin-bottom: 12px;">PROPOSED DETAILS</div>
+        <table style="width: 100%; font-size: 13px;">
+          <tr><td style="padding: 4px 0; color: #2563eb;"><strong>Date:</strong></td><td style="padding: 4px 0;">{{ event.proposed_date.strftime('%d %B %Y') if event.proposed_date else '—' }}</td></tr>
+          <tr><td style="padding: 4px 0; color: #2563eb;"><strong>Time:</strong></td><td style="padding: 4px 0;">{{ event.proposed_start_time }} – {{ event.proposed_end_time }}</td></tr>
+          <tr><td style="padding: 4px 0; color: #2563eb;"><strong>Venue:</strong></td><td style="padding: 4px 0;">{{ event.proposed_venue }}</td></tr>
+          <tr><td style="padding: 4px 0; color: #2563eb;"><strong>Capacity:</strong></td><td style="padding: 4px 0;">{{ event.proposed_capacity or event.capacity }}</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div style="margin-top: 20px; padding: 16px; background: var(--cems-bg-tertiary); border-radius: 10px;">
+      <div style="font-size: 12px; color: var(--cems-text-secondary); font-weight: 700; text-transform: uppercase; margin-bottom: 8px;">REASON FOR RESCHEDULE</div>
+      <div style="font-size: 14px;">{{ event.reschedule_reason or 'No reason provided.' }}</div>
+    </div>
+  </div>
+</div>
+
+<!-- Conflict Check Results -->
+{% if conflict_results %}
+<div class="cems-card" style="max-width: 900px; margin-top: 24px;">
+  <div class="cems-card-header">
+    <div class="cems-card-title">Automatic Conflict Check Results</div>
+    <div class="cems-card-subtitle">Auto-run venue, organizer, resource, and capacity validation</div>
+  </div>
+  <div class="cems-card-body" style="padding: 0;">
+    <div style="padding: 16px;">
+      {% if conflict_results['venue_conflict'].passed %}
+      <div style="padding: 8px 0; font-size: 13px;"><span class="check-passed">✅ Venue Check: PASSED</span> — No venue conflicts detected.</div>
+      {% else %}
+      <div style="padding: 8px 0; font-size: 13px;"><span class="check-failed">❌ Venue Check: FAILED</span> — Conflicts found.</div>
+      {% for c in conflict_results['venue_conflict'].conflicts %}
+      <div class="conflict-item conflict-venue">
+        <strong>{{ c.title }}</strong> — {{ c.date.strftime('%d %b %Y') if c.date else '' }} {{ c.start_time }} – {{ c.end_time }} at {{ c.venue }}
+      </div>
+      {% endfor %}
+      {% endif %}
+
+      {% if conflict_results['organizer_conflict'].passed %}
+      <div style="padding: 8px 0; font-size: 13px;"><span class="check-passed">✅ Organizer Check: PASSED</span> — No organizer conflicts detected.</div>
+      {% else %}
+      <div style="padding: 8px 0; font-size: 13px;"><span class="check-failed">❌ Organizer Check: FAILED</span> — Conflicts found.</div>
+      {% for c in conflict_results['organizer_conflict'].conflicts %}
+      <div class="conflict-item conflict-organizer">
+        <strong>{{ c.title }}</strong> — {{ c.date.strftime('%d %b %Y') if c.date else '' }} {{ c.start_time }} – {{ c.end_time }} at {{ c.venue }}
+      </div>
+      {% endfor %}
+      {% endif %}
+
+      {% if conflict_results['resource_conflict'].passed %}
+      <div style="padding: 8px 0; font-size: 13px;"><span class="check-passed">✅ Resource Check: PASSED</span> — No resource conflicts detected.</div>
+      {% else %}
+      <div style="padding: 8px 0; font-size: 13px;"><span class="check-failed">❌ Resource Check: FAILED</span> — {{ conflict_results['resource_conflict'].message }}</div>
+      {% endif %}
+
+      {% if conflict_results['capacity'].passed %}
+      <div style="padding: 8px 0; font-size: 13px;"><span class="check-passed">✅ Capacity Check: PASSED</span> — Sufficient capacity for all registered students.</div>
+      {% else %}
+      <div style="padding: 8px 0; font-size: 13px;"><span class="check-failed">❌ Capacity Check: FAILED</span> — {{ conflict_results['capacity'].message }}</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Registration Impact -->
+<div class="cems-card" style="max-width: 900px; margin-top: 24px;">
+  <div class="cems-card-header">
+    <div class="cems-card-title">Registration Impact</div>
+    <div class="cems-card-subtitle">
+      Approving this reschedule will notify {{ event.registrations|selectattr('status', 'notequalto', 'cancelled')|list|length }} registered student(s) with the new details.
+    </div>
+  </div>
+  <div class="cems-card-body">
+    <div class="cems-alert cems-alert-info">
+      <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-.01M13 12h-.01M13 8h.01M12 22a10 10 0 100-20 10 10 0 000 20z"></path></div>
+      <span style="margin-left: 12px;">
+        Approving reschedule will update the event with the new date/time/venue,
+        preserve the original event data for historical reference, and send
+        notifications (in-app + email) to all registered students.
+      </span>
+    </div>
+  </div>
+</div>
+
+<!-- Decision Form -->
+<div class="cems-card" style="max-width: 900px; margin-top: 24px;">
+  <div class="cems-card-header">
+    <div class="cems-card-title">Admin Decision</div>
+  </div>
+  <div class="cems-card-body">
+    <form method="post" action="{{ url_for('admin_manage_reschedule', event_id=event.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <div class="cems-form-group">
+        <label class="cems-form-label" for="decision">Decision</label>
+        <select name="decision" id="decision" class="cems-form-select" required>
+          <option value="">-- Select a decision --</option>
+          <option value="approve">Approve Reschedule</option>
+          <option value="reject">Reject Reschedule (Keep Original)</option>
+        </select>
+      </div>
+
+      <div class="cems-form-group">
+        <label class="cems-form-label" for="admin_notes">Admin Notes</label>
+        <textarea name="admin_notes" id="admin_notes" class="cems-form-textarea" rows="4"
+                  placeholder="Internal notes..."></textarea>
+      </div>
+
+      <div style="display: flex; gap: 12px; padding-top: 16px; border-top: 1px solid var(--cems-border);">
+        <button type="submit" name="decision" value="approve" class="cems-btn cems-btn-success"
+                onclick="return confirm('Are you sure you want to approve this reschedule? All registered students will be notified.');">
+          <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+          Approve Reschedule
+        </button>
+        <button type="submit" name="decision" value="reject" class="cems-btn cems-btn-secondary"
+                onclick="return confirm('Are you sure you want to reject this reschedule request? The event will remain at the original time.');">
+          <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+          Reject Reschedule
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

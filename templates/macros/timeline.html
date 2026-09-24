@@ -1,0 +1,125 @@
+{% macro render_event_timeline(event, today=None) %}
+{# Build timeline items based on event state #}
+{% set items = [] %}
+
+{# Determine completed stages based on event status and dates #}
+{% set is_approved = event.status in ('approved', 'published', 'completed', 'cancelled') %}
+{% set is_completed = event.status == 'completed' %}
+{% set is_cancelled = event.status == 'cancelled' %}
+
+{# Stage 1: Registration Open #}
+{% set reg_open_date = event.registration_start if event.registration_start else event.created_at %}
+{% set stage1_done = is_approved or is_completed or is_cancelled %}
+{% set _ = items.append({
+    'title': 'Registration Open',
+    'icon': '📝',
+    'date': reg_open_date,
+    'description': 'Registration for the event is now open. Students can sign up.',
+    'status': 'completed' if stage1_done else 'current'
+}) %}
+
+{# Stage 2: Registration Deadline #}
+{% set stage2_done = is_approved or is_completed or is_cancelled %}
+{% if event.registration_deadline %}
+{% set stage2_status = 'completed' if stage2_done else 'current' %}
+{% else %}
+{% set stage2_status = 'pending' %}
+{% endif %}
+{% set _ = items.append({
+    'title': 'Registration Deadline',
+    'icon': '⏰',
+    'date': event.registration_deadline,
+    'description': 'Last day to register for the event.',
+    'status': stage2_status
+}) %}
+
+{# Stage 3: Event Approved #}
+{% set stage3_done = is_approved or is_completed or is_cancelled %}
+{% set _ = items.append({
+    'title': 'Event Approved',
+    'icon': '✅',
+    'date': event.published_at,
+    'description': 'The event has been reviewed and approved.',
+    'status': 'completed' if stage3_done else 'pending'
+}) %}
+
+{# Stage 4: Event Day #}
+{% if is_completed %}
+{% set stage4_status = 'completed' %}
+{% elif is_approved %}
+{% set stage4_status = 'current' %}
+{% else %}
+{% set stage4_status = 'pending' %}
+{% endif %}
+{% set _ = items.append({
+    'title': 'Event Day',
+    'icon': '🎉',
+    'date': event.date,
+    'description': 'The main event day.',
+    'status': stage4_status
+}) %}
+
+{# Stage 5: Attendance #}
+{% set attended_count = event.registrations|selectattr('attended')|list|length if event.registrations else 0 %}
+{% set stage5_status = 'completed' if is_completed else 'pending' %}
+{% set _ = items.append({
+    'title': 'Attendance',
+    'icon': '✅',
+    'date': None,
+    'description': 'Mark attendance during the event.' ~ (' ' ~ attended_count ~ ' attended.' if attended_count else ''),
+    'status': stage5_status,
+    'meta': attended_count if attended_count else None
+}) %}
+
+{# Stage 6: Certificate #}
+{% set stage6_status = 'completed' if is_completed else 'pending' %}
+{% set _ = items.append({
+    'title': 'Certificate',
+    'icon': '📜',
+    'date': None,
+    'description': 'Participation certificates issued to eligible attendees.',
+    'status': stage6_status
+}) %}
+
+<div class="cems-timeline-card">
+  <div class="cems-card">
+    <div class="cems-card-header">
+      <div>
+        <div class="cems-card-title">Event Timeline</div>
+        <div class="cems-card-subtitle">Track the journey of this event from registration to certificate</div>
+      </div>
+    </div>
+    <div class="cems-card-body">
+      <div class="cems-timeline-legend">
+        <div class="legend-item"><span class="legend-dot done"></span> Completed</div>
+        <div class="legend-item"><span class="legend-dot active"></span> Current</div>
+        <div class="legend-item"><span class="legend-dot upcoming"></span> Upcoming</div>
+      </div>
+      <div class="cems-timeline">
+        {% for item in items %}
+        <div class="cems-timeline-item {{ item.status }}">
+          <div class="cems-timeline-marker">
+            {% if item.status == 'completed' %}✓{% elif item.status == 'current' %}•{% else %}○{% endif %}
+          </div>
+          <div class="cems-timeline-header">
+            <div class="cems-timeline-title">
+              <span class="cems-timeline-icon">{{ item.icon }}</span>
+              {{ item.title }}
+            </div>
+            {% if item.date %}
+            <div class="cems-timeline-date">
+              {% if item.date.strftime %}{{ item.date.strftime('%d %b %Y') }}{% else %}{{ item.date }}{% endif %}
+            </div>
+            {% endif %}
+          </div>
+          <p class="cems-timeline-description">{{ item.description }}</p>
+          {% if item.meta %}
+          <div class="cems-timeline-meta"><span>👥 {{ item.meta }} attended</span></div>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endmacro %}

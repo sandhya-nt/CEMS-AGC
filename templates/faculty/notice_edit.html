@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Edit Notice — CEMS{% endblock %}
+{% block breadcrumb %}Edit Notice{% endblock %}
+
+{% block content %}
+<div class="cems-card" style="max-width:700px;margin:0 auto;padding:24px;">
+  <h2 style="font-size:1.2rem;font-weight:700;margin-bottom:20px;">Edit Notice</h2>
+  <form method="post" action="{{ url_for('faculty_notice_edit', notice_id=notice.id) }}" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="cems-form-group">
+      <label class="cems-form-label">Title</label>
+      <input type="text" name="title" class="cems-form-input" value="{{ notice.title }}" required>
+    </div>
+    <div class="cems-form-group">
+      <label class="cems-form-label">Category</label>
+      <select name="category" class="cems-form-select">
+        <option>General</option>
+        <option>Academic</option>
+        <option>Technical</option>
+        <option>Cultural</option>
+        <option>Sports</option>
+        <option>Workshop</option>
+        <option>Entrepreneurship</option>
+        <option>Social</option>
+        <option>Important Notice</option>
+        <option>Campus Update</option>
+        {% for c in categories %}
+        <option value="{{ c }}" {% if notice.category==c %}selected{% endif %}>{{ c }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="cems-form-group">
+      <label class="cems-form-label">Description</label>
+      <textarea name="description" rows="5" class="cems-form-input" required>{{ notice.description }}</textarea>
+    </div>
+    <div class="cems-form-group">
+      <label class="cems-form-label">Current Image</label>
+      {% if notice.image %}
+      <img src="{{ image_url(notice.image) }}" style="max-width:100%;max-height:200px;border-radius:8px;margin-bottom:8px;">
+      <br>
+      {% endif %}
+      <input type="file" name="image" class="cems-form-input" accept="image/*">
+      <small class="cems-form-hint">Leave blank to keep current image</small>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:16px;">
+      <button type="submit" class="cems-btn cems-btn-primary">Update Notice</button>
+      <a href="{{ url_for('faculty_notices') }}" class="cems-btn cems-btn-secondary">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

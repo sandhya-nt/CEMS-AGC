@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% block title %}Workload — CEMS{% endblock %}
+{% block breadcrumb %}Workload{% endblock %}
+{% block content %}
+<div class="cems-page-header">
+  <div class="cems-page-header-top">
+    <div>
+      <h1 class="cems-page-title">Faculty Workload</h1>
+      <p class="cems-page-description">Overview of your event commitments and tasks.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Stats -->
+<div class="cems-grid cems-grid-cols-4" style="margin-bottom: 24px;">
+  <div class="cems-card">
+    <div class="cems-card-body" style="text-align:center;">
+      <div style="font-size:2.5rem; font-weight:700; color: var(--cems-primary);">{{ total_assigned }}</div>
+      <div style="font-size:0.85rem; color: var(--cems-text-muted);">Assigned Events</div>
+    </div>
+  </div>
+  <div class="cems-card">
+    <div class="cems-card-body" style="text-align:center;">
+      <div style="font-size:2.5rem; font-weight:700; color: var(--cems-warning);">{{ total_tasks }}</div>
+      <div style="font-size:0.85rem; color: var(--cems-text-muted);">Open Tasks</div>
+    </div>
+  </div>
+  <div class="cems-card">
+    <div class="cems-card-body" style="text-align:center;">
+      <div style="font-size:2.5rem; font-weight:700; color: var(--cems-success);">{{ total_volunteers }}</div>
+      <div style="font-size:0.85rem; color: var(--cems-text-muted);">Volunteers</div>
+    </div>
+  </div>
+  <div class="cems-card">
+    <div class="cems-card-body" style="text-align:center;">
+      <div style="font-size:2.5rem; font-weight:700; color: #6366f1;">{{ upcoming_count }}</div>
+      <div style="font-size:0.85rem; color: var(--cems-text-muted);">Upcoming</div>
+    </div>
+  </div>
+</div>
+
+<!-- Workload Timeline -->
+<div class="cems-card" style="margin-bottom: 24px;">
+  <div class="cems-card-header">
+    <div class="cems-card-title">📅 Upcoming Commitments</div>
+  </div>
+  <div class="cems-card-body" style="padding:0;">
+    <div class="cems-overflow-x-auto">
+      <table class="cems-table">
+        <thead>
+          <tr><th>Event</th><th>Date</th><th>Venue</th><th>Registrations</th><th>Volunteers</th><th>Status</th><th>Workload</th></tr>
+        </thead>
+        <tbody>
+          {% for event in upcoming_events %}
+          {% set regs = event.registrations|length %}
+          {% set vols = event.volunteer_assignments|length %}
+          {% if regs > 200 %}
+            {% set workload = '🔴 High' %}
+          {% elif regs > 50 %}
+            {% set workload = '🟡 Medium' %}
+          {% else %}
+            {% set workload = '🟢 Low' %}
+          {% endif %}
+          <tr>
+            <td><strong>{{ event.title }}</strong></td>
+            <td>{{ event.date.strftime('%d %b %Y') if event.date else '—' }}</td>
+            <td>{{ event.venue }}</td>
+            <td>{{ regs }}</td>
+            <td>{{ vols }}</td>
+            <td><span class="cems-badge cems-badge-info">{{ event.status|title }}</span></td>
+            <td>{{ workload }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Task Summary -->
+<div class="cems-card">
+  <div class="cems-card-header">
+    <div class="cems-card-title">📋 Task Summary</div>
+  </div>
+  <div class="cems-card-body">
+    {% if tasks %}
+    <div class="cems-overflow-x-auto">
+      <table class="cems-table">
+        <thead>
+          <tr><th>Event</th><th>Task</th><th>Priority</th><th>Status</th><th>Due</th><th>Assigned</th></tr>
+        </thead>
+        <tbody>
+          {% for task in tasks %}
+          <tr>
+            <td>{{ task.event.title if task.event else '—' }}</td>
+            <td>{{ task.title }}</td>
+            <td>
+              {% if task.priority == 'high' %}
+                <span class="cems-badge cems-badge-danger">High</span>
+              {% elif task.priority == 'medium' %}
+                <span class="cems-badge cems-badge-warning">Medium</span>
+              {% else %}
+                <span class="cems-badge cems-badge-success">Low</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if task.status == 'completed' %}
+                <span class="cems-badge cems-badge-success">Done</span>
+              {% elif task.status == 'in_progress' %}
+                <span class="cems-badge cems-badge-info">In Progress</span>
+              {% else %}
+                <span class="cems-badge cems-badge-warning">Pending</span>
+              {% endif %}
+            </td>
+            <td>{{ task.due_date.strftime('%d %b %Y') if task.due_date else '—' }}</td>
+            <td>{{ task.assignee_name if task.assignee_name else '—' }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div style="text-align:center; padding:48px;">
+      <div style="font-size:3rem; margin-bottom:12px;">📋</div>
+      <div class="cems-empty-title">No tasks yet</div>
+      <div class="cems-empty-description">Create tasks from your event pages.</div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

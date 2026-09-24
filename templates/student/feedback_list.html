@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+{% block title %}My Feedback — CEMS{% endblock %}
+{% block breadcrumb %}<a href="{{ url_for('student_dashboard') }}">Dashboard</a> / Feedback{% endblock %}
+
+{% block extra_css %}
+<style>
+  .cems-feedback-status-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 600;
+  }
+  .cems-feedback-pending {
+    background: var(--cems-warning-bg);
+    color: var(--cems-warning-dark);
+  }
+  .cems-feedback-submitted {
+    background: var(--cems-success-bg);
+    color: var(--cems-success-dark);
+  }
+  .cems-rating-stars { display: flex; gap: 2px; color: var(--cems-warning); font-size: 1rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="cems-page-header">
+  <div class="cems-page-header-top">
+    <div>
+      <h1 class="cems-page-title">My Feedback</h1>
+      <p class="cems-page-description">Give feedback for events you've attended, or view feedback you've already submitted.</p>
+    </div>
+    <div class="cems-page-actions">
+      <a href="{{ url_for('student_dashboard') }}" class="cems-btn cems-btn-secondary">Back to Dashboard</a>
+    </div>
+  </div>
+</div>
+
+{% if pending_regs %}
+<div class="cems-alert cems-alert-warning" style="margin-bottom: 24px;">
+  <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+  <span><strong>{{ pending_regs|length }} event{{ 's' if pending_regs|length != 1 else '' }}</strong> {% if pending_regs|length == 1 %}needs{% else %}need{% endif %} your feedback.</span>
+</div>
+{% else %}
+{% if not submitted_regs %}
+<div class="cems-alert cems-alert-info" style="margin-bottom: 24px;">
+  <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11.25 11.25l.041-.020a.72.72 0 011.063.864l-.708 2.832a.72.72 0 001.065.862l.041-.021M21 12c0 9-9 21-9 21S3 21 3 12a9 9 0 1118 0z"/></svg>
+  <span>You haven't attended any completed events yet. Feedback is available after you attend an event.</span>
+</div>
+{% endif %}
+{% endif %}
+
+{% if pending_regs %}
+<div class="cems-card" style="margin-bottom: 24px;">
+  <div class="cems-card-header">
+    <div class="cems-card-title">Awaiting Your Feedback</div>
+  </div>
+  <div class="cems-card-body" style="padding: 0;">
+    <div class="cems-overflow-x-auto">
+      <table class="cems-table">
+        <thead>
+          <tr>
+            <th>Event</th>
+            <th>Date</th>
+            <th>Venue</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for reg in pending_regs %}
+          <tr>
+            <td><strong>{{ reg.event.title }}</strong><br><small style="color: var(--cems-text-muted);">{{ reg.event.category }}</small></td>
+            <td>{{ reg.event.date.strftime('%d %b %Y') if reg.event.date else '—' }}</td>
+            <td>{{ reg.event.venue }}</td>
+            <td><span class="cems-feedback-status-badge cems-feedback-pending">Feedback Pending</span></td>
+            <td>
+              <a href="{{ url_for('feedback', registration_id=reg.id) }}" class="cems-btn cems-btn-sm cems-btn-primary">
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14.7 15.3L12 18m0 0l-2.7-2.7 2.7 2.7zM12 2v2.5m0 15.5V13m-4-4l2-2m-2 5 2 2"/></svg>
+                Submit Feedback
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% if submitted_regs %}
+<div class="cems-card">
+  <div class="cems-card-header">
+    <div class="cems-card-title">Feedback Submitted</div>
+  </div>
+  <div class="cems-card-body" style="padding: 0;">
+    <div class="cems-overflow-x-auto">
+      <table class="cems-table">
+        <thead>
+          <tr>
+            <th>Event</th>
+            <th>Date</th>
+            <th>Your Rating</th>
+            <th>Submitted</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for reg in submitted_regs %}
+          {% set fb = reg.feedbacks | first %}
+          <tr>
+            <td><strong>{{ reg.event.title }}</strong><br><small style="color: var(--cems-text-muted);">{{ reg.event.category }}</small></td>
+            <td>{{ reg.event.date.strftime('%d %b %Y') if reg.event.date else '—' }}</td>
+            <td>
+              <div class="cems-rating-stars">
+                {% for i in range(1, 6) %}
+                {% if i <= fb.rating %}★{% else %}☆{% endif %}
+                {% endfor %}
+              </div>
+            </td>
+            <td>{{ fb.created_at.strftime('%d %b %Y') if fb.created_at else '—' }}</td>
+            <td><span class="cems-feedback-status-badge cems-feedback-submitted">Submitted</span></td>
+            <td>
+              <a href="{{ url_for('feedback', registration_id=reg.id) }}" class="cems-btn cems-btn-sm cems-btn-outline">View</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% if not pending_regs and not submitted_regs %}
+<div class="cems-empty">
+  <div class="cems-empty-icon">💬</div>
+  <div class="cems-empty-title">No feedback yet</div>
+  <div class="cems-empty-description">Once you attend and complete a registered event, you'll be able to submit feedback here.</div>
+  <a href="{{ url_for('events') }}" class="cems-btn cems-btn-primary" style="margin-top: 20px;">Browse Events</a>
+</div>
+{% endif %}
+{% endblock %}

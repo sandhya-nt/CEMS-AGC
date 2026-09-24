@@ -1,139 +1,617 @@
 {% extends "base.html" %}
 {% block title %}Create Event — CEMS{% endblock %}
-{% block breadcrumb %}Create Event{% endblock %}
+{% block breadcrumb %}<a href="{{ url_for('organizer_dashboard') }}">Dashboard</a> / Create Event{% endblock %}
 
 {% block content %}
-  <div class="cems-page-header">
-    <div class="cems-page-header-top">
-      <div>
-        <h1 class="cems-page-title">Create New Event</h1>
-        <p class="cems-page-description">Fill in the event details. Admin approval is required before publishing.</p>
-      </div>
-      <div class="cems-page-actions">
-        <a href="{{ url_for('festival_calendar') }}" class="cems-btn cems-btn-secondary">📅 Festival Calendar</a>
-      </div>
+<div class="cems-page-header">
+  <div class="cems-page-header-top">
+    <div>
+      <h1 class="cems-page-title">Create New Event</h1>
+      <p class="cems-page-description">Fill in the event details. Admin approval is required before publishing.</p>
+    </div>
+    <div class="cems-page-actions">
+      <a href="{{ url_for('festival_calendar') }}" class="cems-btn cems-btn-secondary">📅 Festival Calendar</a>
     </div>
   </div>
+</div>
 
-<div class="cems-card" style="max-width: 800px;">
+<div class="cems-card" style="max-width: 900px;">
   <div class="cems-card-body">
-    <form method="post" enctype="multipart/form-data" class="cems-form-grid">
+    <!-- Stepper -->
+    <div class="cems-wizard-stepper" id="wizardStepper">
+      <div class="cems-stepper-step active" data-step="1">
+        <div class="cems-stepper-step-num">1</div>
+        <div class="cems-stepper-step-label">Basic Information</div>
+      </div>
+      <div class="cems-stepper-step" data-step="2">
+        <div class="cems-stepper-step-num">2</div>
+        <div class="cems-stepper-step-label">Descriptions & Rules</div>
+      </div>
+      <div class="cems-stepper-step" data-step="3">
+        <div class="cems-stepper-step-num">3</div>
+        <div class="cems-stepper-step-label">Guests & Submission</div>
+      </div>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" class="cems-form-grid" id="createEventForm">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      
-      <div class="cems-form-group">
-        <label class="cems-form-label">Event Title</label>
-        <input type="text" name="title" class="cems-form-input" required placeholder="e.g. Tech Fest 2K26">
-      </div>
-      
-      <div class="cems-form-group">
-        <label class="cems-form-label">Event Banner</label>
-        <input type="file" name="banner" class="cems-form-input" accept="image/*">
-      </div>
-      
-      <div class="cems-grid-2">
-        <div class="cems-form-group">
-          <label class="cems-form-label">Category</label>
-          <select name="category" class="cems-form-select">
-            <option>Technical</option>
-            <option>Cultural</option>
-            <option>Sports</option>
-            <option>Workshop</option>
-            <option>Seminar</option>
-            <option>Competition</option>
-            <option>Academic</option>
-            <option>Entrepreneurship</option>
-            <option>Other</option>
-          </select>
+
+      <!-- STEP 1: Basic Information -->
+      <div class="cems-wizard-step active" data-step="1">
+
+        <!-- Section 1: Basic Information -->
+        <div class="cems-form-section">
+          <h3 class="cems-section-title">📋 Basic Information</h3>
+
+          <div class="cems-form-group">
+            <label class="cems-form-label">Event Name <span class="required">*</span></label>
+            <input type="text" name="title" class="cems-form-input" required placeholder="e.g. Tech Fest 2K26" value="{{ request.form.title if request.form else '' }}">
+            {% if errors and errors.title %}
+              <span class="cems-form-error">{{ errors.title }}</span>
+            {% endif %}
+          </div>
+
+          <div class="cems-form-group">
+            <label class="cems-form-label">Category <span class="required">*</span></label>
+            <select name="category" class="cems-form-select" required>
+              <option value="">Select Category</option>
+              <option value="Technical" {% if request.form.category == 'Technical' %}selected{% endif %}>Technical</option>
+              <option value="Cultural" {% if request.form.category == 'Cultural' %}selected{% endif %}>Cultural</option>
+              <option value="Sports" {% if request.form.category == 'Sports' %}selected{% endif %}>Sports</option>
+              <option value="Workshop" {% if request.form.category == 'Workshop' %}selected{% endif %}>Workshop</option>
+              <option value="Seminar" {% if request.form.category == 'Seminar' %}selected{% endif %}>Seminar</option>
+              <option value="Competition" {% if request.form.category == 'Competition' %}selected{% endif %}>Competition</option>
+              <option value="Academic" {% if request.form.category == 'Academic' %}selected{% endif %}>Academic</option>
+              <option value="Entrepreneurship" {% if request.form.category == 'Entrepreneurship' %}selected{% endif %}>Entrepreneurship</option>
+              <option value="Other" {% if request.form.category == 'Other' %}selected{% endif %}>Other</option>
+            </select>
+            {% if errors and errors.category %}
+              <span class="cems-form-error">{{ errors.category }}</span>
+            {% endif %}
+          </div>
+
+          <div class="cems-form-group">
+            <label class="cems-form-label">Event Type <span class="required">*</span></label>
+            <select name="event_type" class="cems-form-select" required id="eventTypeSelect">
+              <option value="free" {% if request.form.event_type == 'free' or not request.form %}selected{% endif %}>Free</option>
+              <option value="paid" {% if request.form.event_type == 'paid' %}selected{% endif %}>Paid</option>
+            </select>
+          </div>
+
+          <div class="cems-form-group">
+            <label class="cems-form-label">Event Poster / Banner</label>
+            <input type="file" name="banner" class="cems-form-input" accept="image/*" id="bannerUpload">
+            <small class="cems-form-hint">Supported formats: JPG, PNG, WebP (Max 4MB)</small>
+            {% if errors and errors.banner %}
+              <span class="cems-form-error">{{ errors.banner }}</span>
+            {% endif %}
+          </div>
         </div>
-        <div class="cems-form-group">
-          <label class="cems-form-label">Event Type</label>
-          <select name="event_type" class="cems-form-select">
-            <option value="free">Free</option>
-            <option value="paid">Paid</option>
-          </select>
+
+        <!-- Section 2: Date, Time & Venue -->
+        <div class="cems-form-section">
+          <h3 class="cems-section-title">📅 Date, Time & Venue</h3>
+
+          <div class="cems-grid-2">
+            <div class="cems-form-group">
+              <label class="cems-form-label">Event Date <span class="required">*</span></label>
+              <input type="date" name="date" class="cems-form-input" required value="{{ request.form.date if request.form else '' }}">
+              {% if errors and errors.date %}
+                <span class="cems-form-error">{{ errors.date }}</span>
+              {% endif %}
+            </div>
+
+            <div class="cems-form-group">
+              <label class="cems-form-label">Registration Deadline</label>
+              <input type="date" name="registration_deadline" class="cems-form-input" value="{{ request.form.registration_deadline if request.form else '' }}">
+              {% if errors and errors.registration_deadline %}
+                <span class="cems-form-error">{{ errors.registration_deadline }}</span>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="cems-grid-2">
+            <div class="cems-form-group">
+              <label class="cems-form-label">Start Time <span class="required">*</span></label>
+              <input type="time" name="start_time" class="cems-form-input" required value="{{ request.form.start_time if request.form else '' }}">
+              {% if errors and errors.start_time %}
+                <span class="cems-form-error">{{ errors.start_time }}</span>
+              {% endif %}
+            </div>
+
+            <div class="cems-form-group">
+              <label class="cems-form-label">End Time <span class="required">*</span></label>
+              <input type="time" name="end_time" class="cems-form-input" required value="{{ request.form.end_time if request.form else '' }}">
+              {% if errors and errors.end_time %}
+                <span class="cems-form-error">{{ errors.end_time }}</span>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="cems-grid-2">
+            <div class="cems-form-group">
+              <label class="cems-form-label">Venue <span class="required">*</span></label>
+              <input type="text" name="venue" class="cems-form-input" required placeholder="e.g. Main Auditorium" value="{{ request.form.venue if request.form else '' }}">
+              {% if errors and errors.venue %}
+                <span class="cems-form-error">{{ errors.venue }}</span>
+              {% endif %}
+            </div>
+
+            <div class="cems-form-group">
+              <label class="cems-form-label">Maximum Participants <span class="required">*</span></label>
+              <input type="number" name="capacity" class="cems-form-input" min="1" value="{{ request.form.capacity if request.form else '100' }}" required>
+              {% if errors and errors.capacity %}
+                <span class="cems-form-error">{{ errors.capacity }}</span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 3: Target Audience -->
+        <div class="cems-form-section">
+          <h3 class="cems-section-title">🎯 Target Audience</h3>
+
+          <div class="cems-grid-2">
+            <div class="cems-form-group">
+              <label class="cems-form-label">Target Department</label>
+              <select name="target_department" class="cems-form-select">
+                <option value="">All Departments</option>
+                <option value="Computer Science & Engineering" {% if request.form.target_department == 'Computer Science & Engineering' %}selected{% endif %}>Computer Science & Engineering</option>
+                <option value="Electronics & Communication Engineering" {% if request.form.target_department == 'Electronics & Communication Engineering' %}selected{% endif %}>Electronics & Communication Engineering</option>
+                <option value="Mechanical Engineering" {% if request.form.target_department == 'Mechanical Engineering' %}selected{% endif %}>Mechanical Engineering</option>
+                <option value="Civil Engineering" {% if request.form.target_department == 'Civil Engineering' %}selected{% endif %}>Civil Engineering</option>
+                <option value="Electrical Engineering" {% if request.form.target_department == 'Electrical Engineering' %}selected{% endif %}>Electrical Engineering</option>
+                <option value="Information Technology" {% if request.form.target_department == 'Information Technology' %}selected{% endif %}>Information Technology</option>
+                <option value="Management Studies" {% if request.form.target_department == 'Management Studies' %}selected{% endif %}>Management Studies</option>
+                <option value="Pharmacy" {% if request.form.target_department == 'Pharmacy' %}selected{% endif %}>Pharmacy</option>
+                <option value="Applied Sciences" {% if request.form.target_department == 'Applied Sciences' %}selected{% endif %}>Applied Sciences</option>
+                <option value="Other" {% if request.form.target_department == 'Other' %}selected{% endif %}>Other</option>
+              </select>
+            </div>
+
+            <div class="cems-form-group">
+              <label class="cems-form-label">Target Semester</label>
+              <select name="target_semester" class="cems-form-select">
+                <option value="">All Semesters</option>
+                <option value="1" {% if request.form.target_semester == '1' %}selected{% endif %}>1st Semester</option>
+                <option value="2" {% if request.form.target_semester == '2' %}selected{% endif %}>2nd Semester</option>
+                <option value="3" {% if request.form.target_semester == '3' %}selected{% endif %}>3rd Semester</option>
+                <option value="4" {% if request.form.target_semester == '4' %}selected{% endif %}>4th Semester</option>
+                <option value="5" {% if request.form.target_semester == '5' %}selected{% endif %}>5th Semester</option>
+                <option value="6" {% if request.form.target_semester == '6' %}selected{% endif %}>6th Semester</option>
+                <option value="7" {% if request.form.target_semester == '7' %}selected{% endif %}>7th Semester</option>
+                <option value="8" {% if request.form.target_semester == '8' %}selected{% endif %}>8th Semester</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 4: Financial Details -->
+        <div class="cems-form-section">
+          <h3 class="cems-section-title">💰 Financial Details</h3>
+
+          <div class="cems-grid-2">
+            <div class="cems-form-group">
+              <label class="cems-form-label">Registration Fee (₹)</label>
+              <input type="number" step="0.01" name="fee" class="cems-form-input" value="{{ request.form.fee if request.form else '0' }}" min="0" id="feeInput">
+              {% if errors and errors.fee %}
+                <span class="cems-form-error">{{ errors.fee }}</span>
+              {% endif %}
+            </div>
+
+            <div class="cems-form-group">
+              <label class="cems-form-label">Registration Start Date</label>
+              <input type="date" name="registration_start" class="cems-form-input" value="{{ request.form.registration_start if request.form else '' }}">
+              {% if errors and errors.registration_start %}
+                <span class="cems-form-error">{{ errors.registration_start }}</span>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="cems-form-group" id="paymentQrSection" style="display: none;">
+            <label class="cems-form-label">Payment QR Code</label>
+            <input type="file" name="payment_qr" class="cems-form-input" accept="image/*" id="paymentQrUpload">
+            <small class="cems-form-hint">Upload a QR code image for students to scan and pay (UPI/Bank). Supported: JPG, PNG, WebP (Max 4MB)</small>
+            {% if errors and errors.payment_qr %}
+              <span class="cems-form-error">{{ errors.payment_qr }}</span>
+            {% endif %}
+            <div id="paymentQrPreview" style="margin-top: 12px; display: none;">
+              <img id="paymentQrPreviewImg" src="" alt="Payment QR Preview" style="max-width: 200px; max-height: 200px; border-radius: var(--cems-radius-md); border: 1px solid var(--cems-border);">
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 1 Navigation -->
+        <div class="cems-form-actions">
+          <button type="button" class="cems-btn cems-btn-primary" onclick="wizardNext(1)">Next: Descriptions & Rules →</button>
         </div>
       </div>
-      
-      <div class="cems-grid-2">
-        <div class="cems-form-group">
-          <label class="cems-form-label">Date</label>
-          <input type="date" name="date" class="cems-form-input" required>
+
+      <!-- STEP 2: Descriptions & Rules (Page 26) -->
+      <div class="cems-wizard-step" data-step="2">
+        <div class="cems-form-section">
+          <h3 class="cems-section-title">📝 Event Details (Description & Highlights)</h3>
+
+          <div class="cems-form-group">
+            <label class="cems-form-label">Description <span class="required">*</span></label>
+            <textarea name="description" class="cems-form-textarea" rows="6" required placeholder="Provide a detailed description of the event...">{{ request.form.description if request.form else '' }}</textarea>
+          </div>
+
+          <div class="cems-form-group">
+            <label class="cems-form-label">Highlights</label>
+            <textarea name="highlights" class="cems-form-textarea" rows="4" placeholder="One highlight per line (e.g. Keynote by industry experts&#10;Hands-on workshops&#10;Networking opportunities&#10;Certificates for all participants)">{{ request.form.highlights if request.form else '' }}</textarea>
+            <small class="cems-form-hint">Enter each highlight on a new line</small>
+          </div>
         </div>
-        <div class="cems-form-group">
-          <label class="cems-form-label">Registration Deadline</label>
-          <input type="date" name="registration_deadline" class="cems-form-input">
+
+        <div class="cems-form-section">
+          <h3 class="cems-section-title">📜 Rules & Eligibility</h3>
+
+          <div class="cems-form-group">
+            <label class="cems-form-label">Event Rules (Code of Conduct)</label>
+            <textarea name="rules" class="cems-form-textarea" rows="4" placeholder="Participation rules, guidelines, code of conduct, judging criteria...">{{ request.form.rules if request.form else '' }}</textarea>
+          </div>
+
+          <div class="cems-form-group">
+            <label class="cems-form-label">Eligibility Criteria</label>
+            <textarea name="eligibility" class="cems-form-textarea" rows="3" placeholder="Who can participate? Any prerequisites? (e.g. Open to all students, Basic programming knowledge required, Team of 2-4 members)">{{ request.form.eligibility if request.form else '' }}</textarea>
+          </div>
         </div>
-      </div>
-      
-      <div class="cems-grid-2">
-        <div class="cems-form-group">
-          <label class="cems-form-label">Start Time</label>
-          <input type="text" name="start_time" class="cems-form-input" required placeholder="10:00 AM">
+
+        <div class="cems-form-section">
+          <h3 class="cems-section-title">📞 Contact Information</h3>
+
+          <div class="cems-form-group">
+            <label class="cems-form-label">Contact Information</label>
+            <textarea name="contact_info" class="cems-form-textarea" rows="2" placeholder="Organizer contact email/phone for queries...">{{ request.form.contact_info if request.form else '' }}</textarea>
+          </div>
         </div>
-        <div class="cems-form-group">
-          <label class="cems-form-label">End Time</label>
-          <input type="text" name="end_time" class="cems-form-input" required placeholder="5:00 PM">
-        </div>
-      </div>
-      
-      <div class="cems-grid-2">
-        <div class="cems-form-group">
-          <label class="cems-form-label">Venue</label>
-          <input type="text" name="venue" class="cems-form-input" required placeholder="Main Auditorium">
-        </div>
-        <div class="cems-form-group">
-          <label class="cems-form-label">Capacity</label>
-          <input type="number" name="capacity" class="cems-form-input" min="1" value="100">
-        </div>
-      </div>
-      
-      <div class="cems-form-group">
-        <label class="cems-form-label">Fee (₹)</label>
-        <input type="number" step="0.01" name="fee" class="cems-form-input" value="0" min="0">
-      </div>
-      
-      <div class="cems-form-group">
-        <label class="cems-form-label">Description</label>
-        <textarea name="description" class="cems-form-textarea" rows="5" required></textarea>
-      </div>
-      
-      <div class="cems-form-group">
-        <label class="cems-form-label">Highlights</label>
-        <textarea name="highlights" class="cems-form-textarea" rows="4" placeholder="One highlight per line"></textarea>
-      </div>
-      
-      <div class="cems-form-group">
-        <label class="cems-form-label">Event Rules</label>
-        <textarea name="rules" class="cems-form-textarea" rows="3" placeholder="Participation rules, guidelines, code of conduct..."></textarea>
-      </div>
-      
-      <div class="cems-form-group">
-        <label class="cems-form-label">Eligibility Criteria</label>
-        <textarea name="eligibility" class="cems-form-textarea" rows="3" placeholder="Who can participate? Any prerequisites?"></textarea>
-      </div>
-      
-      <div class="cems-form-group">
-        <label class="cems-form-label">Contact Information</label>
-        <textarea name="contact_info" class="cems-form-textarea" rows="2" placeholder="Organizer contact email/phone..."></textarea>
-      </div>
-      
-      <div class="cems-grid-2">
-        <div class="cems-form-group">
-          <label class="cems-form-label">Main Guest</label>
-          <input type="text" name="main_guest" class="cems-form-input" placeholder="e.g. Dr. Jane Smith">
-        </div>
-        <div class="cems-form-group">
-          <label class="cems-form-label">Chief Guest</label>
-          <input type="text" name="chief_guest" class="cems-form-input" placeholder="e.g. Prof. John Doe">
+
+        <!-- Step 2 Navigation -->
+        <div class="cems-form-actions">
+          <button type="button" class="cems-btn cems-btn-secondary" onclick="wizardPrev(2)">← Back</button>
+          <button type="button" class="cems-btn cems-btn-primary" onclick="wizardNext(2)">Next: Guests & Submission →</button>
         </div>
       </div>
-      
-      <div style="display: flex; gap: 12px; margin-top: 8px;">
-        <button type="submit" name="action" value="draft" class="cems-btn cems-btn-secondary">Save as Draft</button>
-        <button type="submit" name="action" value="submit" class="cems-btn cems-btn-primary">Submit for Approval</button>
+
+      <!-- STEP 3: Guests & Submission (Page 27) -->
+      <div class="cems-wizard-step" data-step="3">
+        <div class="cems-form-section">
+          <h3 class="cems-section-title">👥 Guest Information</h3>
+
+          <div class="cems-grid-2">
+            <div class="cems-form-group">
+              <label class="cems-form-label">Main Guest</label>
+              <input type="text" name="main_guest" class="cems-form-input" placeholder="e.g. Dr. Jane Smith" value="{{ request.form.main_guest if request.form else '' }}">
+            </div>
+            <div class="cems-form-group">
+              <label class="cems-form-label">Chief Guest</label>
+              <input type="text" name="chief_guest" class="cems-form-input" placeholder="e.g. Prof. John Doe" value="{{ request.form.chief_guest if request.form else '' }}">
+            </div>
+          </div>
+        </div>
+
+        <!-- Workflow Summary -->
+        <div class="cems-workflow-summary">
+          <h4 style="margin:0 0 12px; font-size:1rem; color:var(--cems-text-primary);">Workflow Summary</h4>
+          <div style="display:flex; gap:16px; flex-wrap:wrap; font-size:0.85rem; color:var(--cems-text-secondary);">
+            <span style="display:inline-flex; align-items:center; gap:6px;"><span style="width:8px; height:8px; border-radius:50%; background:var(--cems-warning);"></span>1. Save Draft (internal)</span>
+            <span style="display:inline-flex; align-items:center; gap:6px;"><span style="width:8px; height:8px; border-radius:50%; background:var(--cems-info);"></span>2. Submit for Approval</span>
+            <span style="display:inline-flex; align-items:center; gap:6px;"><span style="width:8px; height:8px; border-radius:50%; background:var(--cems-success);"></span>3. Admin Review</span>
+            <span style="display:inline-flex; align-items:center; gap:6px;"><span style="width:8px; height:8px; border-radius:50%; background:var(--cems-primary);"></span>4. Published</span>
+          </div>
+        </div>
+
+        <!-- Step 3 Action Buttons -->
+        <div class="cems-form-actions cems-form-actions-final">
+          <button type="button" class="cems-btn cems-btn-secondary" onclick="wizardPrev(3)">← Back</button>
+          <button type="submit" name="action" value="draft" class="cems-btn cems-btn-secondary">💾 Save as Draft</button>
+          <button type="submit" name="action" value="submit" class="cems-btn cems-btn-primary">🚀 Submit for Approval</button>
+        </div>
       </div>
     </form>
   </div>
 </div>
-{% endblock %}
 
+<style>
+.cems-wizard-stepper {
+  display: flex;
+  margin-bottom: 32px;
+  border-bottom: 2px solid var(--cems-border);
+}
+
+.cems-stepper-step {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 8px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all var(--cems-transition-fast);
+  color: var(--cems-text-secondary);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.cems-stepper-step:hover {
+  color: var(--cems-text-primary);
+}
+
+.cems-stepper-step.active {
+  color: var(--cems-primary);
+  border-bottom: 3px solid var(--cems-primary);
+}
+
+.cems-stepper-step-completed {
+  color: var(--cems-success);
+  border-bottom: 3px solid var(--cems-success);
+}
+
+.cems-stepper-step-num {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--cems-slate-200);
+  color: var(--cems-text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  transition: all var(--cems-transition-fast);
+}
+
+.cems-stepper-step.active .cems-stepper-step-num,
+.cems-stepper-step:hover .cems-stepper-step-num {
+  background: var(--cems-primary);
+  color: white;
+}
+
+.cems-stepper-step-completed .cems-stepper-step-num {
+  background: var(--cems-success);
+  color: white;
+}
+
+.cems-stepper-step-label {
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.cems-wizard-step {
+  display: none;
+}
+
+.cems-wizard-step.active {
+  display: block;
+  animation: cemsFadeIn 0.3s ease-out;
+}
+
+@keyframes cemsFadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.cems-form-section {
+  margin-bottom: 28px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--cems-border);
+}
+
+.cems-form-section:last-of-type {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.cems-section-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--cems-text-primary);
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--cems-primary);
+  display: inline-block;
+}
+
+.required {
+  color: var(--cems-danger);
+  margin-left: 4px;
+}
+
+.cems-form-hint {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.8rem;
+  color: var(--cems-text-muted);
+}
+
+.cems-form-error {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.85rem;
+  color: var(--cems-danger);
+}
+
+.cems-form-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--cems-border);
+}
+
+.cems-form-actions-final {
+  justify-content: flex-end;
+}
+
+.cems-workflow-summary {
+  background: var(--cems-bg-secondary);
+  border-radius: var(--cems-radius-lg);
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  border: 1px solid var(--cems-border);
+}
+
+@media (max-width: 768px) {
+  .cems-grid-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .cems-stepper-step {
+    font-size: 0.75rem;
+    padding: 10px 4px;
+  }
+
+  .cems-stepper-step-label {
+    display: none;
+  }
+
+  .cems-form-actions {
+    flex-direction: column;
+  }
+
+  .cems-form-actions-final {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.getElementById('createEventForm');
+  let currentStep = 1;
+  const totalSteps = 3;
+
+  // Handle stepper clicks for completed steps
+  const stepperSteps = document.querySelectorAll('.cems-stepper-step');
+  stepperSteps.forEach((step, index) => {
+    step.addEventListener('click', function() {
+      const stepNum = parseInt(this.getAttribute('data-step'));
+      if (stepNum <= currentStep) {
+        goToStep(stepNum);
+      }
+    });
+  });
+
+  // Validate fields in a step before allowing navigation
+  function validateStep(stepNum) {
+    const stepEl = document.querySelector('.cems-wizard-step[data-step="' + stepNum + '"]');
+    if (!stepEl) return true;
+    const inputs = stepEl.querySelectorAll('input[required], select[required], textarea[required]');
+    let valid = true;
+    inputs.forEach(input => {
+      if (!input.checkValidity && input.type === 'file') {
+        // File inputs are optional unless explicitly required
+      } else if (!input.checkValidity()) {
+        valid = false;
+      }
+    });
+    if (!valid) {
+      // Report first invalid field
+      const firstInvalid = stepEl.querySelector('input[required]:invalid, select[required]:invalid, textarea[required]:invalid');
+      if (firstInvalid) {
+        firstInvalid.reportValidity();
+        return false;
+      }
+    }
+    return true;
+  }
+
+  function goToStep(stepNum) {
+    if (stepNum < 1 || stepNum > totalSteps) return;
+
+    // Validate current step when moving forward
+    if (stepNum > currentStep && !validateStep(currentStep)) {
+      return;
+    }
+
+    currentStep = stepNum;
+
+    // Update step visibility
+    document.querySelectorAll('.cems-wizard-step').forEach(step => {
+      step.classList.remove('active');
+      step.style.display = 'none';
+    });
+    const targetStep = document.querySelector('.cems-wizard-step[data-step="' + stepNum + '"]');
+    if (targetStep) {
+      targetStep.classList.add('active');
+      targetStep.style.display = 'block';
+    }
+
+    // Update stepper
+    stepperSteps.forEach(s => {
+      s.classList.remove('active', 'cems-stepper-step-completed');
+      const sNum = parseInt(s.getAttribute('data-step'));
+      if (sNum < stepNum) {
+        s.classList.add('cems-stepper-step-completed');
+      } else if (sNum === stepNum) {
+        s.classList.add('active');
+      }
+    });
+
+    // Toggle "Back" button visibility on step 1
+    const backButton = targetStep.querySelector('.cems-btn-secondary[onclick*="wizardPrev"]');
+    if (backButton && stepNum === 1) {
+      backButton.style.display = 'none';
+    }
+  }
+
+  // Next button handler - validates then advances
+  window.wizardNext = function(stepNum) {
+    if (validateStep(stepNum)) {
+      goToStep(stepNum + 1);
+    }
+  };
+
+  // Previous button handler
+  window.wizardPrev = function(stepNum) {
+    goToStep(stepNum - 1);
+  };
+
+  // Payment QR toggle (existing functionality)
+  const eventTypeSelect = document.getElementById('eventTypeSelect');
+  const paymentQrSection = document.getElementById('paymentQrSection');
+  const paymentQrUpload = document.getElementById('paymentQrUpload');
+  const paymentQrPreview = document.getElementById('paymentQrPreview');
+  const paymentQrPreviewImg = document.getElementById('paymentQrPreviewImg');
+
+  function togglePaymentQr() {
+    if (eventTypeSelect && eventTypeSelect.value === 'paid') {
+      paymentQrSection.style.display = 'block';
+    } else {
+      paymentQrSection.style.display = 'none';
+      paymentQrPreview.style.display = 'none';
+      paymentQrUpload.value = '';
+    }
+  }
+
+  if (eventTypeSelect) {
+    eventTypeSelect.addEventListener('change', togglePaymentQr);
+    togglePaymentQr();
+  }
+
+  if (paymentQrUpload) {
+    paymentQrUpload.addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          paymentQrPreviewImg.src = e.target.result;
+          paymentQrPreview.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      } else {
+        paymentQrPreview.style.display = 'none';
+      }
+    });
+  }
+
+  // Handle form submission - if on an intermediate step with submit button clicked, advance first
+  // The submit buttons are only on step 3, so no special handling needed
+});
+</script>
+{% endblock %}

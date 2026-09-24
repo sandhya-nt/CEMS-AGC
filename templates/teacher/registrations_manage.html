@@ -1,0 +1,401 @@
+{% extends "base.html" %}
+{% block title %}Manage Registrations — CEMS{% endblock %}
+{% block breadcrumb %}Registrations{% endblock %}
+
+{% block extra_css %}
+<style>
+.reg-status-pending { background: var(--cems-warning-bg, #fef3c7); color: #92400e; }
+.reg-status-approved { background: var(--cems-success-bg, #d1fae5); color: #065f46; }
+.reg-status-rejected { background: var(--cems-danger-bg, #fee2e2); color: #991b1b; }
+.reg-status-waitlisted { background: #e0e7ff; color: #3730a3; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="cems-page-header">
+  <div>
+    <h1 class="cems-page-title">Manage Registrations</h1>
+    <p class="cems-page-description">Review and manage student registrations for your events.</p>
+  </div>
+</div>
+
+<div id="reg-stats-cards" class="cems-grid cems-grid-cols-5" style="margin-bottom: 24px; display: none;">
+  <div class="cems-card">
+    <div class="cems-card-body" style="text-align:center; padding: 16px;">
+      <div style="font-size:1.8rem; font-weight:700; color: var(--cems-primary);" id="stat-all">0</div>
+      <div style="font-size:0.8rem; color: var(--cems-text-muted);">Total</div>
+    </div>
+  </div>
+  <div class="cems-card">
+    <div class="cems-card-body" style="text-align:center; padding: 16px;">
+      <div style="font-size:1.8rem; font-weight:700; color: var(--cems-warning);" id="stat-pending">0</div>
+      <div style="font-size:0.8rem; color: var(--cems-text-muted);">Pending</div>
+    </div>
+  </div>
+  <div class="cems-card">
+    <div class="cems-card-body" style="text-align:center; padding: 16px;">
+      <div style="font-size:1.8rem; font-weight:700; color: var(--cems-success);" id="stat-approved">0</div>
+      <div style="font-size:0.8rem; color: var(--cems-text-muted);">Approved</div>
+    </div>
+  </div>
+  <div class="cems-card">
+    <div class="cems-card-body" style="text-align:center; padding: 16px;">
+      <div style="font-size:1.8rem; font-weight:700; color: var(--cems-danger);" id="stat-rejected">0</div>
+      <div style="font-size:0.8rem; color: var(--cems-text-muted);">Rejected</div>
+    </div>
+  </div>
+  <div class="cems-card">
+    <div class="cems-card-body" style="text-align:center; padding: 16px;">
+      <div style="font-size:1.8rem; font-weight:700; color: #6366f1;" id="stat-waitlisted">0</div>
+      <div style="font-size:0.8rem; color: var(--cems-text-muted);">Waitlisted</div>
+    </div>
+  </div>
+</div>
+
+<div id="no-events-msg" class="cems-card" style="display: none;">
+  <div class="cems-card-body" style="text-align:center; padding:48px;">
+    <div class="cems-empty-icon">📅</div>
+    <div class="cems-empty-title">No Events Assigned</div>
+    <div class="cems-empty-description">You don't have any events assigned to you yet. Registrations for your events will appear here.</div>
+  </div>
+</div>
+
+<div id="registrations-section" style="display: none;">
+  <div class="cems-card" style="margin-bottom: 16px;">
+    <div class="cems-card-body">
+      <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 12px;">
+        <div style="flex: 1; min-width: 200px; position: relative;">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; color: var(--cems-text-muted);"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+          <input type="text" id="reg-search" placeholder="Search by name, roll number, or email..." style="width:100%; padding: 10px 10px 10px 38px; border: 1px solid var(--cems-border); border-radius: 8px; font-size: 0.9rem;">
+        </div>
+        <select id="filter-event" style="padding: 10px 12px; border: 1px solid var(--cems-border); border-radius: 8px; font-size: 0.9rem; min-width: 160px;">
+          <option value="">All Events</option>
+        </select>
+        <select id="filter-branch" style="padding: 10px 12px; border: 1px solid var(--cems-border); border-radius: 8px; font-size: 0.9rem; min-width: 140px;">
+          <option value="">All Branches</option>
+        </select>
+        <select id="filter-semester" style="padding: 10px 12px; border: 1px solid var(--cems-border); border-radius: 8px; font-size: 0.9rem; min-width: 120px;">
+          <option value="">All Semesters</option>
+        </select>
+        <input type="date" id="filter-date" style="padding: 10px 12px; border: 1px solid var(--cems-border); border-radius: 8px; font-size: 0.9rem;" title="Registration Date">
+        <button id="btn-clear-filters" class="cems-btn cems-btn-secondary cems-btn-sm">Clear</button>
+      </div>
+      <div style="display: flex; gap: 4px; flex-wrap: wrap;" id="status-tabs">
+        <button class="cems-btn cems-btn-sm reg-tab active" data-status="all">All</button>
+        <button class="cems-btn cems-btn-sm cems-btn-secondary reg-tab" data-status="pending">Pending</button>
+        <button class="cems-btn cems-btn-sm cems-btn-secondary reg-tab" data-status="approved">Approved</button>
+        <button class="cems-btn cems-btn-sm cems-btn-secondary reg-tab" data-status="rejected">Rejected</button>
+        <button class="cems-btn cems-btn-sm cems-btn-secondary reg-tab" data-status="waitlisted">Waitlisted</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="cems-card">
+    <div class="cems-card-header">
+      <div class="cems-card-title">Registrations</div>
+      <span id="reg-count" style="font-size:0.85rem; color: var(--cems-text-muted);"></span>
+    </div>
+    <div class="cems-card-body" style="padding: 0;">
+      <div class="cems-overflow-x-auto">
+        <table class="cems-table" id="reg-table">
+          <thead>
+            <tr>
+              <th>Student Name</th>
+              <th>Roll Number</th>
+              <th>Email</th>
+              <th>Course</th>
+              <th>Semester</th>
+              <th>Event Name</th>
+              <th>Reg Date</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="reg-tbody">
+          </tbody>
+        </table>
+      </div>
+      <div id="reg-empty" class="cems-empty" style="display: none;">
+        <div class="cems-empty-icon">📋</div>
+        <div class="cems-empty-title">No registrations found</div>
+        <div class="cems-empty-description">Try adjusting your filters or search query.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="confirmModal" class="modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.4); z-index:9998; justify-content:center; align-items:center;">
+  <div class="cems-card" style="width: 440px; max-width: 90%; margin: auto; z-index: 9999; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+    <div class="cems-card-body" style="padding: 24px;">
+      <h3 id="confirm-title" style="margin: 0 0 12px; font-size: 1.1rem;"></h3>
+      <p id="confirm-message" style="margin: 0 0 20px; color: var(--cems-text-secondary); font-size: 0.9rem;"></p>
+      <div style="display: flex; gap: 8px; justify-content: flex-end;">
+        <button id="confirm-cancel" class="cems-btn cems-btn-secondary">Cancel</button>
+        <button id="confirm-ok" class="cems-btn cems-btn-primary"></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="detailsModal" class="modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.4); z-index:9998; justify-content:center; align-items:center;">
+  <div class="cems-card" style="width: 520px; max-width: 95%; margin: auto; z-index: 9999; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+    <div class="cems-card-header">
+      <div class="cems-card-title">Registration Details</div>
+      <button onclick="document.getElementById('detailsModal').style.display='none'" style="background:none;border:none;font-size:1.4rem;cursor:pointer;">&times;</button>
+    </div>
+    <div class="cems-card-body" id="details-content"></div>
+  </div>
+</div>
+
+<div id="toastContainer" style="position: fixed; top: 20px; right: 20px; z-index: 10000; display: flex; flex-direction: column; gap: 8px;"></div>
+
+<script>
+let allRegistrations = [];
+let currentFilterStatus = 'all';
+let debounceTimer = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+  loadRegistrations();
+  setupFilters();
+});
+
+function showToast(message, type = 'success') {
+  const container = document.getElementById('toastContainer');
+  const toast = document.createElement('div');
+  const colors = { success: 'var(--cems-success)', error: 'var(--cems-danger)', info: 'var(--cems-info)' };
+  toast.style.cssText = `background: ${colors[type] || colors.info}; color: white; padding: 12px 20px; border-radius: 8px; font-size: 0.9rem; box-shadow: 0 4px 12px rgba(0,0,0,0.15); animation: slideIn 0.3s ease; max-width: 360px;`;
+  toast.textContent = message;
+  container.appendChild(toast);
+  setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.3s'; setTimeout(() => toast.remove(), 300); }, 3000);
+}
+
+function loadRegistrations() {
+  fetch('/api/teacher/registrations')
+    .then(r => r.json())
+    .then(data => {
+      if (!data.success) return;
+      allRegistrations = data.registrations;
+      updateStats(data.stats);
+      populateFilters(data.registrations);
+      renderTable(data.registrations);
+    });
+}
+
+function updateStats(stats) {
+  document.getElementById('stat-all').textContent = stats.all;
+  document.getElementById('stat-pending').textContent = stats.pending;
+  document.getElementById('stat-approved').textContent = stats.approved;
+  document.getElementById('stat-rejected').textContent = stats.rejected;
+  document.getElementById('stat-waitlisted').textContent = stats.waitlisted;
+}
+
+function populateFilters(regs) {
+  const eventSet = {};
+  const branchSet = {};
+  const semesterSet = {};
+  regs.forEach(r => {
+    if (r.event_id) eventSet[r.event_id] = r.event_name;
+    if (r.department && r.department !== '—') branchSet[r.department] = r.department;
+    if (r.semester && r.semester !== '—') semesterSet[r.semester] = r.semester;
+  });
+  const eventSel = document.getElementById('filter-event');
+  const branchSel = document.getElementById('filter-branch');
+  const semSel = document.getElementById('filter-semester');
+  eventSel.innerHTML = '<option value="">All Events</option>' + Object.entries(eventSet).map(([k,v]) => `<option value="${k}">${v}</option>`).join('');
+  branchSel.innerHTML = '<option value="">All Branches</option>' + Object.values(branchSet).map(b => `<option value="${b}">${b}</option>`).join('');
+  semSel.innerHTML = '<option value="">All Semesters</option>' + Object.values(semesterSet).map(s => `<option value="${s}">${s}</option>`).join('');
+}
+
+function setupFilters() {
+  document.querySelectorAll('.reg-tab').forEach(btn => {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.reg-tab').forEach(b => { b.classList.remove('active'); b.classList.add('cems-btn-secondary'); });
+      this.classList.add('active');
+      this.classList.remove('cems-btn-secondary');
+      currentFilterStatus = this.dataset.status;
+      applyFilters();
+    });
+  });
+
+  ['reg-search', 'filter-event', 'filter-branch', 'filter-semester', 'filter-date'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener('input', () => { clearTimeout(debounceTimer); debounceTimer = setTimeout(applyFilters, 250); });
+      el.addEventListener('change', () => { clearTimeout(debounceTimer); debounceTimer = setTimeout(applyFilters, 250); });
+    }
+  });
+
+  document.getElementById('btn-clear-filters').addEventListener('click', clearFilters);
+}
+
+function getFilterValues() {
+  return {
+    q: document.getElementById('reg-search').value.trim(),
+    event: document.getElementById('filter-event').value,
+    branch: document.getElementById('filter-branch').value,
+    semester: document.getElementById('filter-semester').value,
+    date: document.getElementById('filter-date').value,
+  };
+}
+
+function applyFilters() {
+  const f = getFilterValues();
+  const qs = new URLSearchParams(f);
+  fetch('/api/teacher/registrations?' + qs.toString())
+    .then(r => r.json())
+    .then(data => { if (data.success) { allRegistrations = data.registrations; updateStats(data.stats); renderTable(data.registrations); } });
+}
+
+function clearFilters() {
+  document.getElementById('reg-search').value = '';
+  document.getElementById('filter-event').value = '';
+  document.getElementById('filter-branch').value = '';
+  document.getElementById('filter-semester').value = '';
+  document.getElementById('filter-date').value = '';
+  currentFilterStatus = 'all';
+  document.querySelectorAll('.reg-tab').forEach(b => { b.classList.remove('active'); b.classList.add('cems-btn-secondary'); });
+  const allTab = document.querySelector('.reg-tab[data-status="all"]');
+  if (allTab) { allTab.classList.add('active'); allTab.classList.remove('cems-btn-secondary'); }
+  applyFilters();
+}
+
+function renderTable(regs) {
+  const tbody = document.getElementById('reg-tbody');
+  const empty = document.getElementById('reg-empty');
+  const count = document.getElementById('reg-count');
+  const table = document.getElementById('reg-table');
+  count.textContent = `${regs.length} registration(s)`;
+
+  if (!regs.length) {
+    table.style.display = 'none';
+    empty.style.display = 'block';
+    return;
+  }
+  table.style.display = 'table';
+  empty.style.display = 'none';
+
+  const statusBadge = {
+    pending: '<span class="cems-badge cems-badge-warning">Pending</span>',
+    approved: '<span class="cems-badge cems-badge-success">Approved</span>',
+    rejected: '<span class="cems-badge cems-badge-danger">Rejected</span>',
+    waitlisted: '<span class="cems-badge" style="background:#e0e7ff; color:#3730a3;">Waitlisted</span>',
+  };
+
+  tbody.innerHTML = regs.map(r => {
+    const canAct = ['pending', 'waitlisted'].includes(r.status);
+    const canApprove = r.status === 'pending' || r.status === 'waitlisted';
+    const capacityFull = r.registered_count >= r.capacity;
+    return `<tr>
+      <td><strong>${esc(r.student_name)}</strong></td>
+      <td>${esc(r.roll_no)}</td>
+      <td>${esc(r.email)}</td>
+      <td>${esc(r.course)}</td>
+      <td>${esc(r.semester)}</td>
+      <td>${esc(r.event_name)}</td>
+      <td>${esc(r.registration_date)}</td>
+      <td>${statusBadge[r.status] || r.status}</td>
+      <td><div class="cems-table-actions">
+        <button class="cems-btn cems-btn-secondary cems-btn-sm" onclick="viewDetails(${r.id})">View</button>
+        ${canApprove ? `<button class="cems-btn cems-btn-primary cems-btn-sm" onclick="approveReg(${r.id})">Approve</button>` : ''}
+        ${r.status === 'pending' ? `<button class="cems-btn cems-btn-secondary cems-btn-sm" onclick="rejectReg(${r.id})">Reject</button>` : ''}
+        ${r.status === 'pending' && canAct ? `<button class="cems-btn cems-btn-secondary cems-btn-sm" onclick="waitlistReg(${r.id})">Waitlist</button>` : ''}
+        ${r.status === 'waitlisted' ? `<button class="cems-btn cems-btn-success cems-btn-sm" onclick="promoteReg(${r.id})">Promote</button>` : ''}
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+function esc(str) {
+  if (!str) return '—';
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+function viewDetails(id) {
+  fetch(`/api/teacher/registrations/${id}/details`)
+    .then(r => r.json())
+    .then(data => {
+      if (!data.success) return;
+      const d = data.details;
+      const statusColors = { pending:'var(--cems-warning)', approved:'var(--cems-success)', rejected:'var(--cems-danger)', waitlisted:'#6366f1' };
+      document.getElementById('details-content').innerHTML = `
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+          <div><div style="font-size:0.75rem;color:var(--cems-text-muted);">Student Name</div><div style="font-weight:600;">${esc(d.student_name)}</div></div>
+          <div><div style="font-size:0.75rem;color:var(--cems-text-muted);">Roll Number</div><div style="font-weight:600;">${esc(d.roll_no)}</div></div>
+          <div><div style="font-size:0.75rem;color:var(--cems-text-muted);">Email</div><div style="font-weight:600;">${esc(d.email)}</div></div>
+          <div><div style="font-size:0.75rem;color:var(--cems-text-muted);">Phone</div><div style="font-weight:600;">${esc(d.phone)}</div></div>
+          <div><div style="font-size:0.75rem;color:var(--cems-text-muted);">Course</div><div style="font-weight:600;">${esc(d.course)}</div></div>
+          <div><div style="font-size:0.75rem;color:var(--cems-text-muted);">Department</div><div style="font-weight:600;">${esc(d.department)}</div></div>
+          <div><div style="font-size:0.75rem;color:var(--cems-text-muted);">Semester</div><div style="font-weight:600;">${esc(d.semester)}</div></div>
+          <div><div style="font-size:0.75rem;color:var(--cems-text-muted);">Registration Date</div><div style="font-weight:600;">${esc(d.registration_date)}</div></div>
+          <div><div style="font-size:0.75rem;color:var(--cems-text-muted);">Event Name</div><div style="font-weight:600;">${esc(d.event_name)}</div></div>
+          <div><div style="font-size:0.75rem;color:var(--cems-text-muted);">Event Date</div><div style="font-weight:600;">${esc(d.event_date)}</div></div>
+          <div><div style="font-size:0.75rem;color:var(--cems-text-muted);">Event Time</div><div style="font-weight:600;">${esc(d.event_time)}</div></div>
+          <div><div style="font-size:0.75rem;color:var(--cems-text-muted);">Venue</div><div style="font-weight:600;">${esc(d.event_venue)}</div></div>
+          <div><div style="font-size:0.75rem;color:var(--cems-text-muted);">Status</div><div style="font-weight:600;color:${statusColors[d.status]||'inherit'};">${esc(d.status)}</div></div>
+          <div><div style="font-size:0.75rem;color:var(--cems-text-muted);">Ticket Code</div><div style="font-weight:600;">${esc(d.ticket_code)}</div></div>
+          <div><div style="font-size:0.75rem;color:var(--cems-text-muted);">Payment Status</div><div style="font-weight:600;">${esc(d.payment_status)}</div></div>
+          <div><div style="font-size:0.75rem;color:var(--cems-text-muted);">Terms Accepted</div><div style="font-weight:600;">${d.terms_accepted ? 'Yes' : 'No'}</div></div>
+        </div>
+      `;
+      document.getElementById('detailsModal').style.display = 'flex';
+    });
+}
+
+function showConfirm(title, message, btnText, action) {
+  document.getElementById('confirm-title').textContent = title;
+  document.getElementById('confirm-message').textContent = message;
+  document.getElementById('confirm-ok').textContent = btnText;
+  document.getElementById('confirmModal').style.display = 'flex';
+  document.getElementById('confirm-ok').onclick = function() {
+    document.getElementById('confirmModal').style.display = 'none';
+    action();
+  };
+}
+
+function approveReg(id) {
+  const reg = allRegistrations.find(r => r.id === id);
+  showConfirm('Approve Registration', `Approve ${reg.student_name}'s registration for ${reg.event_name}?`, 'Approve', () => {
+    fetch(`/api/teacher/registrations/${id}/approve`, { method: 'POST' })
+      .then(r => r.json()).then(data => {
+        if (data.success) { showToast(data.message); loadRegistrations(); }
+        else { showToast(data.message || 'Failed', 'error'); }
+      });
+  });
+}
+
+function rejectReg(id) {
+  const reg = allRegistrations.find(r => r.id === id);
+  showConfirm('Reject Registration', `Reject ${reg.student_name}'s registration for ${reg.event_name}?`, 'Reject', () => {
+    fetch(`/api/teacher/registrations/${id}/reject`, { method: 'POST', headers: {'Content-Type': 'application/x-www-form-urlencoded'}, body: 'reason=' + encodeURIComponent('') })
+      .then(r => r.json()).then(data => {
+        if (data.success) { showToast(data.message); loadRegistrations(); }
+        else { showToast(data.message || 'Failed', 'error'); }
+      });
+  });
+}
+
+function waitlistReg(id) {
+  const reg = allRegistrations.find(r => r.id === id);
+  showConfirm('Add to Waitlist', `Move ${reg.student_name}'s registration to waitlist for ${reg.event_name}?`, 'Waitlist', () => {
+    fetch(`/api/teacher/registrations/${id}/waitlist`, { method: 'POST' })
+      .then(r => r.json()).then(data => {
+        if (data.success) { showToast(data.message); loadRegistrations(); }
+        else { showToast(data.message || 'Failed', 'error'); }
+      });
+  });
+}
+
+function promoteReg(id) {
+  const reg = allRegistrations.find(r => r.id === id);
+  showConfirm('Promote from Waitlist', `Approve ${reg.student_name} from waitlist for ${reg.event_name}?`, 'Promote', () => {
+    fetch(`/api/teacher/registrations/${id}/promote`, { method: 'POST' })
+      .then(r => r.json()).then(data => {
+        if (data.success) { showToast(data.message); loadRegistrations(); }
+        else { showToast(data.message || 'Failed', 'error'); }
+      });
+  });
+}
+</script>
+{% endblock %}

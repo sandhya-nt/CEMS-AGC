@@ -1,0 +1,363 @@
+{% extends "base.html" %}
+{% block title %}Campus Assistant — {{ college_short }}{% endblock %}
+{% block extra_head %}
+<style>
+/* ---- Assistant Chat ---- */
+.assistant-shell {
+  max-width: 860px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+.assistant-header {
+  background: linear-gradient(135deg, #1e293b 0%, #312e81 100%);
+  color: #fff;
+  padding: 1.5rem 2rem;
+  border-radius: 16px 16px 0 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.assistant-header h2 { margin: 0; font-size: 1.3rem; }
+.assistant-header .role-badge {
+  background: rgba(255,255,255,0.15);
+  padding: 0.3rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  text-transform: capitalize;
+}
+.ai-status {
+  font-size: 0.75rem;
+  opacity: 0.8;
+  margin-top: 0.4rem;
+}
+.assistant-container {
+  display: flex;
+  flex-direction: column;
+  height: 600px;
+  border: 1px solid #e2e8f0;
+  border-top: none;
+  border-radius: 0 0 16px 16px;
+  background: #f8fafc;
+}
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.message {
+  max-width: 75%;
+  padding: 0.75rem 1rem;
+  border-radius: 16px;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+}
+.message.user {
+  align-self: flex-end;
+  background: linear-gradient(135deg, #4f46e5, #6366f1);
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+.message.assistant {
+  align-self: flex-start;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  color: #1e293b;
+  border-bottom-left-radius: 4px;
+}
+.message.error {
+  align-self: flex-start;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  border-bottom-left-radius: 4px;
+}
+.message .timestamp {
+  font-size: 0.7rem;
+  opacity: 0.6;
+  display: block;
+  margin-top: 0.3rem;
+}
+.typing-indicator {
+  align-self: flex-start;
+  display: flex;
+  gap: 4px;
+  padding: 0.75rem 1rem;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  border-bottom-left-radius: 4px;
+}
+.typing-indicator span {
+  width: 8px;
+  height: 8px;
+  background: #94a3b8;
+  border-radius: 50%;
+  animation: bounce 1.2s infinite;
+}
+.typing-indicator span:nth-child(2) { animation-delay: 0.15s; }
+.typing-indicator span:nth-child(3) { animation-delay: 0.3s; }
+@keyframes bounce {
+  0%, 60%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-8px); }
+}
+.chat-input-area {
+  padding: 1rem;
+  border-top: 1px solid #e2e8f0;
+  background: #fff;
+  border-radius: 0 0 16px 16px;
+}
+.chat-input-row {
+  display: flex;
+  gap: 0.5rem;
+}
+.chat-input-row input {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.chat-input-row input:focus {
+  border-color: #6366f1;
+}
+.chat-input-row button {
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #4f46e5, #6366f1);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  font-weight: 600;
+  transition: opacity 0.2s;
+}
+.chat-input-row button:hover { opacity: 0.9; }
+.chat-input-row button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.suggestion-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.75rem;
+}
+.suggestion-chip {
+  padding: 0.4rem 0.8rem;
+  background: #eef2ff;
+  border: 1px solid #c7d2fe;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+  color: #4338ca;
+}
+.suggestion-chip:hover {
+  background: #4f46e5;
+  color: #fff;
+  border-color: #4f46e5;
+}
+.welcome-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.25rem;
+  margin-bottom: 0.75rem;
+}
+.welcome-card h4 { margin: 0 0 0.5rem; color: #4f46e5; }
+.welcome-card p { margin: 0; color: #64748b; font-size: 0.9rem; }
+.no-data-msg {
+  color: #94a3b8;
+  font-style: italic;
+  padding: 1rem;
+  text-align: center;
+}
+@media (max-width: 600px) {
+  .assistant-shell { margin: 0; padding: 0; }
+  .assistant-header { border-radius: 0; padding: 1rem; }
+  .assistant-container { border-radius: 0; height: calc(100vh - 120px); }
+  .message { max-width: 88%; }
+  .chat-input-row { flex-direction: column; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="assistant-shell">
+  <div class="assistant-header">
+    <div>
+      <h2>🎓 Campus Event Assistant</h2>
+      <div class="ai-status" id="ai-status"></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:0.75rem">
+      <span class="role-badge" id="role-badge">{{ current_user.role }}</span>
+      <span style="font-size:0.85rem;opacity:0.8">{{ current_user.name }}</span>
+    </div>
+  </div>
+
+  <div class="assistant-container">
+    <div class="chat-messages" id="chat-messages">
+      <div class="welcome-card">
+        <h4>👋 Welcome, {{ current_user.name }}!</h4>
+        <p>I'm your AI-powered campus event assistant. Ask me anything about events, registrations, and campus activities.</p>
+      </div>
+    </div>
+
+    <div class="chat-input-area">
+      <div class="chat-input-row">
+        <input type="text" id="chat-input" placeholder="Ask about events, registrations, venues..." autocomplete="off" />
+        <button id="send-btn" onclick="sendMessage()">Send</button>
+      </div>
+      <div class="suggestion-chips" id="suggestion-chips"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const ROLE = "{{ current_user.role }}";
+const isAuthenticated = {{ "true" if current_user.is_authenticated else "false" }};
+let suggestionChips = [];
+
+if (!isAuthenticated) {
+  window.location.href = "/login?role=student";
+}
+
+const messagesEl = document.getElementById("chat-messages");
+const inputEl = document.getElementById("chat-input");
+const sendBtn = document.getElementById("send-btn");
+const aiStatusEl = document.getElementById("ai-status");
+const chipsEl = document.getElementById("suggestion-chips");
+
+// Set AI status
+async function initAIStatus() {
+  try {
+    const res = await fetch("/api/assistant/status");
+    if (res.ok) {
+      const data = await res.json();
+      aiStatusEl.textContent = data.status_message || "Initializing...";
+    }
+  } catch {
+    aiStatusEl.textContent = "AI Engine: Initializing...";
+  }
+}
+initAIStatus();
+
+// Suggestion chips based on role
+const suggestionsByRole = {
+  student: [
+    "Which technical events are coming this week?",
+    "Which events have I registered for?",
+    "Where is my next event?",
+    "How many events have I attended?",
+    "Do I have any certificates?",
+  ],
+  organizer: [
+    "How many students registered for my events?",
+    "How many seats are left?",
+    "Which volunteers are assigned?",
+    "Show my events",
+  ],
+  admin: [
+    "How many events are happening this week?",
+    "Which venues are heavily utilized?",
+    "Are there any event conflicts?",
+    "Show campus events",
+  ],
+  teacher: [
+    "How many events are happening this week?",
+    "Which venues are heavily utilized?",
+    "Are there any event conflicts?",
+  ],
+};
+
+function renderSuggestions(role) {
+  const chips = suggestionsByRole[role] || suggestionsByRole.student;
+  suggestionChips = chips;
+  chipsEl.innerHTML = "";
+  chips.forEach((text) => {
+    const chip = document.createElement("span");
+    chip.className = "suggestion-chip";
+    chip.textContent = text;
+    chip.onclick = () => {
+      inputEl.value = text;
+      sendMessage();
+    };
+    chipsEl.appendChild(chip);
+  });
+}
+renderSuggestions(ROLE);
+
+function addMessage(text, sender, isError) {
+  const msg = document.createElement("div");
+  msg.className = `message ${sender}` + (isError ? " error" : "");
+  const now = new Date();
+  const time = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  msg.innerHTML = `${text}<span class="timestamp">${time}</span>`;
+  messagesEl.appendChild(msg);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+function showTyping() {
+  const typing = document.createElement("div");
+  typing.className = "typing-indicator";
+  typing.id = "typing-indicator";
+  typing.innerHTML = "<span></span><span></span><span></span>";
+  messagesEl.appendChild(typing);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+function hideTyping() {
+  const typing = document.getElementById("typing-indicator");
+  if (typing) typing.remove();
+}
+
+async function sendMessage() {
+  const text = inputEl.value.trim();
+  if (!text) return;
+
+  inputEl.value = "";
+  inputEl.disabled = true;
+  sendBtn.disabled = true;
+
+  addMessage(text, "user");
+  showTyping();
+
+  try {
+    const res = await fetch("/api/assistant/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: text }),
+    });
+
+    const data = await res.json();
+    hideTyping();
+
+    if (data.success) {
+      addMessage(data.response, "assistant");
+    } else {
+      addMessage(data.error || "An error occurred. Please try again.", "assistant", true);
+    }
+  } catch {
+    hideTyping();
+    addMessage("I couldn't connect to the server. Please try again.", "assistant", true);
+  }
+
+  inputEl.disabled = false;
+  sendBtn.disabled = false;
+  inputEl.focus();
+}
+
+inputEl.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") sendMessage();
+});
+
+inputEl.focus();
+</script>
+{% endblock %}

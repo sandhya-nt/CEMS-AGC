@@ -119,6 +119,22 @@
   background: linear-gradient(135deg, #330867 0%, #30cfd0 100%);
 }
 
+.category-card.competitions {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.category-card.competitions:hover {
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+}
+
+.category-card.seminars {
+  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+}
+
+.category-card.seminars:hover {
+  background: linear-gradient(135deg, #38f9d7 0%, #43e97b 100%);
+}
+
 /* Feature items styling */
 .feature-item {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);

@@ -1,0 +1,621 @@
+{% extends "base.html" %}
+{% block title %}Attendance — CEMS{% endblock %}
+{% block breadcrumb %}Attendance{% endblock %}
+
+{% block extra_css %}
+<style>
+  .attendance-page {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+  .attendance-toolbar {
+    display: flex;
+    align-items: flex-end;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .attendance-toolbar .cems-form-group {
+    min-width: 260px;
+    flex: 1;
+    margin-bottom: 0;
+  }
+  .attendance-toolbar .cems-form-group.event-select {
+    flex: 2;
+    min-width: 320px;
+  }
+  .attendance-stats {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(150px, 1fr));
+    gap: 16px;
+  }
+  .attendance-stat {
+    background: var(--cems-bg-primary);
+    border: 1px solid var(--cems-border);
+    border-radius: var(--cems-radius-lg);
+    padding: 18px;
+    min-height: 112px;
+  }
+  .attendance-stat-value {
+    font-size: 1.65rem;
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--cems-text-primary);
+  }
+  .attendance-stat-label {
+    margin-top: 6px;
+    color: var(--cems-text-muted);
+    font-size: 0.82rem;
+    font-weight: 600;
+  }
+  .attendance-stat-accent {
+    width: 8px;
+    border-radius: 999px;
+    background: var(--cems-primary);
+    margin-bottom: 14px;
+  }
+  .attendance-stat-accent.success { background: var(--cems-success); }
+  .attendance-stat-accent.danger { background: var(--cems-danger); }
+  .attendance-stat-accent.warning { background: var(--cems-warning); }
+  .attendance-stat-accent.info { background: var(--cems-info); }
+  .attendance-stat-accent.neutral { background: var(--cems-text-muted); }
+  .attendance-controls {
+    display: flex;
+    align-items: flex-end;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+  }
+  .attendance-controls .cems-form-group {
+    min-width: 210px;
+    margin-bottom: 0;
+  }
+  .attendance-controls .cems-form-group.search-control {
+    flex: 2;
+    min-width: 260px;
+  }
+  .attendance-table-actions {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+  .attendance-action {
+    min-width: 72px;
+    padding: 5px 9px;
+    border-radius: 6px;
+    border: 1px solid var(--cems-border);
+    background: var(--cems-bg-primary);
+    color: var(--cems-text-secondary);
+    font-size: 0.76rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--cems-transition-fast);
+  }
+  .attendance-action:hover:not(:disabled) {
+    border-color: var(--cems-primary);
+    color: var(--cems-primary);
+    background: var(--cems-primary-bg);
+  }
+  .attendance-action.is-current {
+    opacity: 0.55;
+    cursor: default;
+  }
+  .attendance-action.present { color: var(--cems-success-dark); }
+  .attendance-action.absent { color: var(--cems-danger-dark); }
+  .attendance-action.late { color: var(--cems-warning-dark); }
+  .attendance-action.present:hover:not(:disabled), .attendance-action.present.is-current { background: var(--cems-success-bg); border-color: #a7f3d0; color: var(--cems-success-dark); }
+  .attendance-action.absent:hover:not(:disabled), .attendance-action.absent.is-current { background: var(--cems-danger-bg); border-color: #fecaca; color: var(--cems-danger-dark); }
+  .attendance-action.late:hover:not(:disabled), .attendance-action.late.is-current { background: var(--cems-warning-bg); border-color: #fde68a; color: var(--cems-warning-dark); }
+  .attendance-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .attendance-badge::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+  .attendance-badge-not-marked { background: var(--cems-bg-tertiary); color: var(--cems-text-secondary); }
+  .attendance-badge-present { background: var(--cems-success-bg); color: var(--cems-success-dark); }
+  .attendance-badge-absent { background: var(--cems-danger-bg); color: var(--cems-danger-dark); }
+  .attendance-badge-late { background: var(--cems-warning-bg); color: var(--cems-warning-dark); }
+  .registration-badge {
+    display: inline-flex;
+    padding: 4px 9px;
+    border-radius: 999px;
+    background: var(--cems-primary-bg);
+    color: var(--cems-primary-dark);
+    font-size: 0.76rem;
+    font-weight: 700;
+    text-transform: capitalize;
+  }
+  .attendance-result {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    margin-top: 14px;
+    padding: 12px 14px;
+    border-radius: var(--cems-radius-md);
+    font-size: 0.88rem;
+    font-weight: 600;
+  }
+  .attendance-result.show { display: flex; }
+  .attendance-result.success { background: var(--cems-success-bg); color: var(--cems-success-dark); border: 1px solid #a7f3d0; }
+  .attendance-result.error { background: var(--cems-danger-bg); color: var(--cems-danger-dark); border: 1px solid #fecaca; }
+  .attendance-result.info { background: var(--cems-info-bg); color: var(--cems-info-dark); border: 1px solid #bfdbfe; }
+  .attendance-result.loading { background: var(--cems-bg-secondary); color: var(--cems-text-secondary); border: 1px solid var(--cems-border); }
+  .attendance-result-spinner {
+    width: 15px;
+    height: 15px;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: cemsSpin 0.7s linear infinite;
+  }
+  .attendance-muted { color: var(--cems-text-muted); }
+  .attendance-cell-strong { font-weight: 650; color: var(--cems-text-primary); }
+  .attendance-cell-subtle { margin-top: 3px; color: var(--cems-text-muted); font-size: 0.78rem; }
+  .attendance-empty {
+    padding: 44px 20px;
+    text-align: center;
+    color: var(--cems-text-muted);
+  }
+  .attendance-empty-icon {
+    font-size: 2.2rem;
+    margin-bottom: 12px;
+    opacity: 0.55;
+  }
+  .attendance-empty-title { color: var(--cems-text-secondary); font-weight: 700; margin-bottom: 6px; }
+  .attendance-empty-description { max-width: 420px; margin: 0 auto; font-size: 0.88rem; }
+  .attendance-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 18px;
+    flex-wrap: wrap;
+  }
+  .attendance-page-btn {
+    min-width: 34px;
+    padding: 7px 11px;
+    border: 1px solid var(--cems-border);
+    border-radius: 6px;
+    background: var(--cems-bg-primary);
+    color: var(--cems-text-secondary);
+    font-weight: 600;
+    font-size: 0.82rem;
+    cursor: pointer;
+  }
+  .attendance-page-btn:hover:not(:disabled) { border-color: var(--cems-primary); color: var(--cems-primary); }
+  .attendance-page-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .attendance-page-info { color: var(--cems-text-muted); font-size: 0.82rem; }
+  @media (max-width: 1100px) {
+    .attendance-stats { grid-template-columns: repeat(3, minmax(150px, 1fr)); }
+  }
+  @media (max-width: 640px) {
+    .attendance-stats { grid-template-columns: repeat(2, minmax(130px, 1fr)); }
+    .attendance-toolbar, .attendance-controls { align-items: stretch; flex-direction: column; }
+    .attendance-toolbar .cems-form-group, .attendance-controls .cems-form-group { width: 100%; }
+    .attendance-toolbar .cems-btn, .attendance-controls .cems-btn { width: 100%; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="attendance-page">
+  <div class="cems-page-header">
+    <div class="cems-page-header-top">
+      <div>
+        <h1 class="cems-page-title">Attendance Management</h1>
+        <p class="cems-page-description">Record and correct attendance for students approved for your assigned events.</p>
+      </div>
+      <div class="cems-page-actions">
+        <a href="{{ url_for('teacher_assigned_events') }}" class="cems-btn cems-btn-secondary">
+          <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+          Assigned Events
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="cems-card">
+    <div class="cems-card-header">
+      <div>
+        <div class="cems-card-title">Select Assigned Event</div>
+        <div style="font-size:0.82rem;color:var(--cems-text-muted);margin-top:4px;">Attendance is available only for events assigned to you.</div>
+      </div>
+    </div>
+    <div class="cems-card-body">
+      <div class="attendance-toolbar">
+        <div class="cems-form-group event-select">
+          <label class="cems-form-label" for="attendance-event">Event</label>
+          <select id="attendance-event" class="cems-form-select" {% if not events %}disabled{% endif %}>
+            <option value="">Choose an assigned event</option>
+            {% for event in events %}
+            <option value="{{ event.id }}" {% if selected_event and selected_event.id == event.id %}selected{% endif %}>{{ event.title }} — {{ event.date.strftime('%d %b %Y') }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <a id="attendance-export" href="{% if selected_event %}{{ url_for('teacher_attendance_export', event_id=selected_event.id) }}{% else %}#{% endif %}" class="cems-btn cems-btn-outline" {% if not selected_event %}aria-disabled="true"{% endif %}>
+          <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"></path></svg>
+          Export CSV
+        </a>
+        <a href="{{ url_for('kiosk') }}" class="cems-btn" style="background:var(--cems-warning);color:var(--cems-slate-900);">
+          📷 Kiosk Mode
+        </a>
+      </div>
+      <div id="attendance-event-empty" class="attendance-empty" {% if events %}hidden{% endif %}>
+        <div class="attendance-empty-icon"><svg width="44" height="44" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg></div>
+        <div class="attendance-empty-title">No assigned events</div>
+        <div class="attendance-empty-description">Your administrator has not assigned any events to you yet.</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="attendance-workspace" {% if not selected_event %}hidden{% endif %}>
+    <div class="attendance-stats" id="attendance-stats">
+      <div class="attendance-stat"><div class="attendance-stat-accent"></div><div class="attendance-stat-value" data-stat="total">0</div><div class="attendance-stat-label">Total Approved Students</div></div>
+      <div class="attendance-stat"><div class="attendance-stat-accent success"></div><div class="attendance-stat-value" data-stat="present">0</div><div class="attendance-stat-label">Present</div></div>
+      <div class="attendance-stat"><div class="attendance-stat-accent danger"></div><div class="attendance-stat-value" data-stat="absent">0</div><div class="attendance-stat-label">Absent</div></div>
+      <div class="attendance-stat"><div class="attendance-stat-accent warning"></div><div class="attendance-stat-value" data-stat="late">0</div><div class="attendance-stat-label">Late</div></div>
+      <div class="attendance-stat"><div class="attendance-stat-accent neutral"></div><div class="attendance-stat-value" data-stat="not_marked">0</div><div class="attendance-stat-label">Not Marked</div></div>
+      <div class="attendance-stat"><div class="attendance-stat-accent info"></div><div class="attendance-stat-value" data-stat="attendance_percentage">0%</div><div class="attendance-stat-label">Attendance Percentage</div></div>
+    </div>
+
+    <div class="cems-card">
+      <div class="cems-card-header">
+        <div>
+          <div class="cems-card-title">Approved Participants</div>
+          <div id="attendance-event-meta" class="attendance-muted" style="font-size:0.82rem;margin-top:4px;"></div>
+        </div>
+        <div class="cems-page-actions">
+          <button id="attendance-bulk-present" type="button" class="cems-btn cems-btn-success cems-btn-sm">
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            Mark All Present
+          </button>
+        </div>
+      </div>
+      <div class="cems-card-body">
+        <div class="attendance-controls">
+          <div class="cems-form-group search-control">
+            <label class="cems-form-label" for="attendance-search">Search by name, roll number, or email</label>
+            <input id="attendance-search" class="cems-form-input" type="search" placeholder="Search students..." autocomplete="off">
+          </div>
+          <div class="cems-form-group">
+            <label class="cems-form-label" for="attendance-filter">Filter by attendance status</label>
+            <select id="attendance-filter" class="cems-form-select">
+              <option value="">All statuses</option>
+              <option value="present">Present</option>
+              <option value="absent">Absent</option>
+              <option value="late">Late</option>
+              <option value="not_marked">Not Marked</option>
+            </select>
+          </div>
+        </div>
+        <div id="attendance-result" class="attendance-result" role="status" aria-live="polite"></div>
+        <div id="attendance-table-wrap" class="cems-table-container" style="margin-top:18px;">
+          <div class="cems-table-container" style="overflow-x:auto;">
+            <table class="cems-table">
+              <thead>
+                <tr>
+                  <th>Student</th>
+                  <th>Roll No</th>
+                  <th>Branch / Course</th>
+                  <th>Semester</th>
+                  <th>Registration</th>
+                  <th>Attendance</th>
+                  <th>Check-in Time</th>
+                  <th style="text-align:right;">Action</th>
+                </tr>
+              </thead>
+              <tbody id="attendance-rows"></tbody>
+            </table>
+          </div>
+          <div id="attendance-empty-state" class="attendance-empty" hidden>
+            <div class="attendance-empty-icon"><svg width="44" height="44" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16zm0 0v-5m0 5h5"></path></svg></div>
+            <div class="attendance-empty-title" id="attendance-empty-title">No attendance records found.</div>
+            <div class="attendance-empty-description" id="attendance-empty-description">Attendance has not been recorded for this event yet.</div>
+          </div>
+        </div>
+        <div id="attendance-pagination" class="attendance-pagination" hidden>
+          <button type="button" class="attendance-page-btn" id="attendance-prev">Previous</button>
+          <span class="attendance-page-info" id="attendance-page-info"></span>
+          <button type="button" class="attendance-page-btn" id="attendance-next">Next</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  const csrfToken = "{{ csrf_token() }}";
+  const eventSelect = document.getElementById('attendance-event');
+  const workspace = document.getElementById('attendance-workspace');
+  const eventEmpty = document.getElementById('attendance-event-empty');
+  const exportLink = document.getElementById('attendance-export');
+  const statsRoot = document.getElementById('attendance-stats');
+  const eventMeta = document.getElementById('attendance-event-meta');
+  const searchInput = document.getElementById('attendance-search');
+  const filterSelect = document.getElementById('attendance-filter');
+  const bulkButton = document.getElementById('attendance-bulk-present');
+  const resultBox = document.getElementById('attendance-result');
+  const rowsBody = document.getElementById('attendance-rows');
+  const emptyState = document.getElementById('attendance-empty-state');
+  const emptyTitle = document.getElementById('attendance-empty-title');
+  const emptyDescription = document.getElementById('attendance-empty-description');
+  const pagination = document.getElementById('attendance-pagination');
+  const prevButton = document.getElementById('attendance-prev');
+  const nextButton = document.getElementById('attendance-next');
+  const pageInfo = document.getElementById('attendance-page-info');
+  const state = {
+    eventId: eventSelect.value ? Number(eventSelect.value) : null,
+    page: 1,
+    perPage: 15,
+    search: '',
+    filter: '',
+    loading: false
+  };
+  const statusLabels = {
+    not_marked: 'Not Marked',
+    present: 'Present',
+    absent: 'Absent',
+    late: 'Late'
+  };
+  const statusClasses = {
+    not_marked: 'attendance-badge-not-marked',
+    present: 'attendance-badge-present',
+    absent: 'attendance-badge-absent',
+    late: 'attendance-badge-late'
+  };
+
+  function escapeHtml(value) {
+    return String(value == null ? '' : value).replace(/[&<>'"]/g, function (character) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[character];
+    });
+  }
+
+  function normalizeStatus(value) {
+    const raw = String(value == null ? 'not_marked' : value).trim().toLowerCase().replace(/[\s-]+/g, '_');
+    if (raw === 'checked_in' || raw === 'attended' || raw === 'true') return 'present';
+    if (raw === 'not_attended' || raw === 'false') return 'not_marked';
+    return ['present', 'absent', 'late', 'not_marked'].includes(raw) ? raw : 'not_marked';
+  }
+
+  function formatDate(value) {
+    if (!value) return '<span class="attendance-muted">—</span>';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return escapeHtml(value);
+    return escapeHtml(date.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }));
+  }
+
+  function showResult(type, message, loading) {
+    resultBox.className = 'attendance-result show ' + (loading ? 'loading' : type);
+    resultBox.innerHTML = (loading ? '<span class="attendance-result-spinner"></span>' : '') + '<span>' + escapeHtml(message) + '</span>';
+  }
+
+  function clearResult() {
+    resultBox.className = 'attendance-result';
+    resultBox.innerHTML = '';
+  }
+
+  function updateStats(stats) {
+    const values = stats || {};
+    const total = Number(values.total || values.total_approved || values.total_students || 0);
+    const present = Number(values.present || values.present_count || 0);
+    const absent = Number(values.absent || values.absent_count || 0);
+    const late = Number(values.late || values.late_count || 0);
+    const notMarked = Number(values.not_marked || values.notMarked || values.not_marked_count || Math.max(total - present - absent - late, 0));
+    const percentage = values.attendance_percentage != null ? values.attendance_percentage : (values.attendancePercentage != null ? values.attendancePercentage : (total ? Math.round(((present + late) / total) * 100) : 0));
+    const map = {
+      total: total,
+      present: present,
+      absent: absent,
+      late: late,
+      not_marked: notMarked,
+      attendance_percentage: (Number(percentage).toFixed(0) + '%')
+    };
+    statsRoot.querySelectorAll('[data-stat]').forEach(function (element) {
+      element.textContent = map[element.dataset.stat] == null ? '0' : map[element.dataset.stat];
+    });
+  }
+
+  function statusBadge(status) {
+    const normalized = normalizeStatus(status);
+    return '<span class="attendance-badge ' + statusClasses[normalized] + '">' + escapeHtml(statusLabels[normalized]) + '</span>';
+  }
+
+  function registrationBadge(status) {
+    return '<span class="registration-badge">' + escapeHtml(String(status || 'approved').replace('_', ' ')) + '</span>';
+  }
+
+  function actionButton(registrationId, status, target) {
+    const normalized = normalizeStatus(status);
+    const current = normalized === normalizeStatus(target);
+    return '<button type="button" class="attendance-action ' + escapeHtml(target) + (current ? ' is-current' : '') + '" data-registration-id="' + Number(registrationId) + '" data-status="' + escapeHtml(target) + '" data-current-status="' + escapeHtml(normalized) + '" ' + (current ? 'disabled' : '') + '>' + escapeHtml(statusLabels[target]) + '</button>';
+  }
+
+  function renderRows(rows, total) {
+    rowsBody.innerHTML = '';
+    if (!rows || !rows.length) {
+      emptyState.hidden = false;
+      if (state.search || state.filter) {
+        emptyTitle.textContent = 'No students match your search.';
+        emptyDescription.textContent = 'Try a different name, roll number, email, or attendance filter.';
+      } else if (Number(total || 0) === 0) {
+        emptyTitle.textContent = 'No approved students for this event.';
+        emptyDescription.textContent = 'Approved registrations will appear here after students register and Faculty approves them.';
+      } else {
+        emptyTitle.textContent = 'No attendance records found.';
+        emptyDescription.textContent = 'Attendance has not been recorded for this event yet.';
+      }
+      return;
+    }
+    emptyState.hidden = true;
+    rows.forEach(function (student) {
+      const row = document.createElement('tr');
+      const status = normalizeStatus(student.attendance_status || student.status || 'not_marked');
+      const name = student.student_name || (student.user && student.user.name) || 'Unnamed student';
+      const email = student.email || (student.user && student.user.email) || '';
+      const roll = student.roll_number || student.roll_no || (student.user && (student.user.roll_no || student.user.student_id)) || '—';
+      const branch = student.branch || student.course || student.department || (student.user && (student.user.course || student.user.department)) || '—';
+      const semester = student.semester || (student.user && student.user.semester) || '—';
+      const registrationStatus = student.registration_status || student.status || 'approved';
+      const checkIn = student.check_in_time || student.checkin_time || (student.attendance && student.attendance.check_in_time);
+      const registrationId = student.registration_id || student.id;
+      row.innerHTML =
+        '<td><div class="attendance-cell-strong">' + escapeHtml(name) + '</div><div class="attendance-cell-subtle">' + escapeHtml(email) + '</div></td>' +
+        '<td><code>' + escapeHtml(roll) + '</code></td>' +
+        '<td>' + escapeHtml(branch) + '</td>' +
+        '<td>' + escapeHtml(semester) + '</td>' +
+        '<td>' + registrationBadge(registrationStatus) + '</td>' +
+        '<td>' + statusBadge(status) + '</td>' +
+        '<td>' + formatDate(checkIn) + '</td>' +
+        '<td><div class="attendance-table-actions">' + actionButton(registrationId, status, 'present') + actionButton(registrationId, status, 'absent') + actionButton(registrationId, status, 'late') + '</div></td>';
+      rowsBody.appendChild(row);
+    });
+  }
+
+  function renderPagination(data) {
+    const page = Number(data.page || state.page);
+    const pages = Number(data.pages || 1);
+    const total = Number(data.total || data.total_filtered || 0);
+    const start = total ? (page - 1) * state.perPage + 1 : 0;
+    const end = Math.min(page * state.perPage, total);
+    pagination.hidden = pages <= 1;
+    prevButton.disabled = page <= 1;
+    nextButton.disabled = page >= pages;
+    pageInfo.textContent = 'Showing ' + start + '–' + end + ' of ' + total + ' students';
+  }
+
+  function setLoading(loading, message) {
+    state.loading = loading;
+    bulkButton.disabled = loading || !state.eventId;
+    eventSelect.disabled = loading || !eventSelect.options.length;
+    if (loading) showResult('info', message || 'Loading attendance...', true);
+  }
+
+  function attendanceUrl() {
+    const params = new URLSearchParams({ page: state.page, per_page: state.perPage });
+    if (state.search) {
+      params.set('search', state.search);
+      params.set('q', state.search);
+    }
+    if (state.filter) {
+      params.set('status', state.filter);
+      params.set('attendance_status', state.filter);
+    }
+    return '/api/teacher/attendance/' + state.eventId + '?' + params.toString();
+  }
+
+  async function loadAttendance(preserveResult) {
+    if (!state.eventId || state.loading) return;
+    setLoading(true, 'Loading attendance...');
+    try {
+      const response = await fetch(attendanceUrl(), {
+        method: 'GET',
+        headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+      });
+      const data = await response.json().catch(function () { return {}; });
+      if (!response.ok || !data.success) throw new Error(data.message || 'Unable to load attendance.');
+      updateStats(data.stats || data.statistics || {});
+      renderRows(data.students || data.rows || data.registrations || [], data.total != null ? data.total : data.total_filtered);
+      renderPagination(data);
+      eventMeta.textContent = (data.event && data.event.title ? data.event.title + ' · ' : '') + (data.event && data.event.date ? new Date(data.event.date).toLocaleDateString([], { dateStyle: 'medium' }) : '');
+      exportLink.href = '/teacher/attendance/export?event_id=' + encodeURIComponent(state.eventId);
+      exportLink.removeAttribute('aria-disabled');
+    } catch (error) {
+      renderRows([], 0);
+      emptyTitle.textContent = 'Unable to load attendance.';
+      emptyDescription.textContent = error.message || 'Please try again.';
+      showResult('error', error.message || 'Unable to load attendance.');
+    } finally {
+      setLoading(false);
+      if (!preserveResult) clearResult();
+    }
+  }
+
+  async function markAttendance(registrationId, status, currentStatus) {
+    if (!state.eventId || !registrationId) return;
+    const target = normalizeStatus(status);
+    const current = normalizeStatus(currentStatus);
+    if (current !== 'not_marked' && target !== current && !window.confirm('Change this student’s attendance from ' + statusLabels[current] + ' to ' + statusLabels[target] + '?')) return;
+    setLoading(true, 'Saving attendance...');
+    try {
+      const response = await fetch('/api/teacher/attendance/' + state.eventId + '/' + Number(registrationId) + '/mark', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken, 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
+        body: JSON.stringify({ status: target })
+      });
+      const data = await response.json().catch(function () { return {}; });
+      if (!response.ok || !data.success) throw new Error(data.message || 'Unable to update attendance.');
+      showResult('success', data.message || 'Attendance updated.');
+      await loadAttendance(true);
+    } catch (error) {
+      showResult('error', error.message || 'Unable to update attendance.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function markAllPresent() {
+    if (!state.eventId || !window.confirm('Mark all approved students for this event as Present? You can still change individual records afterward.')) return;
+    setLoading(true, 'Marking all students present...');
+    try {
+      const response = await fetch('/api/teacher/attendance/' + state.eventId + '/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken, 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
+        body: JSON.stringify({ status: 'present' })
+      });
+      const data = await response.json().catch(function () { return {}; });
+      if (!response.ok || !data.success) throw new Error(data.message || 'Unable to mark attendance.');
+      showResult('success', data.message || 'All approved students marked Present.');
+      await loadAttendance(true);
+    } catch (error) {
+      showResult('error', error.message || 'Unable to mark attendance.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  rowsBody.addEventListener('click', function (event) {
+    const button = event.target.closest('[data-registration-id][data-status]');
+    if (button && !button.disabled) markAttendance(button.dataset.registrationId, button.dataset.status, button.dataset.currentStatus);
+  });
+  bulkButton.addEventListener('click', markAllPresent);
+  eventSelect.addEventListener('change', function () {
+    state.eventId = eventSelect.value ? Number(eventSelect.value) : null;
+    state.page = 1;
+    workspace.hidden = !state.eventId;
+    eventEmpty.hidden = !!state.eventId;
+    exportLink.href = state.eventId ? '/teacher/attendance/export?event_id=' + encodeURIComponent(state.eventId) : '#';
+    if (state.eventId) {
+      updateStats({});
+      rowsBody.innerHTML = '';
+      emptyState.hidden = true;
+      loadAttendance();
+    }
+  });
+  let searchTimer;
+  searchInput.addEventListener('input', function () {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(function () { state.search = searchInput.value.trim(); state.page = 1; loadAttendance(); }, 250);
+  });
+  filterSelect.addEventListener('change', function () { state.filter = filterSelect.value; state.page = 1; loadAttendance(); });
+  prevButton.addEventListener('click', function () { if (state.page > 1) { state.page -= 1; loadAttendance(); } });
+  nextButton.addEventListener('click', function () { if (!nextButton.disabled) { state.page += 1; loadAttendance(); } });
+  if (state.eventId) loadAttendance();
+})();
+</script>
+{% endblock %}

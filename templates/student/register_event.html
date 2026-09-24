@@ -6,46 +6,92 @@
 <div class="cems-page-header">
   <div class="cems-page-header-top">
     <div>
-      <span class="cems-badge cems-badge-primary" style="margin-bottom: 8px;">{{ event.category }}</span>
+      <a class="cems-btn cems-btn-ghost cems-btn-sm" href="{{ url_for('event_details', event_id=event.id) }}">← Back to event</a>
+      <span class="cems-badge cems-badge-primary" style="margin-bottom: 8px; font-size: 0.8rem; padding: 6px 14px;">{{ event.category }}</span>
       <h1 class="cems-page-title">Register for {{ event.title }}</h1>
-      <p class="cems-page-description">{{ event.date.strftime('%d %b %Y') }} · {{ event.start_time }} · {{ event.venue }}</p>
+      <p class="cems-page-description">{{ event.date.strftime('%d %b %Y') }} · {{ event.start_time }} - {{ event.end_time }} · {{ event.venue }}</p>
     </div>
   </div>
 </div>
 
-<div class="cems-card" style="max-width: 600px;">
+<div class="cems-card" style="max-width: 720px;">
   <div class="cems-card-body">
-    <div style="display: flex; flex-direction: column; gap: 16px; margin-bottom: 24px;">
-      <div style="display: flex; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px solid var(--cems-border-light);">
+
+    {# ---- Event summary panel (always visible) ---- #}
+    <div style="display: flex; flex-direction: column; gap: 14px; margin-bottom: 24px;">
+      <div style="display: flex; justify-content: space-between; padding-bottom: 10px; border-bottom: 1px solid var(--cems-border-light);">
         <span style="color: var(--cems-text-muted); font-size: 0.9rem;">Participant</span>
         <span style="font-weight: 600;">{{ current_user.name }}</span>
       </div>
-      <div style="display: flex; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px solid var(--cems-border-light);">
+      <div style="display: flex; justify-content: space-between; padding-bottom: 10px; border-bottom: 1px solid var(--cems-border-light);">
         <span style="color: var(--cems-text-muted); font-size: 0.9rem;">Email</span>
         <span style="font-weight: 600;">{{ current_user.email }}</span>
       </div>
-      <div style="display: flex; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px solid var(--cems-border-light);">
+      <div style="display: flex; justify-content: space-between; padding-bottom: 10px; border-bottom: 1px solid var(--cems-border-light);">
         <span style="color: var(--cems-text-muted); font-size: 0.9rem;">Fee</span>
-        <span style="font-weight: 600; font-size: 1.1rem;">{% if event.fee %}₹{{ '%.2f'|format(event.fee) }}{% else %}<span class="cems-badge cems-badge-success">Free</span>{% endif %}</span>
+        <span style="font-weight: 600; font-size: 1.1rem;">
+          {% if event.fee %}₹{{ '%.2f'|format(event.fee) }}{% else %}<span class="cems-badge cems-badge-success">Free</span>{% endif %}
+        </span>
       </div>
     </div>
-    
-    <form method="post" class="cems-form-grid">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      <label class="cems-form-label" style="display: flex; gap: 10px; align-items: flex-start; margin-bottom: 16px;">
-        <input type="checkbox" name="terms_accepted" style="margin-top: 4px;" required>
-        <span>I accept the event rules, cancellation policy, and consent to campus event communications.</span>
-      </label>
-      <button type="submit" class="cems-btn cems-btn-primary cems-btn-lg cems-w-full">
-        {% if event.fee %}Continue to Payment{% else %}Submit Registration{% endif %}
-      </button>
-    </form>
 
-    
-    <p style="margin-top: 16px; font-size: 0.85rem; color: var(--cems-text-muted); text-align: center;">
-      Demo payment only — no card/UPI credentials are collected.
-    </p>
+    {# ---- Clear error / info state when not eligible ---- #}
+    {% if not eligibility.eligible %}
+      {# already registered — point straight to the existing ticket #}
+      {% if eligibility.reason == "already_registered" and existing_registration %}
+        <div style="text-align: center; padding: 28px 12px;">
+          <div style="font-size: 3rem; margin-bottom: 14px;">🎟️</div>
+          <h2 style="color: var(--cems-success); margin-bottom: 8px;">Already Registered</h2>
+          <p style="color: var(--cems-text-secondary); margin-bottom: 22px; font-size: 0.95rem;">
+            {{ eligibility.message }}
+          </p>
+          <a href="{{ url_for('ticket', registration_id=existing_registration.id) }}" class="cems-btn cems-btn-primary">View Your Ticket</a>
+          <a href="{{ url_for('my_registrations') }}" class="cems-btn cems-btn-ghost cems-btn-sm" style="margin-left: 10px;">My Registrations</a>
+        </div>
+      {% else %}
+        {# blocked — clear error state with a recovery path #}
+        {% set badge_class = "cems-badge-neutral" %}
+        {% if eligibility.status == "warning" %}{% set badge_class = "cems-badge-warning" %}
+        {% elif eligibility.status == "info" %}{% set badge_class = "cems-badge-info" %}
+        {% elif eligibility.status == "success" %}{% set badge_class = "cems-badge-success" %}{% endif %}
+        <div style="text-align: center; padding: 28px 12px;">
+          <div style="font-size: 3rem; margin-bottom: 14px;">
+            {% if eligibility.status == "warning" %}⚠️{% elif eligibility.status == "info" %}ℹ️{% else %}🚫{% endif %}
+          </div>
+          <h2 style="margin-bottom: 8px;">Registration Unavailable</h2>
+          <span class="{{ badge_class }}" style="text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.5px;">{{ eligibility.status }}</span>
+          <p style="color: var(--cems-text-secondary); margin: 18px 0; font-size: 1rem; line-height: 1.5;">
+            {{ eligibility.message }}
+          </p>
+          {% if eligibility.reason in ("event_past", "deadline_passed", "event_unavailable", "event_not_approved", "event_full", "registration_not_open") %}
+            <a href="{{ url_for('events') }}" class="cems-btn cems-btn-ghost cems-btn-sm">Browse other events</a>
+          {% elif eligibility.reason in ("not_eligible", "account_inactive") %}
+            <a href="{{ url_for('profile') }}" class="cems-btn cems-btn-ghost cems-btn-sm">Update profile</a>
+          {% endif %}
+        </div>
+      {% endif %}
+
+    {# ---- Success / registration form — only shown when eligible ---- #}
+    {% else %}
+      <form method="post" class="cems-form-grid">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <label class="cems-form-label" style="display: flex; gap: 10px; align-items: flex-start; margin-bottom: 16px;">
+          <input type="checkbox" name="terms_accepted" style="margin-top: 4px;" required>
+          <span>I accept the event rules, cancellation policy, and consent to campus event communications.</span>
+        </label>
+        <button type="submit" class="cems-btn cems-btn-primary cems-btn-lg cems-w-full"
+          {% if eligibility.status == "warning" and eligibility.reason == "event_full" %}disabled{% endif %}>
+          {% if event.fee %}Continue to Payment{% else %}Submit Registration{% endif %}
+        </button>
+      </form>
+
+      {% if event.fee %}
+        <p style="margin-top: 16px; font-size: 0.85rem; color: var(--cems-text-muted); text-align: center;">
+          Secure demo payment — no real card/UPI credentials are collected.
+        </p>
+      {% endif %}
+    {% endif %}
+
   </div>
 </div>
 {% endblock %}
-

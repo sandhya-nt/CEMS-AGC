@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Create Feedback Form — CEMS{% endblock %}
+{% block breadcrumb %}<a href="{{ url_for('organizer_dashboard') }}">Dashboard</a> / <a href="{{ url_for('organizer_feedback_forms') }}">Feedback Forms</a> / Create{% endblock %}
+
+{% block content %}
+<div class="cems-page-header">
+  <div class="cems-page-header-top">
+    <div>
+      <h1 class="cems-page-title">Create Feedback Form</h1>
+      <p class="cems-page-description">Select an event to create a custom feedback form for.</p>
+    </div>
+    <div class="cems-page-actions">
+      <a href="{{ url_for('organizer_feedback_forms') }}" class="cems-btn cems-btn-secondary">Back to Forms</a>
+    </div>
+  </div>
+</div>
+
+{% if events %}
+<div class="cems-card">
+  <div class="cems-card-header">
+    <div class="cems-card-title">Your Events</div>
+  </div>
+  <div class="cems-card-body" style="padding: 0;">
+    <div class="cems-overflow-x-auto">
+      <table class="cems-table">
+        <thead>
+          <tr>
+            <th>Event</th>
+            <th>Category</th>
+            <th>Date</th>
+            <th>Venue</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for e in events %}
+          <tr>
+            <td><strong>{{ e.title }}</strong></td>
+            <td><span class="cems-badge cems-badge-primary">{{ e.category }}</span></td>
+            <td>{{ e.date.strftime('%d %b %Y') if e.date else '—' }}</td>
+            <td>{{ e.venue }}</td>
+            <td><span class="cems-badge
+              {% if e.status=='approved' %}cems-badge-success
+              {% elif e.status=='published' %}cems-badge-primary
+              {% elif e.status=='completed' %}cems-badge-info
+              {% elif e.status=='cancelled' %}cems-badge-danger
+              {% else %}cems-badge-warning{% endif %}">
+              {{ e.status|replace('_', ' ')|title }}
+            </span></td>
+            <td>
+              {% set existing = e.feedback_templates|selectattr('is_active')|list|first %}
+              {% if existing %}
+              <a href="{{ url_for('organizer_feedback_form_edit', form_id=existing.id) }}" class="cems-btn cems-btn-sm cems-btn-secondary">Edit Existing</a>
+              {% else %}
+              <a href="{{ url_for('organizer_feedback_form_create', event_id=e.id) }}" class="cems-btn cems-btn-sm cems-btn-primary">Create Form</a>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="cems-empty">
+  <div class="cems-empty-icon">📋</div>
+  <div class="cems-empty-title">No eligible events</div>
+  <div class="cems-empty-description">You need to have approved, published, or completed events to create custom feedback forms.</div>
+  <a href="{{ url_for('create_event') }}" class="cems-btn cems-btn-primary" style="margin-top: 20px;">Create an Event</a>
+</div>
+{% endif %}
+{% endblock %}

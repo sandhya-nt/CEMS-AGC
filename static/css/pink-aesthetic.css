@@ -1,0 +1,1003 @@
+/* ============================================================
+   CEMS PINK CUTE AESTHETIC THEME
+   Professional · Advanced · High-Level · Pink · Cute
+   ============================================================ */
+
+/* ===== Color Palette - Pink Cute Aesthetic ===== */
+:root {
+  /* Core Pink Shades */
+  --pink-50: #fdf2f8;
+  --pink-100: #fce7f3;
+  --pink-200: #fbcfe8;
+  --pink-300: #f9a8d4;
+  --pink-400: #f472b6;
+  --pink-500: #ec4899;
+  --pink-600: #db2777;
+  --pink-700: #be185d;
+  --pink-800: #9d174d;
+  --pink-900: #831843;
+
+  /* Cute Pastel Accents */
+  --lavender-100: #ede9fe;
+  --lavender-200: #ddd6fe;
+  --lavender-300: #c4b5fd;
+  --lavender-400: #a78bfa;
+  --lavender-500: #8b5cf6;
+  --mint-100: #d1fae5;
+  --mint-200: #a7f3d0;
+  --mint-300: #6ee7b7;
+  --peach-100: #ffedd5;
+  --peach-200: #fed7aa;
+  --coral-100: #ffe4e6;
+  --coral-200: #fecdd3;
+  --rose-gold: #b76e79;
+
+  /* Cute Elements */
+  --heart-pink: #ff6b9d;
+  --heart-rose: #ff8fab;
+  --star-gold: #ffd166;
+  --star-cute: #ffea00;
+
+  /* Semantic Colors */
+  --cems-bg-primary: #fffafc;
+  --cems-bg-secondary: #fff0f5;
+  --cems-bg-tertiary: #fce7f3;
+  --cems-bg-card: #ffffff;
+  --cems-bg-hover: #fdf2f8;
+
+  --cems-text-primary: #1e1b2e;
+  --cems-text-secondary: #6b6578;
+  --cems-text-muted: #a09aaa;
+  --cems-text-inverse: #ffffff;
+  --cems-text-accent: #ec4899;
+
+  --cems-border: #f9a8d4;
+  --cems-border-light: #fbcfe8;
+  --cems-border-soft: #fce7f3;
+
+  /* Shadows - Soft & Cute */
+  --cems-shadow-xs: 0 1px 2px rgba(236, 72, 153, 0.04);
+  --cems-shadow-sm: 0 2px 8px rgba(236, 72, 153, 0.06);
+  --cems-shadow-md: 0 4px 16px rgba(236, 72, 153, 0.08);
+  --cems-shadow-lg: 0 8px 32px rgba(236, 72, 153, 0.10);
+  --cems-shadow-xl: 0 16px 48px rgba(236, 72, 153, 0.12);
+  --cems-shadow-glow: 0 0 40px rgba(236, 72, 153, 0.15);
+  --cems-shadow-card: 0 4px 20px rgba(236, 72, 153, 0.08), 0 1px 3px rgba(236, 72, 153, 0.04);
+  --cems-shadow-card-hover: 0 12px 40px rgba(236, 72, 153, 0.14), 0 4px 12px rgba(236, 72, 153, 0.06);
+
+  /* Borders - Extra Rounded for Cute Feel */
+  --cems-radius-sm: 8px;
+  --cems-radius-md: 12px;
+  --cems-radius-lg: 16px;
+  --cems-radius-xl: 24px;
+  --cems-radius-2xl: 32px;
+  --cems-radius-full: 9999px;
+
+  /* Spacing */
+  --cems-space-1: 4px;
+  --cems-space-2: 8px;
+  --cems-space-3: 12px;
+  --cems-space-4: 16px;
+  --cems-space-5: 20px;
+  --cems-space-6: 24px;
+  --cems-space-8: 32px;
+  --cems-space-10: 40px;
+  --cems-space-12: 48px;
+  --cems-space-16: 64px;
+
+  /* Transitions */
+  --cems-transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --cems-transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --cems-transition-slow: 400ms cubic-bezier(0.4, 0, 0.2, 1);
+  --cems-bounce: 500ms cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* Typography */
+  --cems-font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --cems-font-display: 'Poppins', 'Inter', sans-serif;
+}
+
+/* ===== Google Fonts ===== */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap');
+
+/* ===== Base Reset ===== */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--cems-font-sans);
+  background: var(--cems-bg-primary);
+  color: var(--cems-text-primary);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ===== Cute Animations ===== */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(236, 72, 153, 0.15); }
+  50% { box-shadow: 0 0 40px rgba(236, 72, 153, 0.25); }
+}
+
+@keyframes sparkle {
+  0%, 100% { opacity: 0.3; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+@keyframes heart-beat {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slide-in-left {
+  from { opacity: 0; transform: translateX(-30px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-3deg); }
+  75% { transform: rotate(3deg); }
+}
+
+/* ===== Floating Decorations ===== */
+.cems-floating-decor {
+  position: fixed;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.08;
+}
+
+.cems-floating-heart {
+  animation: float 4s ease-in-out infinite;
+}
+
+.cems-floating-star {
+  animation: sparkle 3s ease-in-out infinite;
+}
+
+/* ===== Pink Cute Button Styles ===== */
+.cems-pink-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--cems-space-2);
+  padding: var(--cems-space-3) var(--cems-space-6);
+  font-family: var(--cems-font-sans);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--cems-text-inverse);
+  background: linear-gradient(135deg, var(--pink-400) 0%, var(--pink-500) 50%, var(--pink-600) 100%);
+  background-size: 200% 200%;
+  border: none;
+  border-radius: var(--cems-radius-full);
+  cursor: pointer;
+  text-decoration: none;
+  transition: all var(--cems-transition-base);
+  box-shadow: 0 4px 16px rgba(236, 72, 153, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.cems-pink-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(236, 72, 153, 0.4);
+  background-position: 100% 50%;
+}
+
+.cems-pink-btn:active {
+  transform: translateY(0);
+}
+
+.cems-pink-btn-secondary {
+  background: var(--cems-bg-card);
+  color: var(--pink-600);
+  border: 2px solid var(--pink-300);
+  box-shadow: 0 2px 8px rgba(236, 72, 153, 0.08);
+}
+
+.cems-pink-btn-secondary:hover {
+  background: var(--pink-50);
+  border-color: var(--pink-400);
+  box-shadow: 0 4px 16px rgba(236, 72, 153, 0.15);
+}
+
+.cems-pink-btn-sm {
+  padding: var(--cems-space-2) var(--cems-space-4);
+  font-size: 0.85rem;
+}
+
+.cems-pink-btn-lg {
+  padding: var(--cems-space-4) var(--cems-space-8);
+  font-size: 1.05rem;
+}
+
+/* ===== Pink Cute Card Styles ===== */
+.cems-pink-card {
+  background: var(--cems-bg-card);
+  border: 1.5px solid var(--cems-border-soft);
+  border-radius: var(--cems-radius-xl);
+  padding: var(--cems-space-8);
+  transition: all var(--cems-transition-base);
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--cems-shadow-card);
+}
+
+.cems-pink-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--pink-300), var(--pink-500), var(--lavender-400), var(--pink-500), var(--pink-300));
+  background-size: 200% 100%;
+  animation: gradient-shift 4s ease infinite;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform var(--cems-transition-base);
+}
+
+.cems-pink-card:hover {
+  border-color: var(--pink-300);
+  transform: translateY(-4px);
+  box-shadow: var(--cems-shadow-card-hover);
+}
+
+.cems-pink-card:hover::before {
+  transform: scaleX(1);
+}
+
+/* ===== Role Selection Cards ===== */
+.cems-role-select-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--cems-space-6);
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.cems-role-select-card {
+  position: relative;
+  background: var(--cems-bg-card);
+  border: 2px solid var(--cems-border-soft);
+  border-radius: var(--cems-radius-2xl);
+  padding: var(--cems-space-10) var(--cems-space-6) var(--cems-space-8);
+  text-align: center;
+  cursor: pointer;
+  transition: all var(--cems-bounce);
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 380px;
+  justify-content: center;
+}
+
+.cems-role-select-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--cems-radius-2xl);
+  opacity: 0;
+  transition: opacity var(--cems-transition-base);
+  pointer-events: none;
+}
+
+.cems-role-select-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: var(--cems-shadow-xl), 0 0 60px rgba(236, 72, 153, 0.15);
+  border-color: var(--pink-400);
+}
+
+.cems-role-select-card:hover::after {
+  opacity: 1;
+}
+
+/* Student Card - Soft Pink */
+.cems-role-select-card--student {
+  --role-accent: var(--pink-500);
+  --role-accent-light: var(--pink-200);
+  --role-accent-bg: var(--pink-50);
+  --role-shadow: rgba(236, 72, 153, 0.2);
+}
+
+.cems-role-select-card--student .cems-role-select-icon {
+  background: linear-gradient(135deg, var(--pink-100), var(--pink-200));
+  color: var(--pink-600);
+  box-shadow: 0 8px 24px rgba(236, 72, 153, 0.2);
+}
+
+.cems-role-select-card--student:hover {
+  background: linear-gradient(180deg, var(--pink-50) 0%, #ffffff 60%);
+}
+
+/* Faculty Card - Lavender */
+.cems-role-select-card--faculty {
+  --role-accent: var(--lavender-500);
+  --role-accent-light: var(--lavender-200);
+  --role-accent-bg: var(--lavender-100);
+  --role-shadow: rgba(139, 92, 246, 0.2);
+}
+
+.cems-role-select-card--faculty .cems-role-select-icon {
+  background: linear-gradient(135deg, var(--lavender-100), var(--lavender-200));
+  color: var(--lavender-500);
+  box-shadow: 0 8px 24px rgba(139, 92, 246, 0.2);
+}
+
+.cems-role-select-card--faculty:hover {
+  background: linear-gradient(180deg, #f5f3ff 0%, #ffffff 60%);
+}
+
+/* Organizer Card - Coral/Mint */
+.cems-role-select-card--organizer {
+  --role-accent: var(--mint-300);
+  --role-accent-light: var(--mint-100);
+  --role-accent-bg: #ecfdf5;
+  --role-shadow: rgba(110, 231, 183, 0.25);
+}
+
+.cems-role-select-card--organizer .cems-role-select-icon {
+  background: linear-gradient(135deg, var(--mint-100), var(--mint-200));
+  color: #059669;
+  box-shadow: 0 8px 24px rgba(110, 231, 183, 0.25);
+}
+
+.cems-role-select-card--organizer:hover {
+  background: linear-gradient(180deg, #ecfdf5 0%, #ffffff 60%);
+}
+
+.cems-role-select-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  border-radius: var(--cems-radius-full);
+  margin-bottom: var(--cems-space-5);
+  transition: all var(--cems-bounce);
+  animation: heart-beat 3s ease-in-out infinite;
+}
+
+.cems-role-select-card:hover .cems-role-select-icon {
+  transform: scale(1.1) rotate(-3deg);
+  animation: none;
+}
+
+.cems-role-select-icon svg {
+  width: 36px;
+  height: 36px;
+}
+
+.cems-role-select-title {
+  font-family: var(--cems-font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: var(--cems-space-3);
+  color: var(--cems-text-primary);
+  letter-spacing: -0.02em;
+}
+
+.cems-role-select-desc {
+  font-size: 0.95rem;
+  color: var(--cems-text-secondary);
+  line-height: 1.7;
+  margin-bottom: var(--cems-space-6);
+  flex: 1;
+}
+
+.cems-role-select-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: var(--cems-radius-full);
+  font-size: 0.78rem;
+  font-weight: 600;
+  background: var(--role-accent-bg);
+  color: var(--role-accent);
+  margin-bottom: var(--cems-space-4);
+}
+
+/* ===== Cute Stats Cards ===== */
+.cems-cute-stat {
+  background: var(--cems-bg-card);
+  border: 1.5px solid var(--cems-border-soft);
+  border-radius: var(--cems-radius-xl);
+  padding: var(--cems-space-6);
+  text-align: center;
+  transition: all var(--cems-transition-base);
+  box-shadow: var(--cems-shadow-sm);
+}
+
+.cems-cute-stat:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--cems-shadow-md);
+  border-color: var(--pink-300);
+}
+
+.cems-cute-stat-number {
+  font-family: var(--cems-font-display);
+  font-size: 2.25rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--pink-500), var(--lavender-500));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  line-height: 1.2;
+}
+
+.cems-cute-stat-label {
+  font-size: 0.85rem;
+  color: var(--cems-text-muted);
+  margin-top: var(--cems-space-1);
+  font-weight: 500;
+}
+
+/* ===== Cute Badge ===== */
+.cems-cute-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: var(--cems-radius-full);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.cems-cute-badge-pink {
+  background: var(--pink-100);
+  color: var(--pink-700);
+}
+
+.cems-cute-badge-lavender {
+  background: var(--lavender-100);
+  color: var(--lavender-500);
+}
+
+.cems-cute-badge-mint {
+  background: var(--mint-100);
+  color: #059669;
+}
+
+/* ===== Cute Divider ===== */
+.cems-cute-divider {
+  display: flex;
+  align-items: center;
+  gap: var(--cems-space-4);
+  margin: var(--cems-space-8) 0;
+}
+
+.cems-cute-divider::before,
+.cems-cute-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--pink-300), transparent);
+}
+
+.cems-cute-divider span {
+  font-size: 0.85rem;
+  color: var(--pink-500);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* ===== Cute Section Header ===== */
+.cems-cute-section-header {
+  text-align: center;
+  margin-bottom: var(--cems-space-10);
+}
+
+.cems-cute-section-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 16px;
+  border-radius: var(--cems-radius-full);
+  background: var(--pink-50);
+  border: 1px solid var(--pink-200);
+  color: var(--pink-600);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: var(--cems-space-4);
+}
+
+.cems-cute-section-title {
+  font-family: var(--cems-font-display);
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: var(--cems-text-primary);
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+  margin-bottom: var(--cems-space-3);
+}
+
+.cems-cute-section-title span {
+  background: linear-gradient(135deg, var(--pink-500), var(--lavender-500));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.cems-cute-section-subtitle {
+  font-size: 1.05rem;
+  color: var(--cems-text-secondary);
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.7;
+}
+
+/* ===== Cute Input Styles ===== */
+.cems-cute-input {
+  width: 100%;
+  padding: 14px 18px;
+  border: 2px solid var(--cems-border-light);
+  border-radius: var(--cems-radius-lg);
+  font-family: var(--cems-font-sans);
+  font-size: 0.95rem;
+  color: var(--cems-text-primary);
+  background: var(--cems-bg-card);
+  transition: all var(--cems-transition-base);
+  outline: none;
+}
+
+.cems-cute-input::placeholder {
+  color: var(--cems-text-muted);
+}
+
+.cems-cute-input:focus {
+  border-color: var(--pink-400);
+  box-shadow: 0 0 0 4px rgba(236, 72, 153, 0.1);
+}
+
+.cems-cute-input:hover {
+  border-color: var(--pink-300);
+}
+
+.cems-cute-label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--cems-text-secondary);
+  margin-bottom: var(--cems-space-2);
+}
+
+/* ===== Cute Feature Cards ===== */
+.cems-cute-feature {
+  background: var(--cems-bg-card);
+  border: 1.5px solid var(--cems-border-soft);
+  border-radius: var(--cems-radius-xl);
+  padding: var(--cems-space-6);
+  transition: all var(--cems-transition-base);
+  box-shadow: var(--cems-shadow-sm);
+}
+
+.cems-cute-feature:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--cems-shadow-md);
+  border-color: var(--pink-300);
+}
+
+.cems-cute-feature-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: var(--cems-radius-lg);
+  background: linear-gradient(135deg, var(--pink-50), var(--pink-100));
+  color: var(--pink-600);
+  margin-bottom: var(--cems-space-4);
+  font-size: 1.4rem;
+}
+
+.cems-cute-feature-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--cems-text-primary);
+  margin-bottom: var(--cems-space-2);
+}
+
+.cems-cute-feature-desc {
+  font-size: 0.9rem;
+  color: var(--cems-text-secondary);
+  line-height: 1.6;
+}
+
+/* ===== Cute Hero Section ===== */
+.cems-cute-hero {
+  background: 
+    radial-gradient(circle at 20% 30%, var(--pink-100) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, var(--lavender-100) 0%, transparent 45%),
+    radial-gradient(circle at 50% 100%, var(--pink-50) 0%, transparent 40%),
+    linear-gradient(180deg, var(--pink-50) 0%, var(--cems-bg-primary) 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.cems-cute-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: 
+    radial-gradient(circle at 15% 25%, var(--pink-200) 0%, transparent 30%),
+    radial-gradient(circle at 85% 65%, var(--lavender-200) 0%, transparent 25%);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* ===== Cute Navigation ===== */
+.cems-cute-nav {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  border-bottom: 1.5px solid var(--cems-border-soft);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.cems-cute-nav-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--cems-space-2);
+  font-family: var(--cems-font-display);
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--pink-600);
+  text-decoration: none;
+}
+
+.cems-cute-nav-brand:hover {
+  color: var(--pink-700);
+}
+
+.cems-cute-nav-link {
+  color: var(--cems-text-secondary);
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: color var(--cems-transition-fast);
+  padding: var(--cems-space-2) 0;
+  position: relative;
+}
+
+.cems-cute-nav-link:hover {
+  color: var(--pink-500);
+}
+
+.cems-cute-nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--pink-400), var(--lavender-400));
+  transition: width var(--cems-transition-base);
+  border-radius: 2px;
+}
+
+.cems-cute-nav-link:hover::after {
+  width: 100%;
+}
+
+/* ===== Dashboard Cute Enhancements ===== */
+.cems-dashboard-cute {
+  background: var(--cems-bg-primary);
+  min-height: 100vh;
+}
+
+.cems-dashboard-cute .cems-sidebar {
+  background: linear-gradient(180deg, var(--pink-600) 0%, var(--pink-700) 50%, var(--pink-800) 100%);
+}
+
+.cems-dashboard-cute .nav-item {
+  transition: all var(--cems-transition-fast);
+}
+
+.cems-dashboard-cute .nav-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateX(4px);
+}
+
+.cems-dashboard-cute .nav-item.active {
+  background: rgba(255, 255, 255, 0.15);
+  border-right: 3px solid var(--pink-300);
+}
+
+/* ===== Cute Table ===== */
+.cems-cute-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: var(--cems-bg-card);
+  border-radius: var(--cems-radius-xl);
+  overflow: hidden;
+  border: 1.5px solid var(--cems-border-soft);
+  box-shadow: var(--cems-shadow-sm);
+}
+
+.cems-cute-table th {
+  background: linear-gradient(135deg, var(--pink-50), var(--pink-100));
+  padding: var(--cems-space-4) var(--cems-space-5);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--pink-700);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  text-align: left;
+  border-bottom: 2px solid var(--pink-200);
+}
+
+.cems-cute-table td {
+  padding: var(--cems-space-4) var(--cems-space-5);
+  font-size: 0.9rem;
+  color: var(--cems-text-secondary);
+  border-bottom: 1px solid var(--cems-border-soft);
+  transition: background var(--cems-transition-fast);
+}
+
+.cems-cute-table tr:hover td {
+  background: var(--pink-50);
+}
+
+/* ===== Cute Badge for Tables ===== */
+.cems-cute-table .cems-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: var(--cems-radius-full);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.cems-cute-table .cems-badge-success {
+  background: var(--mint-100);
+  color: #059669;
+}
+
+.cems-cute-table .cems-badge-warning {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.cems-cute-table .cems-badge-danger {
+  background: var(--coral-100);
+  color: var(--pink-700);
+}
+
+.cems-cute-table .cems-badge-info {
+  background: var(--lavender-100);
+  color: var(--lavender-500);
+}
+
+/* ===== Cute Alert/Toast ===== */
+.cems-cute-toast {
+  background: var(--cems-bg-card);
+  border: 1.5px solid var(--cems-border-soft);
+  border-radius: var(--cems-radius-lg);
+  padding: var(--cems-space-4) var(--cems-space-5);
+  display: flex;
+  align-items: center;
+  gap: var(--cems-space-3);
+  box-shadow: var(--cems-shadow-lg);
+  animation: fade-in-up 0.4s ease-out;
+  margin-bottom: var(--cems-space-3);
+}
+
+.cems-cute-toast-success {
+  border-left: 4px solid var(--mint-300);
+}
+
+.cems-cute-toast-danger {
+  border-left: 4px solid var(--pink-400);
+}
+
+.cems-cute-toast-info {
+  border-left: 4px solid var(--lavender-400);
+}
+
+/* ===== Cute Progress Bar ===== */
+.cems-cute-progress {
+  width: 100%;
+  height: 8px;
+  background: var(--pink-100);
+  border-radius: var(--cems-radius-full);
+  overflow: hidden;
+}
+
+.cems-cute-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--pink-400), var(--lavender-400), var(--pink-400));
+  background-size: 200% 100%;
+  border-radius: var(--cems-radius-full);
+  animation: gradient-shift 3s ease infinite;
+  transition: width var(--cems-transition-slow);
+}
+
+/* ===== Cute Empty State ===== */
+.cems-cute-empty {
+  text-align: center;
+  padding: var(--cems-space-12) var(--cems-space-6);
+}
+
+.cems-cute-empty-icon {
+  font-size: 3rem;
+  margin-bottom: var(--cems-space-4);
+  animation: float 3s ease-in-out infinite;
+}
+
+.cems-cute-empty-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--cems-text-primary);
+  margin-bottom: var(--cems-space-2);
+}
+
+.cems-cute-empty-desc {
+  font-size: 0.9rem;
+  color: var(--cems-text-muted);
+  margin-bottom: var(--cems-space-6);
+}
+
+/* ===== Cute Footer ===== */
+.cems-cute-footer {
+  background: linear-gradient(180deg, var(--cems-bg-primary), var(--pink-50));
+  border-top: 1.5px solid var(--cems-border-soft);
+  padding: var(--cems-space-10) 0 var(--cems-space-6);
+}
+
+.cems-cute-footer-text {
+  font-size: 0.85rem;
+  color: var(--cems-text-muted);
+  text-align: center;
+}
+
+/* ===== Cute Category Grid ===== */
+.cems-cute-category-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--cems-space-4);
+}
+
+.cems-cute-category-card {
+  display: flex;
+  align-items: center;
+  gap: var(--cems-space-3);
+  padding: var(--cems-space-4) var(--cems-space-5);
+  background: var(--cems-bg-card);
+  border: 1.5px solid var(--cems-border-soft);
+  border-radius: var(--cems-radius-lg);
+  cursor: pointer;
+  transition: all var(--cems-transition-base);
+  text-decoration: none;
+  color: inherit;
+}
+
+.cems-cute-category-card:hover {
+  border-color: var(--pink-300);
+  transform: translateY(-2px);
+  box-shadow: var(--cems-shadow-md);
+}
+
+.cems-cute-category-emoji {
+  font-size: 1.8rem;
+  line-height: 1;
+}
+
+.cems-cute-category-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.cems-cute-category-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--cems-text-primary);
+}
+
+.cems-cute-category-count {
+  font-size: 0.78rem;
+  color: var(--cems-text-muted);
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 1024px) {
+  .cems-role-select-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .cems-cute-section-title {
+    font-size: 2rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .cems-role-select-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cems-cute-section-title {
+    font-size: 1.75rem;
+  }
+
+  .cems-cute-section-subtitle {
+    font-size: 0.95rem;
+  }
+
+  .cems-role-select-card {
+    min-height: auto;
+    padding: var(--cems-space-8) var(--cems-space-5);
+  }
+
+  .cems-cute-stat-number {
+    font-size: 1.75rem;
+  }
+}
+
+/* ===== Focus States ===== */
+.cems-pink-btn:focus-visible,
+.cems-role-select-card:focus-visible,
+.cems-cute-input:focus-visible,
+.cems-cute-nav-link:focus-visible,
+.cems-cute-category-card:focus-visible,
+.cems-cute-card:focus-visible,
+.cems-cute-feature:focus-visible {
+  outline: 2px solid var(--pink-400);
+  outline-offset: 2px;
+}
+
+/* ===== Reduced Motion ===== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ===== Scrollbar Styling ===== */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--pink-50);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--pink-300);
+  border-radius: var(--cems-radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--pink-400);
+}

@@ -1,0 +1,327 @@
+/* ============================================
+    CEMS MOBILE - Responsive Mobile Styles
+    ============================================ */
+
+/* ===== Desktop: Hide mobile-only elements ===== */
+.mobile-menu-toggle {
+  display: none !important;
+}
+
+/* ===== Global Mobile Fixes ===== */
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+@media (max-width: 768px) {
+  button, a, input, select, textarea, [role="button"] {
+    min-height: 44px;
+  }
+}
+
+/* ===== Mobile Bottom Action Bar ===== */
+.cems-bottom-actions {
+  display: none;
+}
+
+/* ===== App Shell Mobile (logged-in users) ===== */
+@media (max-width: 1024px) {
+  .app-shell {
+    position: relative;
+  }
+
+  .app-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 280px;
+    z-index: 1001;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
+  }
+
+  .app-sidebar.open {
+    transform: translateX(0);
+  }
+
+  .sidebar-scrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+
+  .sidebar-scrim.active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .app-frame {
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
+
+  .app-header {
+    position: sticky;
+    top: 0;
+    z-index: 500;
+  }
+
+  .mobile-menu-toggle {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: none;
+    background: transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    color: inherit;
+  }
+
+  .mobile-menu-toggle:hover {
+    background: rgba(0, 0, 0, 0.05);
+  }
+
+  .global-search {
+    display: none;
+  }
+
+  .app-content {
+    padding: 16px;
+    padding-bottom: 80px;
+  }
+
+  .app-footer {
+    padding: 12px 16px;
+    font-size: 0.75rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .app-content {
+    padding: 12px;
+    padding-bottom: 76px;
+  }
+
+  .app-header {
+    padding: 0 8px;
+  }
+
+  .header-page {
+    display: none;
+  }
+
+  .profile-trigger-copy {
+    display: none;
+  }
+
+  .app-sidebar {
+    width: 100%;
+  }
+}
+
+/* ===== Mobile Bottom Action Bar - Visible ===== */
+@media (max-width: 1024px) {
+  .cems-bottom-actions {
+    display: flex !important;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--cems-bg-primary, #fff);
+    border-top: 1px solid var(--cems-border, #e2e8f0);
+    padding: 12px 16px;
+    gap: 8px;
+    z-index: 1000;
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.06);
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .cems-bottom-actions .cems-btn {
+    flex: 1;
+    max-width: 200px;
+    justify-content: center;
+    min-height: 48px;
+    font-size: 0.85rem;
+  }
+
+    /* App shell pages use sidebar nav, hide bottom bar */
+  body.app-body .cems-bottom-actions {
+    display: none !important;
+  }
+}
+
+/* ===== Touch-Friendly Enhancements ===== */
+@media (max-width: 768px) {
+  .cems-btn {
+    padding: 10px 16px;
+  }
+
+  .cems-btn-lg {
+    padding: 12px 20px;
+    font-size: 0.9rem;
+  }
+
+  .cems-card {
+    border-radius: var(--cems-radius-md);
+  }
+
+  .cems-card-header {
+    padding: 16px;
+  }
+
+  .cems-card-body {
+    padding: 16px;
+  }
+
+  .cems-event-card-meta {
+    gap: 4px;
+    font-size: 0.8rem;
+  }
+}
+
+/* ===== Scroll Prevention ===== */
+body, html {
+  overflow-x: hidden;
+}
+
+img, video, iframe, embed, object {
+  max-width: 100%;
+}
+
+/* ===== Tables Horizontal Scroll ===== */
+.cems-table-container {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.cems-table {
+  min-width: 800px;
+}
+
+/* ===== Full Width Button ===== */
+.cems-btn-full {
+  width: 100%;
+  justify-content: center;
+}
+
+/* ===== Modal Mobile ===== */
+@media (max-width: 640px) {
+  .cems-modal {
+    margin: 8px;
+    max-height: calc(90vh - 16px);
+  }
+}
+
+/* ===== Tabs Horizontal Scroll ===== */
+@media (max-width: 640px) {
+  .cems-tabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .cems-tab {
+    padding: 8px 14px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+  }
+}
+
+/* ===== Landing Page Mobile Fixes ===== */
+@media (max-width: 768px) {
+  .cems-hero {
+    padding: calc(72px + 64px) 0 64px;
+  }
+
+  .cems-hero-title {
+    font-size: 1.75rem;
+  }
+
+  .cems-hero-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .cems-hero-actions .cems-btn {
+    width: 100%;
+    max-width: 280px;
+  }
+
+  .cems-section-title {
+    font-size: 1.25rem;
+  }
+
+  .cems-intro-section {
+    padding: 48px 0;
+  }
+
+  .cems-intro-title {
+    font-size: 1.25rem;
+  }
+
+  .cems-roles-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cems-cta {
+    padding: 20px 16px;
+    border-radius: var(--cems-radius-xl);
+  }
+
+  .cems-cta h2 {
+    font-size: 1.25rem;
+  }
+
+  .cems-cta-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .cems-cta .cems-btn {
+    width: 100%;
+    max-width: 280px;
+  }
+
+  .cems-landing-container {
+    padding: 0 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .cems-hero-title {
+    font-size: 1.5rem;
+  }
+
+  .cems-section-title {
+    font-size: 1.125rem;
+  }
+
+  .cems-intro-title {
+    font-size: 1.25rem;
+  }
+
+  .cems-explore-title {
+    font-size: 1.25rem;
+  }
+
+  .cems-cta h2 {
+    font-size: 1.25rem;
+  }
+
+  .cems-role-card {
+    padding: 20px 16px;
+  }
+
+  .cems-role-icon {
+    font-size: 2.5rem;
+  }
+}

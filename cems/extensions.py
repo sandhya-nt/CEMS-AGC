@@ -1,5 +1,7 @@
 """Flask extensions shared by the application and domain layer."""
 
+import os
+
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_login import LoginManager
@@ -14,5 +16,6 @@ migrate = Migrate()
 limiter = Limiter(
     get_remote_address,
     default_limits=["200 per day", "50 per hour"],
-    storage_uri="memory://",
+    storage_uri=os.getenv("RATE_LIMIT_STORAGE_URI", "memory://"),
+    strategy="fixed-window",
 )

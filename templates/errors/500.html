@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}500 — CEMS{% endblock %}
+{% block content %}
+<div class="narrow-card center">
+  <h1>500</h1>
+  <p>The server encountered an unexpected error. The incident has been logged for review.</p>
+  <a class="btn" href="{{ url_for('landing') }}">Go Home</a>
+</div>
+{% endblock %}

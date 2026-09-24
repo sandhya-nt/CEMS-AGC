@@ -1,0 +1,507 @@
+{% extends "base.html" %}
+{% block title %}{{ action == 'edit' and 'Edit' or 'Create' }} Feedback Form — CEMS{% endblock %}
+{% block breadcrumb %}<a href="{{ url_for('organizer_dashboard') }}">Dashboard</a> / <a href="{{ url_for('organizer_feedback_forms') }}">Feedback Forms</a> / {{ action == 'edit' and 'Edit' or 'Create' }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .cems-fb-question-card {
+    border: 2px dashed var(--cems-border-color);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 12px;
+    background: var(--cems-bg-secondary);
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .cems-fb-question-card:hover { border-color: var(--cems-primary); }
+  .cems-fb-question-card.active { border-color: var(--cems-primary); box-shadow: 0 0 0 3px var(--cems-primary-bg); }
+  .cems-fb-q-type-badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 10px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    background: var(--cems-primary-bg);
+    color: var(--cems-primary);
+  }
+  .cems-fb-option-row { display: flex; gap: 8px; margin-bottom: 6px; }
+  .cems-fb-option-row input { flex: 1; }
+  .cems-fb-drag-handle { cursor: move; color: var(--cems-text-muted); cursor: grab; }
+  .cems-fb-drag-handle:active { cursor: grabbing; }
+  .cems-fb-toolbar-btn { display: inline-flex; align-items: center; gap: 6px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<form method="post" id="fbFormBuilder">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <input type="hidden" name="questions_json" id="questionsJson" value="[]">
+
+  <div class="cems-page-header">
+    <div class="cems-page-header-top">
+      <div>
+        <h1 class="cems-page-title">{{ action == 'edit' and 'Edit Feedback Form' or 'Create Feedback Form' }}</h1>
+        <p class="cems-page-description">{{ event.title }} — {{ event.category }} · {{ event.date.strftime('%d %b %Y') if event.date else '—' }}</p>
+      </div>
+      <div class="cems-page-actions">
+        <a href="{{ url_for('organizer_feedback_forms') }}" class="cems-btn cems-btn-secondary">Back to Forms</a>
+        <button type="submit" class="cems-btn cems-btn-primary" id="fbSubmitBtn">
+          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+          {{ action == 'edit' and 'Update' or 'Create' }} Feedback Form
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="cems-grid cems-grid-cols-2" style="gap: 24px;">
+    <div class="cems-card">
+      <div class="cems-card-header">
+        <div class="cems-card-title">Form Details</div>
+      </div>
+      <div class="cems-card-body">
+        <div class="cems-form-group">
+          <label class="cems-form-label">Form Title *</label>
+          <input type="text" name="form_title" class="cems-form-input"
+                 placeholder="e.g. Post-Event Feedback"
+                 value="{{ template_obj.title if template_obj else '' }}" required>
+        </div>
+
+        <div class="cems-form-group">
+          <label class="cems-form-label">Form Description</label>
+          <textarea name="form_description" class="cems-form-textarea" rows="3"
+                    placeholder="Brief introduction shown to students before they start...">{{ template_obj.description if template_obj else '' }}</textarea>
+        </div>
+
+        {% if template_obj %}
+        <div class="cems-form-group" style="display: flex; align-items: center; gap: 8px;">
+          <input type="checkbox" id="replaceExisting" name="replace_existing" value="on" style="width: auto; display: none;">
+          <label for="replaceExisting" style="font-size: 0.85rem; color: var(--cems-text-secondary);">
+            Replace existing form (updates the current template)
+          </label>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="cems-card">
+      <div class="cems-card-header">
+        <div class="cems-card-title">Add Question</div>
+      </div>
+      <div class="cems-card-body">
+        <div class="cems-form-group">
+          <label class="cems-form-label">Question Type</label>
+          <select id="fbQuestionType" class="cems-form-input">
+            {% for val, label in question_types %}
+            <option value="{{ val }}">{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="cems-form-group">
+          <label class="cems-form-label">Question Label *</label>
+          <input type="text" id="fbQuestionLabel" class="cems-form-input" placeholder="e.g. How was the venue?">
+        </div>
+
+        <div class="cems-form-group" style="display: flex; gap: 12px;">
+          <div style="flex: 1;">
+            <label class="cems-form-label">Required?</label>
+            <select id="fbQuestionRequired" class="cems-form-input">
+              <option value="true">Yes (required)</option>
+              <option value="false" selected>No (optional)</option>
+            </select>
+          </div>
+          <div style="flex: 1;" id="fbRatingScaleGroup" style="display: none;">
+            <label class="cems-form-label">Max Rating</label>
+            <input type="number" id="fbQuestionRatingScale" class="cems-form-input" value="5" min="1" max="10">
+          </div>
+        </div>
+
+        <div class="cems-form-group" id="fbQuestionOptionsGroup" style="display: none;">
+          <label class="cems-form-label">Options</label>
+          <div id="fbQuestionOptionsContainer">
+            <div class="cems-fb-option-row">
+              <input type="text" class="cems-form-input fb-option-input" placeholder="Option 1">
+            </div>
+            <div class="cems-fb-option-row">
+              <input type="text" class="cems-form-input fb-option-input" placeholder="Option 2">
+            </div>
+          </div>
+          <button type="button" id="fbAddOptionBtn" class="cems-btn cems-btn-secondary cems-btn-sm" style="margin-top: 8px;">
+            + Add Option
+          </button>
+        </div>
+
+        <div class="cems-form-group">
+          <button type="button" id="fbAddQuestionBtn" class="cems-btn cems-btn-secondary" style="width: 100%;">
+            + Add Question
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Questions List -->
+  <div class="cems-card" style="margin-top: 24px;">
+    <div class="cems-card-header">
+      <div class="cems-card-title">Questions (drag to reorder)</div>
+      <div class="cems-page-actions">
+        <span id="fbQuestionCount" style="font-size: 0.85rem; color: var(--cems-text-muted);">0 questions</span>
+      </div>
+    </div>
+    <div class="cems-card-body">
+      <div id="fbQuestionsContainer">
+        {% if template_obj %}
+        {% for q in template_obj.questions %}
+        <div class="cems-fb-question-card" data-qid="{{ q.id }}" data-index="{{ loop.index0 }}"
+             data-type="{{ q.question_type }}">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+            <span class="cems-fb-q-type-badge">{{ question_types|selectattr('1')|list|select('eq', q.question_type)|first if false else q.question_type }}</span>
+            <span class="cems-fb-drag-handle" title="Drag to reorder">≡</span>
+          </div>
+          <div style="font-weight: 600; margin-bottom: 6px;">{{ q.label }}</div>
+          <div style="font-size: 0.8rem; color: var(--cems-text-muted);">
+            Type: {{ q.question_type }} · Required: {{ 'Yes' if q.required else 'No' }}
+            {% if q.question_type in ('rating_stars', 'rating_number', 'nps') %}· Max: {{ q.rating_scale }}{% endif %}
+            {% if q.question_type in ('select', 'radio', 'checkbox') %}· Options: {{ q.get_options()|length }}{% endif %}
+          </div>
+          <div style="margin-top: 8px;" class="cems-table-actions">
+            <button type="button" class="cems-btn cems-btn-sm cems-btn-secondary fb-edit-q-btn" data-qid="{{ q.id }}" title="Edit">Edit</button>
+            <button type="button" class="cems-btn cems-btn-sm cems-btn-danger fb-delete-q-btn" data-qid="{{ q.id }}" title="Delete">Delete</button>
+          </div>
+        </div>
+        {% endfor %}
+        {% endif %}
+      </div>
+      <div id="fbEmptyState" style="text-align: center; padding: 32px; color: var(--cems-text-muted);"
+           {% if template_obj and template_obj.questions %}style="display: none;"{% endif %}>
+        <div style="font-size: 2rem; margin-bottom: 8px;">📝</div>
+        <div>No questions added yet. Create your first question on the left.</div>
+      </div>
+    </div>
+  </div>
+</form>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+  const questionTypes = {{ question_types|tojson }};
+  let questionCounter = 0;
+  const questions = [];
+
+  // Load existing questions if editing
+  {% if template_obj %}
+  {% for q in template_obj.questions %}
+  questions.push({
+    id: {{ q.id|tojson }},
+    label: {{ q.label|tojson }},
+    question_type: {{ q.question_type|tojson }},
+    required: {{ q.required|tojson }},
+    options_json: {{ q.options_json|tojson }},
+    rating_scale: {{ q.rating_scale|tojson }},
+    position: {{ q.position|tojson }},
+  });
+  {% endfor %}
+  {% endif %}
+
+  const typeSelect = document.getElementById('fbQuestionType');
+  const labelInput = document.getElementById('fbQuestionLabel');
+  const requiredSelect = document.getElementById('fbQuestionRequired');
+  const ratingScaleInput = document.getElementById('fbQuestionRatingScale');
+  const optionsGroup = document.getElementById('fbQuestionOptionsGroup');
+  const optionsContainer = document.getElementById('fbQuestionOptionsContainer');
+  const addOptionBtn = document.getElementById('fbAddOptionBtn');
+  const addQuestionBtn = document.getElementById('fbAddQuestionBtn');
+  const questionsContainer = document.getElementById('fbQuestionsContainer');
+  const emptyState = document.getElementById('fbEmptyState');
+  const questionCountSpan = document.getElementById('fbQuestionCount');
+  const submitBtn = document.getElementById('fbSubmitBtn');
+  const formBuilder = document.getElementById('fbFormBuilder');
+
+  function updateTypeSpecificUI() {
+    const type = typeSelect.value;
+    const isRating = ['rating_stars', 'rating_number', 'nps'].includes(type);
+    const needsOptions = ['select', 'radio', 'checkbox'].includes(type);
+    ratingScaleInput.parentElement.style.display = isRating ? 'block' : 'none';
+    optionsGroup.style.display = needsOptions ? 'block' : 'none';
+  }
+
+  typeSelect.addEventListener('change', updateTypeSpecificUI);
+  updateTypeSpecificUI();
+
+  addOptionBtn.addEventListener('click', function() {
+    const row = document.createElement('div');
+    row.className = 'cems-fb-option-row';
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'cems-form-input fb-option-input';
+    input.placeholder = 'Option ' + (optionsContainer.children.length + 1);
+    row.appendChild(input);
+    const rmBtn = document.createElement('button');
+    rmBtn.type = 'button';
+    rmBtn.className = 'cems-btn cems-btn-sm cems-btn-secondary';
+    rmBtn.textContent = '×';
+    rmBtn.title = 'Remove option';
+    rmBtn.onclick = function() { row.remove(); };
+    row.appendChild(rmBtn);
+    optionsContainer.appendChild(row);
+  });
+
+  function resetEditor() {
+    typeSelect.value = 'rating_stars';
+    labelInput.value = '';
+    requiredSelect.value = 'false';
+    ratingScaleInput.value = '5';
+    optionsContainer.innerHTML = '';
+    addOptionInput('Option 1');
+    addOptionInput('Option 2');
+    updateTypeSpecificUI();
+  }
+
+  function addOptionInput(placeholder) {
+    const row = document.createElement('div');
+    row.className = 'cems-fb-option-row';
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'cems-form-input fb-option-input';
+    input.placeholder = placeholder;
+    row.appendChild(input);
+    const rmBtn = document.createElement('button');
+    rmBtn.type = 'button';
+    rmBtn.className = 'cems-btn cems-btn-sm cems-btn-secondary';
+    rmBtn.textContent = '×';
+    rmBtn.title = 'Remove option';
+    rmBtn.onclick = function() { row.remove(); };
+    row.appendChild(rmBtn);
+    optionsContainer.appendChild(row);
+  }
+
+  function getOptionsFromUI() {
+    return Array.from(optionsContainer.querySelectorAll('.fb-option-input'))
+      .map(i => i.value.trim())
+      .filter(v => v);
+  }
+
+  addQuestionBtn.addEventListener('click', function() {
+    const label = labelInput.value.trim();
+    if (!label) { alert('Please enter a question label.'); return; }
+    const qtype = typeSelect.value;
+    const opts = getOptionsFromUI();
+
+    if (['select', 'radio', 'checkbox'].includes(qtype) && opts.length < 2) {
+      alert('Please provide at least 2 options for ' + typeSelect.options[typeSelect.selectedIndex].text + '.');
+      return;
+    }
+
+    const q = {
+      id: null,
+      label: label,
+      question_type: qtype,
+      required: requiredSelect.value === 'true',
+      options_json: opts,
+      rating_scale: parseInt(ratingScaleInput.value) || 5,
+      position: questions.length,
+    };
+    questions.push(q);
+    renderQuestions();
+    resetEditor();
+  });
+
+  function getTypeLabel(qtype) {
+    for (var i = 0; i < questionTypes.length; i++) {
+      if (questionTypes[i][0] === qtype) return questionTypes[i][1];
+    }
+    return qtype;
+  }
+
+  function renderQuestions() {
+    questionCountSpan.textContent = questions.length + ' question' + (questions.length === 1 ? '' : 's');
+    questionsContainer.innerHTML = '';
+    if (questions.length === 0) {
+      emptyState.style.display = 'block';
+      return;
+    }
+    emptyState.style.display = 'none';
+
+    questions.forEach(function(q, idx) {
+      const card = document.createElement('div');
+      card.className = 'cems-fb-question-card';
+      card.draggable = true;
+      card.dataset.qid = q.id || ('new_' + idx);
+      card.dataset.index = idx;
+      card.dataset.type = q.question_type;
+      card.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+          <span class="cems-fb-q-type-badge">${getTypeLabel(q.question_type)}</span>
+          <span class="cems-fb-drag-handle" title="Drag to reorder">≡</span>
+        </div>
+        <div style="font-weight: 600; margin-bottom: 6px;">${escapeHtml(q.label)}</div>
+        <div style="font-size: 0.8rem; color: var(--cems-text-muted);">
+          Type: ${getTypeLabel(q.question_type)} · Required: ${q.required ? 'Yes' : 'No'}
+          ${['rating_stars','rating_number','nps'].includes(q.question_type) ? '· Max: ' + q.rating_scale : ''}
+          ${['select','radio','checkbox'].includes(q.question_type) ? '· Options: ' + (q.options_json||[]).length : ''}
+        </div>
+        <div style="margin-top: 8px;" class="cems-table-actions">
+          <button type="button" class="cems-btn cems-btn-sm cems-btn-secondary" onclick="editQuestion(${idx})" title="Edit">Edit</button>
+          <button type="button" class="cems-btn cems-btn-sm cems-btn-danger" onclick="deleteQuestion(${idx})" title="Delete">Delete</button>
+        </div>
+      `;
+      questionsContainer.appendChild(card);
+    });
+  }
+
+  function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, function(c) {
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  window.editQuestion = function(idx) {
+    const q = questions[idx];
+    typeSelect.value = q.question_type;
+    labelInput.value = q.label;
+    requiredSelect.value = q.required ? 'true' : 'false';
+    ratingScaleInput.value = q.rating_scale || 5;
+    optionsContainer.innerHTML = '';
+    if (q.options_json && Array.isArray(q.options_json)) {
+      q.options_json.forEach(function(opt) { addOptionInput(opt); });
+    }
+    if (!q.options_json || !q.options_json.length) {
+      addOptionInput('Option 1');
+      addOptionInput('Option 2');
+    }
+    updateTypeSpecificUI();
+    // Change add button behaviour for editing
+    addQuestionBtn.onclick = function() {
+      const label = labelInput.value.trim();
+      if (!label) { alert('Please enter a question label.'); return; }
+      const qtype = typeSelect.value;
+      const opts = getOptionsFromUI();
+      if (['select', 'radio', 'checkbox'].includes(qtype) && opts.length < 2) {
+        alert('Please provide at least 2 options.'); return;
+      }
+      q.label = label;
+      q.question_type = qtype;
+      q.required = requiredSelect.value === 'true';
+      q.options_json = opts;
+      q.rating_scale = parseInt(ratingScaleInput.value) || 5;
+      questions[idx] = q;
+      renderQuestions();
+      resetEditor();
+      addQuestionBtn.onclick = addQuestionHandler;
+    };
+  };
+
+  function addQuestionHandler() {
+    const label = labelInput.value.trim();
+    if (!label) { alert('Please enter a question label.'); return; }
+    const qtype = typeSelect.value;
+    const opts = getOptionsFromUI();
+    if (['select', 'radio', 'checkbox'].includes(qtype) && opts.length < 2) {
+      alert('Please provide at least 2 options.'); return;
+    }
+    const q = {
+      id: null,
+      label: label,
+      question_type: qtype,
+      required: requiredSelect.value === 'true',
+      options_json: opts,
+      rating_scale: parseInt(ratingScaleInput.value) || 5,
+      position: questions.length,
+    };
+    questions.push(q);
+    renderQuestions();
+    resetEditor();
+  }
+  addQuestionBtn.onclick = addQuestionHandler;
+
+  window.deleteQuestion = function(idx) {
+    if (!confirm('Remove this question?')) return;
+    questions.splice(idx, 1);
+    // Re-number positions
+    questions.forEach(function(q, i) { q.position = i; });
+    renderQuestions();
+  };
+
+  // Drag-and-drop reorder
+  let dragSrc = null;
+  questionsContainer.addEventListener('dragstart', function(e) {
+    dragSrc = e.target.closest('.cems-fb-question-card');
+    if (dragSrc) dragSrc.classList.add('active');
+  });
+  questionsContainer.addEventListener('dragend', function(e) {
+    if (dragSrc) dragSrc.classList.remove('active');
+    dragSrc = null;
+  });
+  questionsContainer.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    const afterElement = getDragAfterElement(this, e.clientY);
+    if (afterElement == null) {
+      this.appendChild(dragSrc);
+    } else {
+      this.insertBefore(dragSrc, afterElement);
+    }
+  });
+  questionsContainer.addEventListener('dragend', function(e) {
+    // Re-sync order from DOM
+    const cards = questionsContainer.querySelectorAll('.cems-fb-question-card');
+    const newOrder = [];
+    cards.forEach(function(card, i) {
+      const qid = card.dataset.qid;
+      const q = questions.find(function(qq) { return (qq.id != null ? String(qq.id) : 'new_' + questions.indexOf(qq)) === qid; });
+      if (q) newOrder.push(q);
+    });
+    // Keep any items not in DOM order
+    questions.forEach(function(q) {
+      const qid = q.id != null ? String(q.id) : 'new_' + questions.indexOf(q);
+      const found = newOrder.find(function(o) { return (o.id != null ? String(o.id) : 'new_' + questions.indexOf(o)) === qid; });
+      if (!found) newOrder.push(q);
+    });
+    questions.length = 0;
+    newOrder.forEach(function(q, i) { q.position = i; questions.push(q); });
+    renderQuestions();
+  });
+
+  function getDragAfterElement(container, y) {
+    const draggableElements = container.querySelectorAll('.cems-fb-question-card:not(.active):not(:empty)');
+    let closestElement = null;
+    let closestOffset = 0;
+    for (let i = 0; i < draggableElements.length; i++) {
+      const element = draggableElements[i];
+      // Skip the one being dragged
+      if (element === dragSrc) continue;
+      const box = element.getBoundingClientRect();
+      const offset = y - box.top - box.height / 2;
+      if (offset < 0 && offset > closestOffset) {
+        closestOffset = offset;
+        closestElement = element;
+      }
+    }
+    return closestElement;
+  }
+
+  // Serialize and submit
+  formBuilder.addEventListener('submit', function(e) {
+    if (questions.length === 0) {
+      if (!confirm('You have no questions. Save anyway?')) {
+        e.preventDefault();
+        return;
+      }
+    }
+    // Final position re-numbering
+    questions.forEach(function(q, i) { q.position = i; });
+    document.getElementById('questionsJson').value = JSON.stringify(questions);
+  });
+
+  // Initialize
+  resetEditor();
+  if (questions.length > 0) {
+    resetEditor();
+    const savedQuestions = questions.slice();
+    questions.length = 0;
+    savedQuestions.forEach(function(q) { questions.push(q); });
+    renderQuestions();
+  }
+})();
+</script>
+{% endblock %}

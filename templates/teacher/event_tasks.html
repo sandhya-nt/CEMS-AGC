@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+{% block title %}Tasks — CEMS{% endblock %}
+{% block breadcrumb %}Tasks{% endblock %}
+{% block content %}
+<div class="cems-page-header">
+  <div class="cems-page-header-top">
+    <div>
+      <h1 class="cems-page-title">Event Tasks</h1>
+      <p class="cems-page-description">Manage tasks for your assigned events.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Event Selector -->
+<div class="cems-card" style="margin-bottom: 24px;">
+  <div class="cems-card-body">
+    <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
+      <div style="flex: 1; min-width: 240px;">
+        <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--cems-text-secondary);">Select Event</label>
+        <select id="task-event-select" style="width:100%; padding: 10px 12px; border: 1px solid var(--cems-border); border-radius: 8px; font-size: 0.95rem;">
+          <option value="">All Assigned Events</option>
+          {% for event in events %}
+          <option value="{{ event.id }}">{{ event.title }} ({{ event.date.strftime('%d %b %Y') if event.date else '—' }})</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div style="align-self: flex-end;">
+        <button id="btn-load-tasks" class="cems-btn cems-btn-primary">Load Tasks</button>
+      </div>
+      <div style="align-self: flex-end;">
+        <a href="#" id="btn-new-task" class="cems-btn cems-btn-secondary" onclick="openTaskModal(); return false;">+ New Task</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Task Board -->
+<div id="tasks-section" style="display: none;">
+  <div class="cems-grid" style="grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 24px;">
+    <div class="cems-card">
+      <div class="cems-card-body">
+        <h3 style="font-size: 0.9rem; color: var(--cems-text-muted); margin-bottom: 8px;">⏳ Pending</h3>
+        <div id="pending-count" class="task-count" style="font-size: 2rem; font-weight: 700; color: var(--cems-warning);">0</div>
+        <div id="pending-tasks" class="task-list"></div>
+      </div>
+    </div>
+    <div class="cems-card">
+      <div class="cems-card-body">
+        <h3 style="font-size: 0.9rem; color: var(--cems-text-muted); margin-bottom: 8px;">🔄 In Progress</h3>
+        <div id="inprogress-count" class="task-count" style="font-size: 2rem; font-weight: 700; color: #6366f1;">0</div>
+        <div id="inprogress-tasks" class="task-list"></div>
+      </div>
+    </div>
+    <div class="cems-card">
+      <div class="cems-card-body">
+        <h3 style="font-size: 0.9rem; color: var(--cems-text-muted); margin-bottom: 8px;">✅ Completed</h3>
+        <div id="completed-count" class="task-count" style="font-size: 2rem; font-weight: 700; color: var(--cems-success);">0</div>
+        <div id="completed-tasks" class="task-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Task Table -->
+  <div class="cems-card">
+    <div class="cems-card-header">
+      <div class="cems-card-title">All Tasks</div>
+    </div>
+    <div class="cems-card-body" style="padding:0;">
+      <div class="cems-overflow-x-auto">
+        <table class="cems-table">
+          <thead>
+            <tr><th>Title</th><th>Event</th><th>Priority</th><th>Assigned To</th><th>Due Date</th><th>Status</th><th>Actions</th></tr>
+          </thead>
+          <tbody id="tasks-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- New Task Modal -->
+<div class="modal-backdrop" id="task-modal" role="dialog" aria-modal="true" aria-hidden="true">
+  <div class="modal-card" style="max-width: 560px;">
+    <div class="modal-card-header">
+      <h3>Create New Task</h3>
+      <button type="button" class="modal-close" onclick="closeTaskModal()">×</button>
+    </div>
+    <form id="task-form" method="post" action="#">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="modal-card-body">
+        <div class="form-group">
+          <label>Task Title <span style="color: red;">*</span></label>
+          <input type="text" id="task-title" name="title" required placeholder="Enter task title">
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <textarea id="task-description" name="description" rows="3" placeholder="Task description"></textarea>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label>Priority</label>
+            <select id="task-priority" name="priority">
+              <option value="low">Low</option>
+              <option value="medium" selected>Medium</option>
+              <option value="high">High</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Due Date</label>
+            <input type="datetime-local" id="task-due" name="due_date">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Assigned To</label>
+          <input type="text" id="task-assignee" name="assignee" placeholder="Name or email">
+        </div>
+        <input type="hidden" id="task-event-id" name="event_id">
+      </div>
+      <div class="modal-card-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeTaskModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Create Task</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function openTaskModal() {
+  var select = document.getElementById('task-event-select');
+  document.getElementById('task-event-id').value = select.value || '';
+  document.getElementById('task-modal').classList.remove('hidden');
+  document.getElementById('task-modal').setAttribute('aria-hidden', 'false');
+}
+function closeTaskModal() {
+  document.getElementById('task-modal').classList.add('hidden');
+  document.getElementById('task-modal').setAttribute('aria-hidden', 'true');
+}
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('btn-load-tasks').addEventListener('click', loadTasks);
+  document.getElementById('task-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    createTask();
+  });
+});
+
+function loadTasks() {
+  var eventId = document.getElementById('task-event-select').value;
+  fetch('/api/teacher/tasks?' + (eventId ? 'event_id=' + eventId : ''))
+    .then(r => r.json())
+    .then(data => {
+      if (!data.success) return;
+      renderTasks(data.tasks, data.events);
+    })
+    .catch(err => console.error('Failed to load tasks:', err));
+}
+
+function renderTasks(tasks, events) {
+  var eventMap = {};
+  events.forEach(function(e) { eventMap[e.id] = e.title; });
+
+  var pending = tasks.filter(function(t) { return t.status === 'pending'; });
+  var inprog = tasks.filter(function(t) { return t.status === 'in_progress'; });
+  var done = tasks.filter(function(t) { return t.status === 'completed'; });
+
+  document.getElementById('pending-count').textContent = pending.length;
+  document.getElementById('inprogress-count').textContent = inprog.length;
+  document.getElementById('completed-count').textContent = done.length;
+
+  ['pending', 'in_progress', 'completed'].forEach(function(status) {
+    var container = document.getElementById(status.replace('_','') === 'inprogress' ? 'inprogress-tasks' : status + '-tasks');
+    var items = status === 'in_progress' ? inprog : (status === 'pending' ? pending : done);
+    container.innerHTML = items.map(function(t) {
+      return '<div style="background: var(--cems-card-bg); padding: 8px; border-radius: 6px; margin-bottom: 6px; font-size: 0.85rem; border-left: 3px solid ' +
+        (t.priority === 'high' ? 'var(--cems-danger)' : t.priority === 'medium' ? 'var(--cems-warning)' : 'var(--cems-success)') + ';">' +
+        esc(t.title) + '<br><small style="color: var(--cems-text-muted);">' + (eventMap[t.event_id] || '—') + '</small></div>';
+    }).join('');
+  });
+
+  var tbody = document.getElementById('tasks-tbody');
+  tbody.innerHTML = tasks.map(function(t) {
+    var priBadge = t.priority === 'high' ? 'cems-badge-danger' : t.priority === 'medium' ? 'cems-badge-warning' : 'cems-badge-success';
+    var statusBadge = t.status === 'completed' ? 'cems-badge-success' : t.status === 'in_progress' ? 'cems-badge-info' : 'cems-badge-warning';
+    return '<tr>' +
+      '<td><strong>' + esc(t.title) + '</strong><br><small>' + (esc(t.description) || '') + '</small></td>' +
+      '<td>' + (eventMap[t.event_id] || '—') + '</td>' +
+      '<td><span class="cems-badge ' + priBadge + '">' + t.priority + '</span></td>' +
+      '<td>' + esc(t.assignee_name || '—') + '</td>' +
+      '<td>' + (t.due_date || '—') + '</td>' +
+      '<td><span class="cems-badge ' + statusBadge + '">' + t.status.replace('_',' ') + '</span></td>' +
+      '<td><button onclick="updateTaskStatus(' + t.id + ')" class="cems-btn cems-btn-sm cems-btn-secondary">' +
+        (t.status === 'completed' ? 'Reopen' : 'Mark Done') + '</button></td>' +
+    '</tr>';
+  }).join('');
+
+  document.getElementById('tasks-section').style.display = '';
+}
+
+function createTask() {
+  var form = document.getElementById('task-form');
+  var data = {
+    title: document.getElementById('task-title').value,
+    description: document.getElementById('task-description').value,
+    priority: document.getElementById('task-priority').value,
+    due_date: document.getElementById('task-due').value,
+    assignee: document.getElementById('task-assignee').value,
+    event_id: document.getElementById('task-event-id').value,
+  };
+  fetch('/api/teacher/tasks', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) { closeTaskModal(); loadTasks(); flash('Task created.', 'success'); }
+      else { flash(data.message || 'Failed to create task.', 'danger'); }
+    });
+}
+
+function updateTaskStatus(taskId) {
+  fetch('/api/teacher/tasks/' + taskId, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({action: 'toggle_status'}) })
+    .then(r => r.json())
+    .then(data => { if (data.success) loadTasks(); });
+}
+
+function esc(str) { if (!str) return ''; var d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
+function flash(msg, type) { console.log(type + ': ' + msg); }
+</script>
+{% endblock %}

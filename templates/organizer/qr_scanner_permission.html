@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+{% block title %}Camera Permission — QR Scanner{% endblock %}
+{% block breadcrumb %}<a href="{{ url_for('checkin') }}">Check-in</a> / Camera Permission{% endblock %}
+
+{% block extra_css %}
+<style>
+  .cems-permission-container {
+    max-width: 480px;
+    margin: 60px auto;
+    background: var(--cems-bg-primary);
+    border: 1px solid var(--cems-border);
+    border-radius: var(--cems-radius-xl);
+    box-shadow: var(--cems-shadow-xl);
+    padding: 40px;
+    text-align: center;
+  }
+  .cems-permission-icon {
+    width: 96px;
+    height: 96px;
+    margin: 0 auto 24px;
+    background: var(--cems-info-bg);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .cems-permission-icon svg {
+    width: 48px;
+    height: 48px;
+    stroke: var(--cems-info-dark);
+  }
+  .cems-permission-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--cems-text-primary);
+    margin-bottom: 12px;
+  }
+  .cems-permission-body {
+    color: var(--cems-text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin-bottom: 28px;
+  }
+  .cems-permission-body b {
+    color: var(--cems-text-primary);
+    font-weight: 600;
+  }
+  .cems-permission-dialog {
+    background: var(--cems-bg-secondary);
+    border: 1px solid var(--cems-border);
+    border-radius: var(--cems-radius-lg);
+    padding: 20px;
+    margin: 24px 0;
+    text-align: left;
+  }
+  .cems-permission-dialog .dialog-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .cems-permission-dialog .dialog-icon {
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+    color: var(--cems-info);
+  }
+  .cems-permission-dialog .dialog-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--cems-text-primary);
+  }
+  .cems-permission-dialog .dialog-text {
+    font-size: 0.85rem;
+    color: var(--cems-text-secondary);
+  }
+  .cems-permission-options {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 24px;
+  }
+  .cems-permission-options .cems-btn {
+    flex: 1;
+    min-width: 160px;
+  }
+  .cems-permission-note {
+    margin-top: 16px;
+    font-size: 0.8rem;
+    color: var(--cems-text-muted);
+  }
+  .cems-permission-denied {
+    display: none;
+  }
+  .cems-denied-msg {
+    background: var(--cems-danger-bg);
+    border: 1px solid var(--cems-danger);
+    border-radius: var(--cems-radius-lg);
+    padding: 24px;
+    margin-top: 20px;
+    text-align: center;
+  }
+  .cems-denied-msg svg {
+    width: 40px;
+    height: 40px;
+    stroke: var(--cems-danger);
+  }
+  @media (max-width: 560px) {
+    .cems-permission-container { padding: 28px 20px; margin: 20px 8px; }
+    .cems-permission-options .cems-btn { flex: 1; min-width: 120px; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="cems-permission-container">
+  <!-- Permission Request State -->
+  <div id="permissionRequest">
+    <div class="cems-permission-icon">
+      <svg fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 14l14-6V8a6 6 0 01-6-6H8a6 6 0 010 12h8v8a6 6 0 01-6 6H4a6 6 0 010-12V8a6 6 0 016-6z"></path></svg>
+    </div>
+
+    <h1 class="cems-permission-title">📷 Camera Access Required</h1>
+
+    <div class="cems-permission-body">
+      <p><b>http://127.0.0.1:5000</b> wants to <b>Use available cameras</b> (1).</p>
+      <p>Allow this site to access your camera so the QR scanner can read participant ticket codes.</p>
+    </div>
+
+    <!-- Simulated Browser Permission Dialog -->
+    <div class="cems-permission-dialog">
+      <div class="dialog-header">
+        <div class="dialog-icon">
+          <svg fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 2l4 6h-3v8h-2V8H8z"/><path d="M4 2h16v4H4zM6 22h12v-6H6z"/></svg>
+        </div>
+        <div class="dialog-title">Camera Permission</div>
+      </div>
+      <div class="dialog-text">
+        <b>http://127.0.0.1:5000</b> wants to <b>use your camera</b> to scan QR codes for attendance check-in.
+        This will only be used during the check-in process.
+      </div>
+    </div>
+
+    <div class="cems-permission-options">
+      <button type="button" class="cems-btn cems-btn-success" onclick="requestPermission()">
+        Allow while visiting the site
+      </button>
+      <button type="button" class="cems-btn cems-btn-secondary" onclick="denyPermission()">
+        Never allow
+      </button>
+    </div>
+  </div>
+
+  <!-- Permission Granted State (hidden, shown after allow) -->
+  <div id="permissionGranted" style="display: none;">
+    <div class="cems-permission-icon" style="background: var(--cems-success-bg);">
+      <svg fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 2l4 6h-3v8h-2V8H8z"/><path d="M4 2h16v4H4zM6 22h12v-6H6z"/></svg><path d="M9 12l2 2 4-4"></path></svg>
+    </div>
+    <h1 class="cems-permission-title" style="color: var(--cems-success-dark);">✅ Permission Granted</h1>
+    <div class="cems-permission-body">
+      Camera access has been granted. You will be redirected to the QR scanner.
+    </div>
+  </div>
+
+  <!-- Permission Denied State -->
+  <div id="permissionDenied" class="cems-permission-denied">
+    <div class="cems-denied-msg">
+      <svg fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+      <div style="margin-top: 12px; font-weight: 600; color: var(--cems-danger-dark);">Camera access was denied</div>
+    </div>
+    <div class="cems-permission-note" style="margin-top: 20px;">
+      You can still use <a href="{{ url_for('checkin') }}" style="color: var(--cems-info);">manual ticket code entry</a> to mark attendance.
+    </div>
+    <a href="{{ url_for('checkin') }}" class="cems-btn cems-btn-secondary" style="margin-top: 16px;">← Back to Check-in</a>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+  async function requestPermission() {
+    const grantedEl = document.getElementById('permissionGranted');
+    const requestEl = document.getElementById('permissionRequest');
+
+    // Attempt to access the camera via the MediaDevices API
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+      // Success: stop the stream immediately (we just needed permission)
+      const tracks = stream.getTracks();
+      tracks.forEach(track => track.stop());
+
+      requestEl.style.display = 'none';
+      grantedEl.style.display = 'block';
+
+      // Redirect to the QR scanner screen
+      setTimeout(function() {
+        window.location.href = "{{ url_for('qr_scanner') }}";
+      }, 1500);
+    } catch (err) {
+      // If getUserMedia fails (e.g. HTTPS required, or permission denied at browser level),
+      // still redirect to QR scanner which has its own error handling
+      console.warn('Camera permission via API failed:', err);
+      requestEl.style.display = 'none';
+      grantedEl.style.display = 'block';
+
+      setTimeout(function() {
+        window.location.href = "{{ url_for('qr_scanner') }}";
+      }, 1500);
+    }
+  }
+
+  function denyPermission() {
+    document.getElementById('permissionRequest').style.display = 'none';
+    document.getElementById('permissionDenied').style.display = 'block';
+  }
+
+  // Expose to global scope
+  window.requestPermission = requestPermission;
+  window.denyPermission = denyPermission;
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% block title %}QR Check-in — CEMS{% endblock %}
+{% block breadcrumb %}QR Check-in{% endblock %}
+
+{% block content %}
+<div class="cems-page-header">
+  <div class="cems-page-header-top">
+    <div>
+      <h1 class="cems-page-title">QR Check-in</h1>
+      <p class="cems-page-description">Scan QR codes to check in students for your assigned events.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Event Selector -->
+<div class="cems-card" style="margin-bottom: 24px;">
+  <div class="cems-card-body">
+    <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
+      <div style="flex: 1; min-width: 240px;">
+        <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--cems-text-secondary);">Select Event</label>
+        <select id="checkin-event-select" style="width:100%; padding: 10px 12px; border: 1px solid var(--cems-border); border-radius: 8px; font-size: 0.95rem;">
+          <option value="">Select an event</option>
+          {% for event in events %}
+          <option value="{{ event.id }}">{{ event.title }} ({{ event.date.strftime('%d %b %Y') if event.date else '—' }})</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div style="align-self: flex-end;">
+        <button id="btn-start-checkin" class="cems-btn cems-btn-primary">Start Check-in</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Check-in Panel -->
+<div id="checkin-panel" style="display: none;">
+  <div class="cems-card" style="margin-bottom: 24px;">
+    <div class="cems-card-header">
+      <div class="cems-card-title">Check-in Dashboard</div>
+      <span id="checkin-event-name" style="font-size:0.85rem; color:var(--cems-text-muted);"></span>
+    </div>
+    <div class="cems-card-body">
+      <div class="cems-grid cems-grid-cols-4" style="margin-bottom: 24px;" id="checkin-stats">
+        <div class="cems-stat-card">
+          <div class="cems-stat-icon success">
+            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+          </div>
+          <div class="cems-stat-content">
+            <div class="cems-stat-value" id="stat-checkedin">0</div>
+            <div class="cems-stat-label">Checked In</div>
+          </div>
+        </div>
+        <div class="cems-stat-card">
+          <div class="cems-stat-icon neutral">
+            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+          </div>
+          <div class="cems-stat-content">
+            <div class="cems-stat-value" id="stat-pending-checkin">0</div>
+            <div class="cems-stat-label">Pending</div>
+          </div>
+        </div>
+        <div class="cems-stat-card">
+          <div class="cems-stat-icon warning">
+            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          </div>
+          <div class="cems-stat-content">
+            <div class="cems-stat-value" id="stat-late">0</div>
+            <div class="cems-stat-label">Late</div>
+          </div>
+        </div>
+        <div class="cems-stat-card">
+          <div class="cems-stat-icon danger">
+            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+          </div>
+          <div class="cems-stat-content">
+            <div class="cems-stat-value" id="stat-absent">0</div>
+            <div class="cems-stat-label">Absent</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- QR Code Area -->
+      <div style="text-align:center; padding:24px; background:var(--cems-bg-secondary); border-radius:8px; margin-bottom:24px;">
+        <div style="font-size:0.85rem; color:var(--cems-text-muted); margin-bottom:12px;">Event QR Code</div>
+        <div id="qr-code-area" style="display:inline-block; padding:16px; background:white; border-radius:8px; border:1px solid var(--cems-border);">
+          <div style="font-size:0.85rem; color:var(--cems-text-muted);">QR code will be generated when an event is selected</div>
+        </div>
+      </div>
+
+      <!-- Attendee List -->
+      <div class="cems-card">
+        <div class="cems-card-header">
+          <div class="cems-card-title">Attendee Check-in</div>
+          <div class="cems-btn-group">
+            <button id="btn-scan-qr" class="cems-btn cems-btn-sm cems-btn-primary">📷 Scan QR</button>
+            <button id="btn-manual-checkin" class="cems-btn cems-btn-sm cems-btn-secondary">Manual Check-in</button>
+          </div>
+        </div>
+        <div class="cems-card-body" style="padding:0;">
+          <div class="cems-overflow-x-auto">
+            <table class="cems-table">
+              <thead>
+                <tr><th>Student</th><th>Email</th><th>Registration Status</th><th>Check-in</th><th>Action</th></tr>
+              </thead>
+              <tbody id="attendee-tbody">
+                <tr><td colspan="5" style="text-align:center; padding:32px; color:var(--cems-text-muted);">Select an event to view attendees</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Check-in Modal -->
+<div id="checkin-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; justify-content:center; align-items:center;">
+  <div class="cems-card" style="width:400px; max-width:90%; margin:auto; z-index:10000;">
+    <div class="cems-card-header">
+      <div class="cems-card-title">Manual Check-in</div>
+      <button onclick="document.getElementById('checkin-modal').style.display='none'" style="background:none; border:none; font-size:1.4rem; cursor:pointer; float:right;">&times;</button>
+    </div>
+    <div class="cems-card-body">
+      <div class="cems-form-group">
+        <label style="display:block; font-size:0.85rem; font-weight:600; margin-bottom:4px;">Student Name or Email</label>
+        <input type="text" id="checkin-student-search" placeholder="Search student..." style="width:100%; padding:10px 12px; border:1px solid var(--cems-border); border-radius:8px; font-size:0.9rem;">
+      </div>
+      <div id="checkin-search-results" style="margin-top:12px;"></div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('btn-start-checkin').addEventListener('click', loadCheckinData);
+});
+
+function loadCheckinData() {
+  var eventId = document.getElementById('checkin-event-select').value;
+  if (!eventId) return;
+  fetch('/api/teacher/attendance/' + eventId)
+    .then(r => r.json())
+    .then(data => {
+      if (!data.success) return;
+      document.getElementById('checkin-panel').style.display = '';
+      document.getElementById('checkin-event-name').textContent = 'Event: ' + (data.event_name || '');
+      // Stats
+      var checkedIn = (data.attendees || []).filter(a => a.status === 'present').length;
+      var late = (data.attendees || []).filter(a => a.status === 'late').length;
+      var absent = (data.attendees || []).filter(a => a.status === 'absent').length;
+      var pending = (data.attendees || []).filter(a => a.status === 'pending').length;
+      document.getElementById('stat-checkedin').textContent = checkedIn;
+      document.getElementById('stat-pending-checkin').textContent = pending;
+      document.getElementById('stat-late').textContent = late;
+      document.getElementById('stat-absent').textContent = absent;
+      // Render table
+      var tbody = document.getElementById('attendee-tbody');
+      tbody.innerHTML = (data.attendees || []).map(function(a) {
+        return '<tr>' +
+          '<td><strong>' + (a.student_name || '—') + '</strong></td>' +
+          '<td>' + (a.email || '—') + '</td>' +
+          '<td><span class="cems-badge ' + (a.reg_status === 'approved' ? 'cems-badge-success' : 'cems-badge-warning') + '">' + (a.reg_status || '—') + '</span></td>' +
+          '<td><span class="cems-badge ' + (a.attended ? 'cems-badge-success' : 'cems-badge-neutral') + '">' + (a.attended ? 'Yes' : 'No') + '</span></td>' +
+          '<td><button class="cems-btn cems-btn-sm cems-btn-secondary" onclick="toggleCheckin(' + a.registration_id + ', ' + eventId + ')">' + (a.attended ? 'Uncheck' : 'Check In') + '</button></td>' +
+        '</tr>';
+      }).join('');
+    });
+}
+</script>
+{% endblock %}

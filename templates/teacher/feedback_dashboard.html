@@ -1,0 +1,424 @@
+{% extends "base.html" %}
+{% block title %}Feedback — {{ event.title }} — CEMS{% endblock %}
+{% block breadcrumb %}<a href="{{ url_for('teacher_feedback_dashboard') }}">Feedback</a> / {{ event.title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .cems-rating-bar-container { display: flex; align-items: center; gap: 8px; }
+  .cems-rating-bar-track { flex: 1; height: 10px; background: var(--cems-gray-200); border-radius: 5px; overflow: hidden; }
+  .cems-rating-bar-fill { height: 100%; border-radius: 5px; }
+  .cems-feedback-table td { vertical-align: top; padding-top: 8px; }
+  #ratingDistributionChart, #feedbackTrendChart { max-width: 100%; height: 300px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="cems-page-header">
+  <div class="cems-page-header-top">
+    <div>
+      <h1 class="cems-page-title">{{ event.title }}</h1>
+      <p class="cems-page-description">Event feedback evaluation and analytics</p>
+    </div>
+    <div class="cems-page-actions">
+      <a href="{{ url_for('teacher_feedback_detail', event_id=event.id) }}" class="cems-btn cems-btn-primary cems-btn-sm">All Feedback</a>
+      <button class="cems-btn cems-btn-outline cems-btn-sm" onclick="exportCSV()">Export CSV</button>
+      <button class="cems-btn cems-btn-outline cems-btn-sm" onclick="exportPDF()">Export PDF</button>
+    </div>
+  </div>
+</div>
+
+<div class="cems-stats-grid">
+  <div class="cems-stat-card">
+    <div class="cems-stat-icon primary">
+      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.25 11.25l.041-.020a.72.72 0 011.063.864l-.708 2.832a.72.72 0 001.065.862l.041-.021M21 12c0 9-9 21-9 21S3 21 3 12a9 9 0 0118 0z"></path></svg>
+    </div>
+    <div class="cems-stat-content">
+      <div class="cems-stat-value" id="statAvgRating">—</div>
+      <div class="cems-stat-label">Average Rating</div>
+    </div>
+  </div>
+  <div class="cems-stat-card">
+    <div class="cems-stat-icon info">
+      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0zM12 17v4m-3-3h6"></path></svg>
+    </div>
+    <div class="cems-stat-content">
+      <div class="cems-stat-value" id="statTotalFeedbacks">—</div>
+      <div class="cems-stat-label">Total Feedbacks</div>
+    </div>
+  </div>
+  <div class="cems-stat-card">
+    <div class="cems-stat-icon success">
+      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+    </div>
+    <div class="cems-stat-content">
+      <div class="cems-stat-value" id="statRegistrations">—</div>
+      <div class="cems-stat-label">Total Registrations</div>
+    </div>
+  </div>
+  <div class="cems-stat-card">
+    <div class="cems-stat-icon warning">
+      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+    </div>
+    <div class="cems-stat-content">
+      <div class="cems-stat-value" id="statResponseRate">—</div>
+      <div class="cems-stat-label">Response Rate</div>
+    </div>
+  </div>
+</div>
+
+<div class="cems-grid cems-grid-cols-2" style="gap: 24px;">
+  <div class="cems-card">
+    <div class="cems-card-header">
+      <div class="cems-card-title">Rating Distribution</div>
+    </div>
+    <div class="cems-card-body">
+      <div id="ratingDistributionChart"></div>
+      <div style="margin-top: 16px;">
+        {% for r in [5,4,3,2,1] %}
+        <div class="cems-rating-bar-container">
+          <span style="width: 40px; font-weight: 600; font-size: 0.85rem;">{{ r }}★</span>
+          <div class="cems-rating-bar-track">
+            <div class="cems-rating-bar-fill" id="bar-{{ r }}" style="width: 0%; background: var(--cems-primary); transition: width 0.5s;"></div>
+          </div>
+          <span style="width: 60px; font-size: 0.85rem; text-align: right;" id="count-{{ r }}">0</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div class="cems-card">
+    <div class="cems-card-header">
+      <div class="cems-card-title">Category Averages</div>
+    </div>
+    <div class="cems-card-body">
+      <div id="categoryAveragesChart"></div>
+      <div style="margin-top: 16px;">
+        <div class="cems-rating-bar-container" id="cat-org-row">
+          <span style="width: 140px; font-weight: 600; font-size: 0.85rem;">Organization</span>
+          <div class="cems-rating-bar-track">
+            <div class="cems-rating-bar-fill" id="bar-org" style="width: 0%; background: var(--cems-primary); transition: width 0.5s;"></div>
+          </div>
+          <span style="width: 60px; font-size: 0.85rem; text-align: right;" id="count-org">0</span>
+        </div>
+        <div class="cems-rating-bar-container" id="cat-venue-row">
+          <span style="width: 140px; font-weight: 600; font-size: 0.85rem;">Venue</span>
+          <div class="cems-rating-bar-track">
+            <div class="cems-rating-bar-fill" id="bar-venue" style="width: 0%; background: var(--cems-info); transition: width 0.5s;"></div>
+          </div>
+          <span style="width: 60px; font-size: 0.85rem; text-align: right;" id="count-venue">0</span>
+        </div>
+        <div class="cems-rating-bar-container" id="cat-speaker-row">
+          <span style="width: 140px; font-weight: 600; font-size: 0.85rem;">Speaker</span>
+          <div class="cems-rating-bar-track">
+            <div class="cems-rating-bar-fill" id="bar-speaker" style="width: 0%; background: var(--cems-success); transition: width 0.5s;"></div>
+          </div>
+          <span style="width: 60px; font-size: 0.85rem; text-align: right;" id="count-speaker">0</span>
+        </div>
+        <div class="cems-rating-bar-container" id="cat-reg-row">
+          <span style="width: 140px; font-weight: 600; font-size: 0.85rem;">Registration</span>
+          <div class="cems-rating-bar-track">
+            <div class="cems-rating-bar-fill" id="bar-reg" style="width: 0%; background: var(--cems-warning); transition: width 0.5s;"></div>
+          </div>
+          <span style="width: 60px; font-size: 0.85rem; text-align: right;" id="count-reg">0</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="cems-grid cems-grid-cols-2" style="gap: 24px; margin-top: 24px;">
+  <div class="cems-card">
+    <div class="cems-card-header">
+      <div class="cems-card-title">Feedback Trend</div>
+    </div>
+    <div class="cems-card-body">
+      <div id="feedbackTrendChart"></div>
+    </div>
+  </div>
+  <div class="cems-card">
+    <div class="cems-card-header">
+      <div class="cems-card-title">Top Themes</div>
+    </div>
+    <div class="cems-card-body">
+      <div id="themeCloud" style="min-height: 120px;">
+        <div style="text-align: center; color: var(--cems-text-muted); font-size: 0.85rem; padding: 20px;">Loading themes…</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="cems-card" style="margin-top: 24px;">
+  <div class="cems-card-header">
+    <div class="cems-card-title">Student Feedback</div>
+    <div class="cems-page-actions">
+      <div class="cems-search-box">
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+        <input type="text" id="feedbackSearch" placeholder="Search by student name, email, or comment...">
+      </div>
+      <select id="ratingFilter" class="cems-form-select" style="width: auto;">
+        <option value="">All Ratings</option>
+        <option value="5">5 Stars</option>
+        <option value="4">4 Stars</option>
+        <option value="3">3 Stars</option>
+        <option value="2">2 Stars</option>
+        <option value="1">1 Star</option>
+      </select>
+    </div>
+  </div>
+  <div class="cems-card-body" style="padding: 0;">
+    <div class="cems-overflow-x-auto">
+      <table class="cems-table cems-feedback-table" id="feedbackTable">
+        <thead>
+          <tr>
+            <th>Student</th>
+            <th>Rating</th>
+            <th>Organization</th>
+            <th>Venue</th>
+            <th>Speaker</th>
+            <th>Registration</th>
+            <th>Theme</th>
+            <th>Comment</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody id="feedbackTableBody">
+          <tr>
+            <td colspan="9" style="text-align:center; padding:48px; color:var(--cems-text-muted);">
+              <div style="font-size:2rem; margin-bottom:8px;">⏳</div>
+              Loading feedback...
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div id="feedbackPagination" style="padding: 16px;"></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+let ratingChart = null;
+let trendChart = null;
+let categoryChart = null;
+let currentRatingFilter = '';
+let currentSearch = '';
+
+function starHtml(rating) {
+  const full = '&#9733;'.repeat(rating);
+  const empty = '&#9734;'.repeat(5 - rating);
+  return full + empty;
+}
+
+function loadStats() {
+  fetch("{{ url_for('api_teacher_event_feedback', event_id=event.id) }}")
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        document.getElementById('statAvgRating').textContent = data.stats.average_rating || '0';
+        document.getElementById('statTotalFeedbacks').textContent = data.stats.total_feedbacks;
+        document.getElementById('statRegistrations').textContent = data.stats.total_registrations;
+        document.getElementById('statResponseRate').textContent = data.stats.response_rate + '%';
+      }
+    });
+}
+
+function loadAnalytics() {
+  fetch("{{ url_for('api_teacher_event_feedback_analytics', event_id=event.id) }}")
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        // Rating distribution chart
+        const ctx = document.getElementById('ratingDistributionChart').getContext('2d');
+        const dist = data.rating_distribution || [];
+        const labels = dist.map(d => d.label);
+        const counts = dist.map(d => d.count);
+        const colors = ['#10b981', '#3b82f6', '#eab308', '#f97316', '#ef4444'];
+        if (ratingChart) ratingChart.destroy();
+        ratingChart = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: 'Feedbacks',
+              data: counts,
+              backgroundColor: colors,
+              borderColor: colors,
+              borderWidth: 1
+            }]
+          },
+          options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { x: { beginAtZero: true, ticks: { precision: 0 } } },
+            plugins: { legend: { display: false } }
+          }
+        });
+
+        const maxCount = Math.max(...counts, 1);
+        dist.forEach(d => {
+          const pct = (d.count / maxCount) * 100;
+          document.getElementById('bar-' + d.rating).style.width = pct + '%';
+          document.getElementById('count-' + d.rating).textContent = d.count;
+        });
+
+        // Category averages chart
+        const catAvg = data.category_averages || {};
+        const catLabels = ['Organization', 'Venue', 'Speaker', 'Registration'];
+        const catValues = [catAvg.organization || 0, catAvg.venue || 0, catAvg.speaker || 0, catAvg.registration || 0];
+        const catCtx = document.getElementById('categoryAveragesChart').getContext('2d');
+        const catColors = ['#3b82f6', '#10b981', '#eab308', '#f97316'];
+        if (categoryChart) categoryChart.destroy();
+        categoryChart = new Chart(catCtx, {
+          type: 'bar',
+          data: {
+            labels: catLabels,
+            datasets: [{
+              label: 'Avg Rating',
+              data: catValues,
+              backgroundColor: catColors,
+              borderColor: catColors,
+              borderWidth: 1,
+              maxBarThickness: 40
+            }]
+          },
+          options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { x: { beginAtZero: true, max: 5, ticks: { precision: 1 } } },
+            plugins: { legend: { display: false } }
+          }
+        });
+
+        const maxCatVal = Math.max(...catValues, 0.1);
+        const catBars = [
+          { id: 'bar-org', countId: 'count-org', val: catValues[0] },
+          { id: 'bar-venue', countId: 'count-venue', val: catValues[1] },
+          { id: 'bar-speaker', countId: 'count-speaker', val: catValues[2] },
+          { id: 'bar-reg', countId: 'count-reg', val: catValues[3] },
+        ];
+        catBars.forEach(cb => {
+          const pct = (cb.val / maxCatVal) * 100;
+          const el = document.getElementById(cb.id);
+          const cEl = document.getElementById(cb.countId);
+          if (el) el.style.width = pct + '%';
+          if (cEl) cEl.textContent = cb.val.toFixed(2);
+        });
+
+        // Theme cloud
+        const themeCloud = document.getElementById('themeCloud');
+        const themes = data.themes || [];
+        if (themes.length > 0) {
+          const maxCountTheme = Math.max(...themes.map(t => t.count), 1);
+          const html = themes.map(t => {
+            const size = Math.round(12 + (t.count / maxCountTheme) * 12);
+            return '<span class="cems-theme-tag" style="font-size:' + size + 'px">' + t.theme + ' (' + t.count + ')</span>';
+          }).join('');
+          themeCloud.innerHTML = html;
+        } else {
+          themeCloud.innerHTML = '<div style="color: var(--cems-text-muted); font-size: 0.85rem;">No themes identified yet.</div>';
+        }
+
+        // Feedback trend
+        if (trendChart) trendChart.destroy();
+        const trendCtx = document.getElementById('feedbackTrendChart').getContext('2d');
+        const trend = data.trend || [];
+        trendChart = new Chart(trendCtx, {
+          type: 'line',
+          data: {
+            labels: trend.map(t => t.date),
+            datasets: [{
+              label: 'Feedbacks',
+              data: trend.map(t => t.count),
+              borderColor: '#0ea5e9',
+              backgroundColor: 'rgba(14, 165, 233, 0.1)',
+              tension: 0.3,
+              fill: true
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+          }
+        });
+      }
+    });
+}
+
+function catStar(val) {
+  if (!val) return '<span style="color:var(--cems-text-muted);">—</span>';
+  return '<span style="color:var(--cems-warning); font-weight:600;">' + val + '/5</span>';
+}
+
+function loadFeedbacks(page = 1) {
+  let url = "{{ url_for('api_teacher_event_feedback', event_id=event.id) }}?page=" + page + "&per_page=15";
+  if (currentSearch) url += "&search=" + encodeURIComponent(currentSearch);
+  if (currentRatingFilter) url += "&rating=" + currentRatingFilter;
+  fetch(url)
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        const tbody = document.getElementById('feedbackTableBody');
+        tbody.innerHTML = '';
+        if (data.feedbacks.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:48px; color:var(--cems-text-muted);">No feedback entries match your criteria.</td></tr>';
+        }
+        data.feedbacks.forEach(fb => {
+          const stars = starHtml(fb.rating);
+          const anonBadge = fb.is_anonymous ? '<span class="cems-badge cems-badge-outline" style="font-size:0.7rem; margin-left:6px;">Anonymous</span>' : '';
+          const tr = document.createElement('tr');
+          tr.innerHTML =
+            '<td><strong>' + fb.student_name + '</strong>' + anonBadge + '<br><small style="color:var(--cems-text-muted);">' + fb.student_email + ' | ' + fb.student_roll_no + '</small></td>' +
+            '<td style="color:var(--cems-warning); font-weight:600;">' + stars + '</td>' +
+            '<td>' + catStar(fb.organization_rating) + '</td>' +
+            '<td>' + catStar(fb.venue_rating) + '</td>' +
+            '<td>' + catStar(fb.speaker_rating) + '</td>' +
+            '<td>' + catStar(fb.registration_experience_rating) + '</td>' +
+            '<td>' + (fb.theme || '<span style="color:var(--cems-text-muted);">—</span>') + '</td>' +
+            '<td>' + (fb.comment || '<span style="color:var(--cems-text-muted);">No comment</span>') + '</td>' +
+            '<td style="color:var(--cems-text-muted); font-size:0.85rem;">' + (fb.created_at || '') + '</td>';
+          tbody.appendChild(tr);
+        });
+        const pagination = document.getElementById('feedbackPagination');
+        if (data.pages > 1) {
+          let html = '<div style="display:flex; justify-content:center; gap:4px; flex-wrap:wrap;">';
+          for (let i = 1; i <= data.pages; i++) {
+            html += '<button class="cems-btn cems-btn-sm ' + (i === data.page ? 'cems-btn-primary' : 'cems-btn-outline') + '" onclick="loadFeedbacks(' + i + ')">' + i + '</button>';
+          }
+          html += '</div>';
+          pagination.innerHTML = html;
+        } else {
+          pagination.innerHTML = '';
+        }
+      }
+    });
+}
+
+function exportCSV() {
+  window.location.href = "{{ url_for('teacher_feedback_export', event_id=event.id) }}" + "?format=csv";
+}
+function exportPDF() {
+  window.location.href = "{{ url_for('teacher_feedback_export', event_id=event.id) }}" + "?format=pdf";
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  loadStats();
+  loadAnalytics();
+  loadFeedbacks();
+
+  document.getElementById('feedbackSearch').addEventListener('input', function() {
+    currentSearch = this.value.trim();
+    loadFeedbacks();
+  });
+  document.getElementById('ratingFilter').addEventListener('change', function() {
+    currentRatingFilter = this.value;
+    loadFeedbacks();
+  });
+});
+</script>
+{% endblock %}

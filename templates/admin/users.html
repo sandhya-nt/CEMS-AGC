@@ -33,18 +33,48 @@
           <td><span class="cems-role-badge {{ u.role }}">{{ u.role|title }}</span></td>
           <td>{{ u.department or '—' }}</td>
           <td>
-            <span class="cems-badge {% if u.is_active_account %}cems-badge-success{% else %}cems-badge-danger{% endif %}">
-              {{ 'Active' if u.is_active_account else 'Blocked' }}
+            {% set status = u.account_status.value if u.account_status else 'active' %}
+            <span class="cems-badge 
+              {% if status == 'active' %}cems-badge-success
+              {% elif status == 'suspended' %}cems-badge-warning
+              {% else %}cems-badge-danger{% endif %}">
+              {{ status|title }}
             </span>
           </td>
           <td>
             {% if u.id != current_user.id %}
-            <form method="post" action="{{ url_for('toggle_user', user_id=u.id) }}" style="display: inline;">
-              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <button type="submit" class="cems-btn {% if not u.is_active_account %}cems-btn-success{% else %}cems-btn-danger{% endif %} cems-btn-sm">
-                {{ 'Unblock' if not u.is_active_account else 'Block' }}
+            <div class="cems-dropdown" style="display: inline-block; position: relative;">
+              <button type="button" class="cems-btn cems-btn-secondary cems-btn-sm" 
+                      onclick="toggleDropdown(this)" aria-expanded="false">
+                Change Status ▼
               </button>
-            </form>
+              <div class="cems-dropdown-menu" style="display: none; position: absolute; right: 0; top: 100%; min-width: 160px; background: white; border: 1px solid var(--cems-border); border-radius: var(--cems-radius-md); box-shadow: var(--cems-shadow-md); z-index: 100; margin-top: 4px;">
+                <form method="post" action="{{ url_for('update_user_status', user_id=u.id) }}" style="display: block;">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <input type="hidden" name="status" value="active">
+                  <button type="submit" class="cems-dropdown-item {% if status == 'active' %}active{% endif %}" 
+                          style="width: 100%; text-align: left; padding: 10px 16px; border: none; background: none; cursor: pointer; font-size: 0.875rem; color: var(--cems-text-primary); {% if status == 'active' %}font-weight: 600;{% endif %}">
+                    ✓ Active
+                  </button>
+                </form>
+                <form method="post" action="{{ url_for('update_user_status', user_id=u.id) }}" style="display: block;">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <input type="hidden" name="status" value="suspended">
+                  <button type="submit" class="cems-dropdown-item {% if status == 'suspended' %}active{% endif %}" 
+                          style="width: 100%; text-align: left; padding: 10px 16px; border: none; background: none; cursor: pointer; font-size: 0.875rem; color: var(--cems-text-primary); {% if status == 'suspended' %}font-weight: 600;{% endif %}">
+                    ⏸ Suspended
+                  </button>
+                </form>
+                <form method="post" action="{{ url_for('update_user_status', user_id=u.id) }}" style="display: block;">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <input type="hidden" name="status" value="disabled">
+                  <button type="submit" class="cems-dropdown-item {% if status == 'disabled' %}active{% endif %}" 
+                          style="width: 100%; text-align: left; padding: 10px 16px; border: none; background: none; cursor: pointer; font-size: 0.875rem; color: var(--cems-text-primary); {% if status == 'disabled' %}font-weight: 600;{% endif %}">
+                    ✕ Disabled
+                  </button>
+                </form>
+              </div>
+            </div>
             {% else %}
             <span style="color: var(--cems-text-muted); font-size: 0.85rem;">Your Account</span>
             {% endif %}
@@ -66,5 +96,27 @@
   </div>
   {% endif %}
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleDropdown(btn) {
+  const menu = btn.nextElementSibling;
+  const expanded = btn.getAttribute('aria-expanded') === 'true';
+  btn.setAttribute('aria-expanded', !expanded);
+  menu.style.display = expanded ? 'none' : 'block';
+}
+
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.cems-dropdown')) {
+    document.querySelectorAll('.cems-dropdown-menu').forEach(function(menu) {
+      menu.style.display = 'none';
+    });
+    document.querySelectorAll('.cems-dropdown button[aria-expanded="true"]').forEach(function(btn) {
+      btn.setAttribute('aria-expanded', 'false');
+    });
+  }
+});
+</script>
 {% endblock %}
 
